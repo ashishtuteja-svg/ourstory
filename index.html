@@ -1309,9 +1309,15 @@ function HomeTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
   const [voiceOn, setVoiceOn] = useState(false);
   const [idx, setIdx] = useState(0);
   const [hint, setHint] = useState(0);
+  const [query, setQuery] = useState("");
   const hints = ["Try: \"" + (circle.members[0] ? circle.members[0].name : "Papa") + "'s memories\"", "Try: \"Best moments in Shimla\"", "Try: \"What happened in 2023\""];
   const mems = circle.memories || [];
   const mem = mems[idx] || null;
+  const q = query.toLowerCase().trim();
+  const searchResults = q.length < 2 ? [] : mems.filter(m => {
+    const fields = [m.place, String(m.year||""), m.month, ...(m.people||[]), m.caption].join(" ").toLowerCase();
+    return q.split(" ").every(word => fields.includes(word));
+  });
 
   useEffect(() => {
     const t = setInterval(() => setHint(h => (h + 1) % hints.length), 2800);
@@ -1360,8 +1366,34 @@ function HomeTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
         <div style={{ fontSize: 9.5, color: voiceOn ? circle.color : "#c0a080", fontWeight: voiceOn ? 700 : 400, letterSpacing: "0.07em", textTransform: "uppercase" }}>{voiceOn ? "Listening..." : "Tap to speak"}</div>
         <div style={{ width: "100%", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.8)", borderRadius: 22, padding: "6px 12px", border: "1px solid " + circle.color + "28", gap: 6 }}>
           <span style={{ fontSize: 11, opacity: 0.3 }}>🔍</span>
-          <input placeholder="Or type a name, place, year..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 11, color: "#5a3e28", flex: 1 }} />
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search name, place, year..."
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: 11, color: "#5a3e28", flex: 1 }} />
+          {query && <span onClick={() => setQuery("")} style={{ fontSize: 11, cursor: "pointer", opacity: 0.4 }}>✕</span>}
         </div>
+        {query && searchResults.length > 0 && (
+          <div style={{ width: "100%", background: "#fff", borderRadius: 14, border: "1px solid rgba(196,154,60,0.18)", maxHeight: 200, overflowY: "auto", boxShadow: "0 4px 16px rgba(150,100,40,0.12)" }}>
+            {searchResults.map(m => (
+              <div key={m.id} onClick={() => { onEdit(m); setQuery(""); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderBottom: "1px solid rgba(196,154,60,0.08)", cursor: "pointer" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: m.photo_url ? "url(" + m.photo_url + ") center/cover" : (m.grad || "linear-gradient(145deg,#f5e0b8,#e8c070)"), flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {!m.photo_url && <span style={{ fontSize: 16 }}>{m.emoji || "📸"}</span>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3d2410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {m.place || "—"} · {m.month} {m.year}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#b09070" }}>{(m.people || []).join(", ")}</div>
+                </div>
+                <span style={{ fontSize: 10, color: circle.color, fontWeight: 700 }}>{(m.voices || []).length} 🎙</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {query && searchResults.length === 0 && (
+          <div style={{ fontSize: 11, color: "#b09070", fontStyle: "italic" }}>No memories found for "{query}"</div>
+        )}
         <div style={{ display: "flex", gap: 8, width: "100%" }}>
           <button onClick={onAddMemory} style={{ flex: 1, padding: "8px", background: "linear-gradient(135deg," + circle.color + "," + circle.color + "bb)", border: "none", borderRadius: 19, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>📸 Add Memory</button>
           {mem && <button onClick={() => onAddVoice(mem)} style={{ flex: 1, padding: "8px", background: "transparent", border: "1.5px solid " + circle.color, borderRadius: 19, color: circle.color, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>🎙 Add Voice</button>}
@@ -1374,12 +1406,18 @@ function HomeTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
 function TimelineTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
   const [filter, setFilter] = useState("Years");
   const [sel, setSel] = useState(null);
+  const [search, setSearch] = useState("");
   const mems = circle.memories || [];
   const years = [...new Set(mems.map(m => m.year))].sort((a, b) => b - a).map(String);
   const places = [...new Set(mems.map(m => m.place).filter(p => p && p !== "—"))];
   const people = (circle.members || []).map(m => m.name);
   const opts = { Years: years, Places: places, People: people };
-  const filtered = sel ? mems.filter(m => filter === "Years" ? String(m.year) === sel : filter === "Places" ? m.place === sel : (m.people || []).includes(sel)) : mems;
+  const chipFiltered = sel ? mems.filter(m => filter === "Years" ? String(m.year) === sel : filter === "Places" ? m.place === sel : (m.people || []).includes(sel)) : mems;
+  const sq = search.toLowerCase().trim();
+  const filtered = sq.length < 2 ? chipFiltered : chipFiltered.filter(m => {
+    const fields = [m.place, String(m.year||""), m.month, ...(m.people||[]), m.caption].join(" ").toLowerCase();
+    return sq.split(" ").every(word => fields.includes(word));
+  });
 
   return (
     <div style={{ padding: "0 12px" }}>
@@ -1390,6 +1428,11 @@ function TimelineTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
           ))}
         </div>
         <button onClick={onAddMemory} style={{ marginLeft: 8, padding: "7px 12px", borderRadius: 16, background: "linear-gradient(135deg," + circle.color + "," + circle.color + "cc)", border: "none", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>+ Add</button>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.8)", borderRadius: 22, padding: "6px 12px", border: "1px solid rgba(196,154,60,0.2)", gap: 6, marginBottom: 8 }}>
+        <span style={{ fontSize: 11, opacity: 0.35 }}>🔍</span>
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search memories..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 11, color: "#5a3e28", flex: 1 }} />
+        {search && <span onClick={() => setSearch("")} style={{ fontSize: 11, cursor: "pointer", opacity: 0.4 }}>✕</span>}
       </div>
       <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 3, marginBottom: 11 }}>
         <button onClick={() => setSel(null)} style={{ flexShrink: 0, padding: "4px 11px", borderRadius: 16, background: !sel ? circle.color : "rgba(255,255,255,0.65)", border: "none", color: !sel ? "#fff" : "#9c7a52", fontSize: 10.5, fontWeight: 600, cursor: "pointer" }}>All</button>
@@ -1614,6 +1657,7 @@ function App() {
   const TABS = [
     { id: "home", icon: "🏠", label: "Home" },
     { id: "timeline", icon: "📖", label: "Timeline" },
+    { id: "search", icon: "🔍", label: "Search" },
     { id: "people", icon: "👥", label: "People" },
   ];
 
@@ -1687,6 +1731,7 @@ function App() {
             ? <ManageTab circle={circle} onClose={() => setManaging(false)} onUpdate={upd} />
             : tab === "home" ? <HomeTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
               : tab === "timeline" ? <TimelineTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
+              : tab === "search" ? <SearchTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onEdit={m => setDetailTarget(m)} />
                 : <PeopleTab circle={circle} onManage={() => setManaging(true)} userName={userName} onAddVoice={m => setRecorderTarget(m)} onEdit={m => setDetailTarget(m)} />
           }
         </div>
