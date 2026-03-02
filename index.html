@@ -10,6 +10,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exifr@7/dist/lite.umd.js"></script>
 <style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  #root { height: 100%; }
+  @media (max-width: 480px) {
+    .app-shell { width: 100vw !important; height: 100dvh !important; border-radius: 0 !important; box-shadow: none !important; }
+  }
+  @media (min-width: 481px) {
+    .app-shell { width: 390px !important; height: 844px !important; }
+  }
 *{box-sizing:border-box;margin:0;padding:0;font-family:Georgia,serif}
 body{background:#1a0c06;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 ::-webkit-scrollbar{display:none}
@@ -427,7 +436,7 @@ function RecorderSheet({ memory, speakerName, color, onSaved, onClose }) {
         <div style={{ background: "rgba(196,148,58,0.06)", borderRadius: 18, padding: "18px", marginBottom: 20, minHeight: 72, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid " + color + "22" }}>
           {rec.state === "idle" && <div style={{ color: "#c0a080", fontSize: 12, fontStyle: "italic" }}>Your voice will appear here</div>}
           {rec.state === "requesting" && <div style={{ color: "#b09070", fontSize: 12 }}>Waiting for mic permission...</div>}
-          {rec.state === "recording" && <LiveWave analyser={rec.analyser} color={color} />}
+          {rec.state === "recording" && <div style={{ display: "flex", gap: 3, alignItems: "center", height: 28 }}>{[0.6,1,0.7,0.9,0.5].map((h,i) => <div key={i} style={{ width: 3, borderRadius: 2, background: color, height: h*22, opacity: 0.8, animation: "pulse " + (0.6+i*0.1) + "s ease-in-out infinite alternate" }} />)}</div>}
           {rec.state === "done" && (
             <div style={{ width: "100%" }}>
               <audio controls src={rec.audioUrl} preload="auto"
@@ -533,16 +542,6 @@ function AddMemorySheet({ circle, userName, onSaved, onClose }) {
   }, [rec.state]);
 
   const toggleTag = name => setTagged(ts => ts.includes(name) ? ts.filter(n => n !== name) : [...ts, name]);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (playing) { audioRef.current.pause(); setPlaying(false); }
-    else {
-      if (rec.audioUrl) audioRef.current.src = rec.audioUrl;
-      playAudio(audioRef.current);
-      setPlaying(true);
-    }
-  };
 
   const finish = async () => {
     setSaving(true);
@@ -868,7 +867,7 @@ function Card({ m, compact, accent, userName, onAddVoice, onEdit }) {
         </div>
       </div>
       <div style={{ padding: "9px 11px" }}>
-        <p style={{ fontStyle: "italic", fontSize: 12, color: "#5a3e28", lineHeight: 1.5, margin: 0 }}>"{m.caption}"</p>
+        <p style={{ fontSize: 11, color: "#9c7a52", lineHeight: 1.5, margin: 0 }}>{(m.people||[]).length > 0 ? "👤 " + (m.people||[]).join(", ") : <span style={{ fontStyle: "italic", color: "#c0a080" }}>No people tagged</span>}</p>
         <div style={{ marginTop: 7, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center" }}>
             {voices.length > 0
@@ -1364,7 +1363,7 @@ function HomeTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
               <span style={{ background: "rgba(255,255,255,0.18)", borderRadius: 9, padding: "2px 7px", fontSize: 9, color: "rgba(255,255,255,0.9)" }}>📍 {mem.place || "—"}</span>
               <span style={{ background: "rgba(255,255,255,0.18)", borderRadius: 9, padding: "2px 7px", fontSize: 9, color: "rgba(255,255,255,0.85)" }}>{mem.month} {mem.year}</span>
             </div>
-            <p style={{ fontStyle: "italic", fontSize: 12, color: "rgba(255,255,255,0.93)", lineHeight: 1.42, margin: "0 0 7px" }}>"{mem.caption}"</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", lineHeight: 1.42, margin: "0 0 7px" }}>{(mem.people||[]).length > 0 ? "👤 " + (mem.people||[]).join(", ") : ""}</p>
             <div style={{ display: "flex", gap: 5 }}>
               {(mem.voices || []).map((v, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.14)", borderRadius: 15, padding: "3px 8px 3px 3px" }}>
@@ -1726,7 +1725,6 @@ function App() {
   const TABS = [
     { id: "home", icon: "🏠", label: "Home" },
     { id: "timeline", icon: "📖", label: "Timeline" },
-    { id: "search", icon: "🔍", label: "Search" },
     { id: "people", icon: "👥", label: "People" },
   ];
 
@@ -1751,7 +1749,7 @@ function App() {
   // In-app circle addition flows
   if (phase === "joinCode2") return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <ScreenJoinCode onJoined={c => { addCircleToApp(c); setPhase("app"); }} onBack={() => setPhase("app")} />
       </div>
     </div>
@@ -1759,7 +1757,7 @@ function App() {
 
   if (phase === "createCircle2") return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <ScreenCreateCircle onBack={() => setPhase("app")} onCreate={async c => { const full = await dbLoadCircle(c.code); addCircleToApp(full || c); setPhase("app"); }} />
       </div>
     </div>
@@ -1767,7 +1765,7 @@ function App() {
 
   if (phase !== "app") return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
         {phase === "name" && <ScreenName onNext={n => { setUserName(n); setPhase("choosePath"); }} />}
         {phase === "choosePath" && <ScreenChoosePath userName={userName} onJoin={() => setPhase("joinCode")} onCreate={() => setPhase("createCircle")} onBack={() => setPhase("name")} />}
         {phase === "joinCode" && <ScreenJoinCode onJoined={c => enterApp(userName, c)} onBack={() => setPhase("choosePath")} />}
@@ -1785,7 +1783,7 @@ function App() {
 
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
+      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
 
         {recorderTarget && <RecorderSheet memory={recorderTarget} speakerName={userName} color={circle.color} onSaved={saveVoice} onClose={() => setRecorderTarget(null)} />}
         {detailTarget && <MemoryDetail memory={detailTarget} circle={circle} userName={userName} onAddVoice={m => { setDetailTarget(null); setRecorderTarget(m); }} onEdit={m => { setDetailTarget(null); setEditTarget(m); }} onClose={() => setDetailTarget(null)} />}
@@ -1835,7 +1833,7 @@ function App() {
             ? <ManageTab circle={circle} onClose={() => setManaging(false)} onUpdate={upd} />
             : tab === "home" ? <HomeTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
               : tab === "timeline" ? <TimelineTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
-              : tab === "search" ? <SearchTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onEdit={m => setDetailTarget(m)} />
+              : tab === "search" ? <TimelineTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
                 : <PeopleTab circle={circle} onManage={() => setManaging(true)} userName={userName} onAddVoice={m => setRecorderTarget(m)} onEdit={m => setDetailTarget(m)} />
           }
         </div>
