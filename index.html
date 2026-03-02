@@ -1590,12 +1590,15 @@ function ManageTab({ circle, onClose, onUpdate }) {
   );
 }
 
-function CirclesSheet({ circles, active, onSelect, onClose }) {
+function CirclesSheet({ circles, active, onSelect, onClose, onAdd }) {
   return (
     <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(18,8,2,0.82)", zIndex: 100, display: "flex", flexDirection: "column", justifyContent: "flex-end", borderRadius: 42 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: "#fdf6ec", borderRadius: "24px 24px 0 0", padding: "16px 14px 26px" }}>
         <div style={{ width: 30, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 14px" }} />
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410", marginBottom: 14 }}>Your Circles</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410" }}>Your Circles</div>
+          <button onClick={onAdd} style={{ background: "linear-gradient(135deg,#c8943a,#8b5e28)", border: "none", borderRadius: 16, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>+ Join / Create</button>
+        </div>
         {circles.map(c => (
           <div key={c.id} onClick={() => onSelect(c)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: 13, marginBottom: 7, cursor: "pointer", background: active === c.id ? c.color + "14" : "rgba(255,255,255,0.6)", border: "1.5px solid " + (active === c.id ? c.color : "rgba(196,154,60,0.14)") }}>
             <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg," + c.color + "," + c.color + "99)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{c.emoji}</div>
@@ -1603,7 +1606,7 @@ function CirclesSheet({ circles, active, onSelect, onClose }) {
               <div style={{ fontWeight: 700, fontSize: 13, color: "#3d2410" }}>{c.label}</div>
               <div style={{ fontSize: 10, color: "#b09070", marginTop: 1 }}>{(c.members || []).length} members · {(c.memories || []).length} memories</div>
             </div>
-            {active === c.id && <div style={{ width: 6, height: 6, borderRadius: "50%", background: c.color }} />}
+            {active === c.id && <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.color }} />}
           </div>
         ))}
       </div>
@@ -1627,37 +1630,55 @@ function App() {
   const [addingMemory, setAddingMemory] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [detailTarget, setDetailTarget] = useState(null);
+  const [addingCircle, setAddingCircle] = useState(false);
 
   const circle = circles.find(c => c.id === activeCircleId) || circles[0] || null;
   const upd = updated => setCircles(cs => cs.map(c => c.id === updated.id ? updated : c));
 
   const enterApp = (name, circ) => {
-    localStorage.setItem("ourstory_v14", JSON.stringify({ name, code: circ.code }));
+    localStorage.setItem("ourstory_v14", JSON.stringify({ name, codes: [circ.code] }));
     setUserName(name);
     setCircles([circ]);
     setActiveCircleId(circ.id);
     setPhase("app");
   };
 
+  const addCircleToApp = async (circ) => {
+    // Add a new circle to existing session
+    const saved = localStorage.getItem("ourstory_v14");
+    const existing = saved ? JSON.parse(saved) : { name: userName, codes: [] };
+    const codes = [...new Set([...(existing.codes || [existing.code].filter(Boolean)), circ.code])];
+    localStorage.setItem("ourstory_v14", JSON.stringify({ name: userName, codes }));
+    setCircles(cs => [...cs.filter(c => c.id !== circ.id), circ]);
+    setActiveCircleId(circ.id);
+    setTab("home");
+    setShowCircles(false);
+    setAddingCircle(false);
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem("ourstory_v14");
     if (saved) {
       try {
-        const { name, code } = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const name = parsed.name;
+        // Support both old { code } and new { codes: [] } format
+        const codes = parsed.codes || (parsed.code ? [parsed.code] : []);
         setUserName(name);
-        dbLoadCircle(code)
-          .then(c => {
-            if (c) { setCircles([c]); setActiveCircleId(c.id); setPhase("app"); }
-            else {
-              // Circle code not found in DB — genuinely gone
+        if (codes.length === 0) { setPhase("name"); return; }
+        Promise.all(codes.map(code => dbLoadCircle(code).catch(() => null)))
+          .then(results => {
+            const loaded = results.filter(Boolean);
+            if (loaded.length > 0) {
+              setCircles(loaded);
+              setActiveCircleId(loaded[0].id);
+              setPhase("app");
+            } else {
               localStorage.removeItem("ourstory_v14");
               setPhase("name");
             }
           })
-          .catch(() => {
-            // Network error — DO NOT wipe session, show retry instead
-            setPhase("retry");
-          });
+          .catch(() => setPhase("retry"));
       } catch(e) { setPhase("name"); }
     } else {
       setPhase("name");
@@ -1727,6 +1748,23 @@ function App() {
     </div>
   );
 
+  // In-app circle addition flows
+  if (phase === "joinCode2") return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
+      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <ScreenJoinCode onJoined={c => { addCircleToApp(c); setPhase("app"); }} onBack={() => setPhase("app")} />
+      </div>
+    </div>
+  );
+
+  if (phase === "createCircle2") return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
+      <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <ScreenCreateCircle onBack={() => setPhase("app")} onCreate={async c => { const full = await dbLoadCircle(c.code); addCircleToApp(full || c); setPhase("app"); }} />
+      </div>
+    </div>
+  );
+
   if (phase !== "app") return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
       <div style={{ width: 350, height: 755, borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
@@ -1758,7 +1796,25 @@ function App() {
               // Refresh circle data in background
               dbLoadCircle(circle.code).then(c => { if (c) upd(c); }).catch(() => {});
             }} onClose={() => setAddingMemory(false)} />}
-        {showCircles && <CirclesSheet circles={circles} active={activeCircleId} onSelect={switchCircle} onClose={() => setShowCircles(false)} />}
+        {showCircles && <CirclesSheet circles={circles} active={activeCircleId} onSelect={switchCircle} onClose={() => setShowCircles(false)} onAdd={() => { setShowCircles(false); setAddingCircle(true); }} />}
+        {addingCircle && (
+          <div style={{ position: "absolute", inset: 0, background: "#fdf6ec", zIndex: 200, borderRadius: 42, display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "linear-gradient(135deg,#3d2410,#6b3c18)", padding: "16px 18px", flexShrink: 0 }}>
+              <button onClick={() => setAddingCircle(false)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700, marginBottom: 10, display: "block" }}>← Back</button>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>Add another Circle</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>Join an existing one or create new</div>
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, padding: "20px 18px", justifyContent: "center" }}>
+              {[{ icon: "🔗", title: "Join a Circle", desc: "Use an invite link or code", cb: "join" }, { icon: "✨", title: "Create a Circle", desc: "Start a new group", cb: "create" }].map(p => (
+                <div key={p.title} onClick={() => { setAddingCircle(false); setPhase(p.cb === "join" ? "joinCode2" : "createCircle2"); }} style={{ background: "#fff", borderRadius: 20, padding: "20px", border: "2px solid rgba(196,154,60,0.18)", cursor: "pointer", boxShadow: "0 4px 18px rgba(150,100,40,0.09)" }}>
+                  <div style={{ fontSize: 32, marginBottom: 10 }}>{p.icon}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410", marginBottom: 5 }}>{p.title}</div>
+                  <div style={{ fontSize: 12, color: "#7a5c38" }}>{p.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ padding: "10px 14px 7px", background: "#fdf6ec", flexShrink: 0, borderBottom: "1px solid rgba(196,154,60,0.09)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
