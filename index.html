@@ -1597,7 +1597,7 @@ function CirclesSheet({ circles, active, onSelect, onClose, onAdd }) {
         <div style={{ width: 30, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 14px" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410" }}>Your Circles</div>
-          <button onClick={onAdd} style={{ background: "linear-gradient(135deg,#c8943a,#8b5e28)", border: "none", borderRadius: 16, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>+ Join / Create</button>
+          <button onClick={e => { e.stopPropagation(); onAdd(); }} style={{ background: "linear-gradient(135deg,#c8943a,#8b5e28)", border: "none", borderRadius: 16, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>+ Join / Create</button>
         </div>
         {circles.map(c => (
           <div key={c.id} onClick={() => onSelect(c)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: 13, marginBottom: 7, cursor: "pointer", background: active === c.id ? c.color + "14" : "rgba(255,255,255,0.6)", border: "1.5px solid " + (active === c.id ? c.color : "rgba(196,154,60,0.14)") }}>
