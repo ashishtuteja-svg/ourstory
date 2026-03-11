@@ -102,7 +102,8 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const CL_KEY   = "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"; /* ← paste your key here */
-const SK       = "ourstory_v24";
+const SK       = "ourstory_v25";
+const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
 const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -308,11 +309,11 @@ function AddSheet({album,user,onSaved,onClose}){
     for(let i=0;i<photos.length;i++){
       try{
         const m=await saveMem(album.id,[user],{year:now.getFullYear(),month:now.toLocaleString("default",{month:"long"}),place:null},photos[i].file,user);
-        mems.push({...m,photo_url:m.photo_url,voices:[]});setDone(i+1);
-      }catch(e){}
+        mems.push({...m,voices:[]});setDone(i+1);
+      }catch(e){console.error("Save error:",e);alert("Could not save photo "+(i+1)+". Please check your connection.");setSaving(false);return;}
     }
     setSaved(mems);setSaving(false);
-    if(mems.length===1){setVoiceFor(mems[0])}// single photo — offer voice immediately
+    if(mems.length===1&&mems[0]){setVoiceFor(mems[0])}
   };
 
   // After voice recorded for a saved memory
@@ -683,7 +684,7 @@ function ScrFirst({onDone}){
       if(members.length){for(const mn of[name.trim(),...members])await sb.from("members").insert({circle_id:al.id,name:mn,phone:"",joined:true,code:mkCode()})}
       else await sb.from("members").insert({circle_id:al.id,name:name.trim(),phone:"",joined:true,code:mkCode()});
       const full=await load(code);
-      localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
+      localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
       onDone(full,name.trim())
     }catch(e){alert("Could not create: "+e.message);setCreating(false)}
   };
@@ -725,7 +726,7 @@ function ScrFirst({onDone}){
 function ScrJoin({code,onDone}){
   const[name,setName]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
   const join=async()=>{if(!name.trim())return;setLoading(true);setErr("");
-    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
+    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
     catch(e){setErr("Could not join: "+e.message);setLoading(false)}};
   return(
     <div className="ob">
@@ -748,7 +749,7 @@ function App(){
     (async()=>{
       const jc=jCode();
       if(jc){setScr("join");return}
-      try{const saved=JSON.parse(localStorage.getItem(SK)||"{}");
+      try{const saved=JSON.parse(localStorage.getItem(SK_SESSION)||localStorage.getItem('ourstory_v23')||localStorage.getItem('ourstory_v22')||localStorage.getItem('ourstory_v21')||localStorage.getItem(SK)||"{}");
         if(saved.user&&saved.code){const al=await load(saved.code);if(al){setAlbum(al);setUser(saved.user);setScr("album");return}}
       }catch(e){}
       setScr("first")
