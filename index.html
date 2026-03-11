@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Our Story"/>
-<meta name="theme-color" content="#100804"/>
+<meta name="theme-color" content="#111014"/>
 <title>Our Story</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
@@ -15,133 +15,83 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body,#root{width:100%;height:100%;height:100dvh;overflow:hidden;background:#100804;font-family:'Lora',Georgia,serif}
+html,body,#root{width:100%;height:100%;height:100dvh;overflow:hidden;background:#111014;font-family:'Lora',Georgia,serif}
 ::-webkit-scrollbar{display:none}
 input,textarea,button{font-family:inherit}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes pageOutLeft{0%{transform:perspective(1200px) rotateY(0deg) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(-18deg) translateX(-60px) scale(.93);opacity:0}}
-@keyframes pageOutRight{0%{transform:perspective(1200px) rotateY(0deg) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(18deg) translateX(60px) scale(.93);opacity:0}}
-@keyframes pageInLeft{0%{transform:perspective(1200px) rotateY(14deg) translateX(55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0deg) translateX(0) scale(1);opacity:1}}
-@keyframes pageInRight{0%{transform:perspective(1200px) rotateY(-14deg) translateX(-55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0deg) translateX(0) scale(1);opacity:1}}
+@keyframes pageOutLeft{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(-18deg) translateX(-60px) scale(.93);opacity:0}}
+@keyframes pageOutRight{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(18deg) translateX(60px) scale(.93);opacity:0}}
+@keyframes pageInLeft{0%{transform:perspective(1200px) rotateY(14deg) translateX(55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0) translateX(0) scale(1);opacity:1}}
+@keyframes pageInRight{0%{transform:perspective(1200px) rotateY(-14deg) translateX(-55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0) translateX(0) scale(1);opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes bar{from{width:0}to{width:100%}}
 
-/* ── layout ── */
-.app{width:100vw;height:100dvh;overflow:hidden;background:#100804;display:flex;flex-direction:column;position:relative}
+/* layout */
+.app{width:100vw;height:100dvh;overflow:hidden;background:#111014;display:flex;flex-direction:column;position:relative}
 .frame{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .photo-col{flex:1;position:relative;overflow:hidden}
 
-/* portrait info overlay */
+/* album background */
+.album-bg{position:absolute;inset:0;background-color:#1a1a1f;background-image:radial-gradient(ellipse 75% 70% at 50% 46%,rgba(42,36,30,0) 0%,rgba(12,10,10,.55) 60%,rgba(4,3,4,.92) 100%)}
+.album-bg::after{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");pointer-events:none}
+
+/* photo print mount */
+.photo-print{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d;padding-bottom:5%}
+.photo-mount{position:relative;background:#fdf8f0;padding:11px 11px 32px 11px;box-shadow:0 2px 4px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.5),0 24px 64px rgba(0,0,0,.45);border-radius:2px;max-width:91%;max-height:91%;display:flex;flex-direction:column;align-items:center;will-change:transform}
+.photo-mount img{display:block;max-width:100%;max-height:calc(100% - 32px);object-fit:contain;border-radius:1px}
+.mount-caption{position:absolute;bottom:7px;left:8px;right:8px;text-align:center;font-family:'Lora',serif;font-style:italic;font-size:12px;color:#7a6454;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* portrait overlay */
 .info-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(4,2,1,.85) 28%,rgba(4,2,1,.97) 100%);padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px))}
 .landscape-panel{display:none}
 .landscape-nav{display:none}
 .portrait-only{display:flex}
 
-/* ── iPad landscape ── */
+/* iPad landscape */
 @media(orientation:landscape)and(min-width:768px){
   .frame{flex-direction:row!important}
   .photo-col{flex:0 0 62%;height:100%}
   .info-overlay{display:none!important}
   .portrait-only{display:none!important}
-  .landscape-panel{
-    display:flex!important;flex-direction:column;flex:1;
-    background:#f5ede0;padding:18px 20px;overflow-y:auto;
-    -webkit-overflow-scrolling:touch;gap:11px;color:#2a1505
-  }
-  .landscape-nav{
-    display:flex!important;background:#ede5d8;
-    border-top:1px solid rgba(180,140,80,.2);
-    padding:9px 18px calc(9px + env(safe-area-inset-bottom,0px));
-    align-items:center;justify-content:space-between;flex-shrink:0
-  }
+  .landscape-panel{display:flex!important;flex-direction:column;flex:1;background:#f5ede0;padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;gap:10px;color:#2a1505}
+  .landscape-nav{display:flex!important;background:#ede5d8;border-top:1px solid rgba(180,140,80,.2);padding:9px 16px calc(9px + env(safe-area-inset-bottom,0px));align-items:center;justify-content:space-between;flex-shrink:0}
 }
 
-/* ── frame mode ── */
+/* frame mode */
 .framebox{position:fixed;inset:0;background:#111014;z-index:1000}
 
-/* ── onboarding ── */
-.ob{position:fixed;inset:0;background:#100804;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .4s ease}
-.card{width:100%;max-width:420px;background:linear-gradient(160deg,#fdf6ec,#f5ede0);border-radius:28px;padding:30px 26px;box-shadow:0 28px 72px rgba(0,0,0,.55)}
+/* onboarding */
+.ob{position:fixed;inset:0;background:#111014;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .4s ease}
+.card{width:100%;max-width:420px;background:linear-gradient(160deg,#fdf6ec,#f5ede0);border-radius:28px;padding:28px 24px;box-shadow:0 28px 72px rgba(0,0,0,.55)}
 
-/* ── settings ── */
+/* settings */
 .settings{position:fixed;inset:0;background:#f5ede0;z-index:500;display:flex;flex-direction:column;overflow-y:auto;animation:fadeIn .3s ease}
 
-/* ── sheets ── */
-.sheet{background:#fdf6ec;border-radius:24px 24px 0 0;max-height:93vh;overflow-y:auto;animation:slideUp .3s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
+/* sheets */
+.sheet{background:#fdf6ec;border-radius:24px 24px 0 0;max-height:96vh;overflow-y:auto;animation:slideUp .3s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
 
-/* ── album background texture ── */
-.album-bg{
-  position:absolute;inset:0;
-  /* Deep charcoal base */
-  background-color:#1a1a1f;
-  /* Soft warm vignette — darkens corners, glows center */
-  background-image:radial-gradient(ellipse 75% 70% at 50% 46%, rgba(42,36,30,.0) 0%, rgba(12,10,10,.55) 60%, rgba(4,3,4,.92) 100%);
-}
-/* subtle grain texture overlay */
-.album-bg::after{
-  content:"";position:absolute;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-  pointer-events:none;
-}
-/* ── photo print mount ── */
-.photo-print{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  transform-style:preserve-3d;
-  /* push photo up very slightly so it feels optically centred */
-  padding-bottom:5%;
-}
-.photo-mount{
-  position:relative;
-  background:#fdf8f0;
-  /* asymmetric padding — more at bottom for caption area */
-  padding:11px 11px 32px 11px;
-  box-shadow:
-    0 2px 4px rgba(0,0,0,.25),
-    0 8px 24px rgba(0,0,0,.5),
-    0 24px 64px rgba(0,0,0,.45),
-    0 0 0 1px rgba(255,255,255,.06);
-  border-radius:2px;
-  /* bigger — fills more real estate */
-  max-width:91%;max-height:91%;
-  display:flex;flex-direction:column;align-items:center;
-  will-change:transform;
-}
-.photo-mount img{
-  display:block;max-width:100%;max-height:calc(100% - 32px);
-  object-fit:contain;border-radius:1px;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
-}
-/* caption strip at bottom of mount */
-.mount-caption{
-  position:absolute;bottom:7px;left:8px;right:8px;
-  text-align:center;font-family:'Lora',serif;font-style:italic;
-  font-size:12px;color:#7a6454;letter-spacing:.05em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-/* page turn animation classes */
-.page-out-l{animation:pageOutLeft .32s cubic-bezier(.4,0,.2,1) forwards}
-.page-out-r{animation:pageOutRight .32s cubic-bezier(.4,0,.2,1) forwards}
-.page-in-l{animation:pageInLeft .35s cubic-bezier(.2,0,.3,1) forwards}
-.page-in-r{animation:pageInRight .35s cubic-bezier(.2,0,.3,1) forwards}
-
-.fill img{width:100%;height:100%;object-fit:contain}
+/* empty state */
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#232228,#111014)}
 
-/* ── voice pill ── */
-.vp{border-radius:13px;padding:9px 11px;margin-bottom:7px;background:rgba(255,255,255,.1)}
-@media(orientation:landscape)and(min-width:768px){.vp{background:rgba(55,28,8,.06);border:1px solid rgba(180,140,80,.18)}}
+/* voice pill */
+.vp{border-radius:12px;padding:8px 10px;margin-bottom:6px;background:rgba(55,28,8,.06);border:1px solid rgba(180,140,80,.18)}
 
-/* ── buttons ── */
-.bA{background:linear-gradient(135deg,#c8943a,#a06820);color:#fff;border:none;border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer}
-.bG{background:transparent;border:1.5px solid rgba(200,148,58,.5);color:#c8943a;border-radius:13px;padding:11px 16px;font-size:13px;cursor:pointer}
+/* buttons */
+.bA{background:linear-gradient(135deg,#c8943a,#a06820);color:#fff;border:none;border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.bG{background:transparent;border:1.5px solid rgba(200,148,58,.5);color:#c8943a;border-radius:13px;padding:11px 16px;font-size:13px;cursor:pointer;text-align:center}
 .bI{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 @media(orientation:landscape)and(min-width:768px){.bI{background:rgba(55,28,8,.1);border-color:rgba(180,140,80,.3);color:#3d2410}}
 
-/* ── inputs ── */
+/* inputs */
 .inp{width:100%;padding:12px 15px;border-radius:13px;border:1.5px solid rgba(200,148,58,.3);background:rgba(255,255,255,.7);font-size:15px;color:#2a1505;outline:none;transition:border .2s}
 .inp:focus{border-color:#c8943a;background:#fff}
+textarea.inp{resize:none;line-height:1.6}
+
+/* summary editable */
+.summary-text{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:#2a1505;line-height:1.65;cursor:pointer}
+.summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer}
 </style>
 </head>
 <body><div id="root"></div>
@@ -149,11 +99,12 @@ input,textarea,button{font-family:inherit}
 const {useState,useEffect,useRef,useCallback} = React;
 
 /* ── config ── */
-const SB_URL  = "https://crwigyzwesxhpiktcalp.supabase.co";
-const SB_KEY  = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
-const SK      = "ourstory_v23";
-const PAL     = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
-const COLS    = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
+const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
+const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
+const CL_KEY   = "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"; /* ← paste your key here */
+const SK       = "ourstory_v24";
+const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
+const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 /* ── db ── */
@@ -166,16 +117,13 @@ async function load(code){
   return{...c,members:members||[],memories}
 }
 async function createAlbum(label,color,code){const{data:c,error}=await sb.from("circles").insert({label,emoji:"📖",color,code}).select().single();if(error)throw error;return c}
-async function saveMem(cid,people,meta,photoFile,audioBlob,dur,user){
-  let pUrl=null,aUrl=null;const ts=Date.now();
+async function saveMem(cid,people,meta,photoFile,user){
+  let pUrl=null;const ts=Date.now();
   if(photoFile)pUrl=await up("photos",cid+"/"+ts+".jpg",photoFile);
-  if(audioBlob){const ext=audioBlob.type.includes("mp4")?"mp4":audioBlob.type.includes("ogg")?"ogg":"webm";aUrl=await up("audio",cid+"/"+ts+"."+ext,audioBlob)}
   const now=new Date();
-  const row={circle_id:cid,year:meta.year||now.getFullYear(),month:meta.month||now.toLocaleString("default",{month:"long"}),place:meta.place||"—",people,caption:(meta.transcript||"A memory.").substring(0,200),emoji:"📸",grad:"linear-gradient(145deg,#f5e0b8,#e8c070)",photo_url:pUrl};
-  try{row.transcript=meta.transcript||null;row.auto_tags=[]}catch(e){}
+  const row={circle_id:cid,year:meta.year||now.getFullYear(),month:meta.month||now.toLocaleString("default",{month:"long"}),place:meta.place||"—",people,caption:"A memory.",emoji:"📸",grad:"linear-gradient(145deg,#f5e0b8,#e8c070)",photo_url:pUrl,transcript:null,auto_tags:[],summary:null};
   const{data:mem,error}=await sb.from("memories").insert(row).select().single();if(error)throw error;
-  if(aUrl)await sb.from("voices").insert({memory_id:mem.id,name:user,col:pc(user),audio_url:aUrl,duration:dur});
-  return mem.id
+  return mem
 }
 async function saveVoice(mid,name,blob,dur,tx){
   const ext=blob.type.includes("mp4")?"mp4":blob.type.includes("ogg")?"ogg":"webm";
@@ -184,6 +132,12 @@ async function saveVoice(mid,name,blob,dur,tx){
   if(tx){try{await sb.from("memories").update({transcript:tx}).eq("id",mid)}catch(e){}}
   return url
 }
+async function updateSummary(mid,summary){try{await sb.from("memories").update({summary}).eq("id",mid)}catch(e){}}
+async function deleteMem(mid){
+  await sb.from("voices").delete().eq("memory_id",mid);
+  await sb.from("memories").delete().eq("id",mid);
+}
+async function deleteVoice(vid){await sb.from("voices").delete().eq("id",vid)}
 async function joinAlbum(code,user){
   const al=await load(code);if(!al)return null;
   const exists=(al.members||[]).find(m=>m.name.toLowerCase()===user.toLowerCase());
@@ -191,14 +145,30 @@ async function joinAlbum(code,user){
   return load(code)
 }
 
-/* ── ai search ── */
-async function aiSearch(q,mems,key){
-  const local=kSearch(q,mems);if(!key?.trim())return local;
+/* ── Claude summary ── */
+async function genSummary(transcript,members,place,year){
+  if(!transcript||!CL_KEY||CL_KEY.startsWith("YOUR_"))return null;
   try{
-    const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.caption||"").substring(0,300)}));
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key.trim(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    const names=(members||[]).map(m=>m.name).join(", ");
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":CL_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,
+        system:`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to this list: ${names||"unknown"}. No quotes, no hashtags, no emojis.`,
+        messages:[{role:"user",content:`Transcript: "${transcript}"\nPlace: ${place||""}\nYear: ${year||""}`}]})});
+    const j=await r.json();return j.content?.[0]?.text?.trim()||null
+  }catch(e){return null}
+}
+
+/* ── AI search ── */
+async function aiSearch(q,mems){
+  const local=kSearch(q,mems);
+  if(!CL_KEY||CL_KEY.startsWith("YOUR_"))return local;
+  try{
+    const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.summary||m.caption||"").substring(0,300)}));
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":CL_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
-        system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. E.g. [\"id1\"]. Understand Hindi, Punjabi, mixed-language, Indian names.",
+        system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. Understand Hindi, Punjabi, Indian names.",
         messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
     const j=await r.json();const raw=j.content?.[0]?.text||"[]";
     const ids=JSON.parse(raw.replace(/```json|```/g,"").trim());
@@ -208,11 +178,11 @@ async function aiSearch(q,mems,key){
 function kSearch(q,mems){
   const words=q.toLowerCase().split(/\s+/).filter(w=>w.length>1);if(!words.length)return mems;
   const scored=mems.map(m=>{
-    const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();
+    const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.summary||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();
     const score=words.reduce((s,w)=>{if(h.includes(w))return s+2;if(w.length>=4&&h.includes(w.substring(0,4)))return s+1;return s},0);
-    return{m,score};
+    return{m,score}
   }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
-  return scored.map(x=>x.m);
+  return scored.map(x=>x.m)
 }
 
 /* ── helpers ── */
@@ -224,15 +194,6 @@ function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%CO
 function fd(s){return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")}
 function jCode(){try{return new URL(window.location.href).searchParams.get("join")}catch(e){return null}}
 function iUrl(code){return window.location.origin+window.location.pathname+"?join="+code}
-function extr(text,members){
-  if(!text||text.length<3)return{};const r={},lo=text.toLowerCase();
-  const mons=["january","february","march","april","may","june","july","august","september","october","november","december"];
-  const yr=(text.match(/\d{4}/g)||[]).map(Number).find(n=>n>=1950&&n<=2030);if(yr)r.year=yr;
-  for(let i=0;i<mons.length;i++)if(lo.includes(mons[i])){r.month=mons[i].charAt(0).toUpperCase()+mons[i].slice(1);break}
-  const pm=lo.match(/\b(?:in|at|to|from|went to|trip to)\s+([a-z]+)/i);if(pm&&pm[1]&&pm[1].length>2)r.place=pm[1].charAt(0).toUpperCase()+pm[1].slice(1);
-  const mentioned=(members||[]).filter(m=>{const f=m.name.split(" ")[0].toLowerCase();return f.length>2&&lo.includes(f)}).map(m=>m.name);
-  if(mentioned.length)r.people=mentioned;return r
-}
 
 /* ── hooks ── */
 function useWakeLock(){
@@ -273,248 +234,180 @@ function useRec(){
   return{state,dur,aUrl,aBlob,start,stop,reset}
 }
 
-/* ── tiny UI ── */
+/* ── small UI ── */
 function Spin({sz=20,col="#c8943a"}){return<div style={{width:sz,height:sz,border:"2px solid "+col+"30",borderTop:"2px solid "+col,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
 function Av({name,sz=32,col}){return<div style={{width:sz,height:sz,borderRadius:"50%",background:col||pc(name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz*.36,fontWeight:700,color:"#fff",flexShrink:0}}>{ini(name)}</div>}
-function Hr({label}){return<div style={{display:"flex",alignItems:"center",gap:9}}><div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/>{label&&<span style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",opacity:.5}}>{label}</span>}<div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/></div>}
+function Hr({label}){return<div style={{display:"flex",alignItems:"center",gap:9,margin:"2px 0"}}><div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/>{label&&<span style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",opacity:.5}}>{label}</span>}<div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/></div>}
 
 /* ── Recorder Sheet ── */
-function RecSheet({memory,speaker,color,onSaved,onClose}){
+function RecSheet({memory,speaker,color,members,onSaved,onClose}){
   const rec=useRec();const sp=useSpeech();const[saving,setSaving]=useState(false);const lv=useRef("");
   useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
-  // Auto-save as soon as recording stops
-  useEffect(()=>{if(rec.state==="done"&&!saving){setSaving(true);(async()=>{try{const url=await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,lv.current);onSaved({url,name:speaker,dur:rec.dur})}catch(e){alert("Could not save voice.");setSaving(false)}})()}},[rec.state]);
+  useEffect(()=>{
+    if(rec.state==="done"&&!saving){
+      setSaving(true);
+      (async()=>{
+        try{
+          const tx=lv.current;
+          await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,tx);
+          // Generate Claude summary if we have transcript
+          if(tx&&!memory.summary){
+            const s=await genSummary(tx,members,memory.place,memory.year);
+            if(s)await updateSummary(memory.id,s);
+          }
+          onSaved();
+        }catch(e){alert("Could not save voice.");setSaving(false)}
+      })()
+    }
+  },[rec.state]);
   const go=()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)};
   const halt=()=>{rec.stop();sp.stop()};
   const C=color||"#c8943a";
   return(
-    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(22px + env(safe-area-inset-bottom,0px))"}}>
-        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 18px"}}/>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
         <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Add your voice</div>
-        <div style={{fontSize:13,color:"#7a5c38",marginBottom:16}}>{memory.place&&memory.place!=="—"?memory.place:"This memory"} · {memory.year||""}</div>
-        <div style={{minHeight:60,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,background:"rgba(200,148,58,.07)",borderRadius:15,padding:12}}>
-          {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap below to start recording</div>}
-          {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Allow microphone...</div>}
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:14}}>{memory.place&&memory.place!=="—"?memory.place:"This memory"}{memory.year?" · "+memory.year:""}</div>
+        {/* preview photo */}
+        {memory.photo_url&&<div style={{height:110,borderRadius:12,overflow:"hidden",background:"#0a0502",marginBottom:13,display:"flex",alignItems:"center",justifyContent:"center"}}><img src={memory.photo_url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain"}}/></div>}
+        <div style={{background:"rgba(200,148,58,.06)",borderRadius:14,padding:"12px",marginBottom:12,minHeight:56,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Speak naturally — say when, where, who was there</div>}
+          {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Waiting for microphone...</div>}
           {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
-            <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.65].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
-            <div style={{fontSize:12,color:"#b09070"}}>{fd(rec.dur)} · Recording</div>
-            {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5,maxHeight:34,overflow:"hidden"}}>{sp.transcript}</div>}
+            <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
+            <div style={{fontSize:13,color:"#b09070",fontWeight:600}}>{fd(rec.dur)} · Recording...</div>
+            {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5,marginTop:3}}>{sp.transcript.substring(0,120)}</div>}
           </div>}
           {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
-          {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13}}>Microphone blocked</div>}
+          {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>Microphone blocked.<br/>Check Safari Settings → Microphone.</div>}
         </div>
-        {(rec.state==="idle"||rec.state==="error")&&<button onClick={go} className="bA" style={{width:"100%",fontSize:15}}>🎙 Start Recording</button>}
-        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop & Save</button>}
-        {rec.state==="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"13px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>Saving your voice...</span></div>}
-        {saving&&rec.state!=="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"13px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>Saving...</span></div>}
+        {(rec.state==="idle"||rec.state==="error")&&<button onClick={go} style={{width:"100%",padding:15,borderRadius:13,background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer"}}>🎙 Start Recording</button>}
+        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:15,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop & Save</button>}
+        {rec.state==="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,padding:"12px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>{saving?"Saving & generating summary...":"Processing..."}</span></div>}
       </div>
     </div>
   )
 }
 
-/* ── Add Memory Sheet ── */
+/* ── Add Sheet (photo-first, no mode screen) ── */
 function AddSheet({album,user,onSaved,onClose}){
-  const[mode,setMode]=useState(null);const[step,setStep]=useState(1);
-  // Single story mode state
-  const[photo,setPhoto]=useState(null);const[prev,setPrev]=useState(null);
-  const[saving,setSaving]=useState(false);
-  const[place,setPlace]=useState("");const[month,setMonth]=useState("");const[year,setYear]=useState("");const[tagged,setTagged]=useState([]);const[tx,setTx]=useState("");
-  // Bulk upload state
-  const[bulkFiles,setBulkFiles]=useState([]);// array of {file, previewUrl}
-  const[bulkSaving,setBulkSaving]=useState(false);const[bulkDone,setBulkDone]=useState(0);
-  const fRef=useRef(null);const fBulkRef=useRef(null);const lv=useRef("");
-  const rec=useRec();const sp=useSpeech();const C=album.color||"#c8943a";
-  useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
-  useEffect(()=>{if(rec.state==="done"&&mode==="story"){const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setTimeout(()=>setStep(3),400)}},[rec.state]);
-  const onPick=e=>{const f=e.target.files?.[0];if(!f)return;setPhoto(f);setPrev(URL.createObjectURL(f))};
-  const onBulkPick=e=>{
-    const files=Array.from(e.target.files||[]);
-    if(!files.length)return;
-    setBulkFiles(files.map(f=>({file:f,previewUrl:URL.createObjectURL(f)})));
+  const[photos,setPhotos]=useState([]);// [{file,prev}]
+  const[saving,setSaving]=useState(false);const[done,setDone]=useState(0);
+  const[saved,setSaved]=useState([]);// saved memory objects
+  const[voiceFor,setVoiceFor]=useState(null);// memory to add voice to
+  const fRef=useRef(null);const C=album.color||"#c8943a";
+
+  const onPick=e=>{
+    const files=Array.from(e.target.files||[]);if(!files.length)return;
+    setPhotos(files.map(f=>({file:f,prev:URL.createObjectURL(f)})));
   };
-  const qSave=async()=>{if(!photo)return;setSaving(true);try{await saveMem(album.id,[user],{year:new Date().getFullYear(),month:new Date().toLocaleString("default",{month:"long"}),place:null},photo,null,0,user);onSaved()}catch(e){alert("Could not save.");setSaving(false)}};
-  const sSave=async()=>{setSaving(true);try{const ppl=[user,...tagged.filter(t=>t!==user)];await saveMem(album.id,ppl,{year:year?parseInt(year):null,month:month||null,place:place||null,transcript:tx},photo,rec.aBlob,rec.dur,user);onSaved()}catch(e){alert("Could not save.");setSaving(false)}};
-  const bulkSave=async()=>{
-    if(!bulkFiles.length)return;
-    setBulkSaving(true);setBulkDone(0);
-    const now=new Date();
-    for(let i=0;i<bulkFiles.length;i++){
+
+  const saveAll=async()=>{
+    setSaving(true);setDone(0);const now=new Date();const mems=[];
+    for(let i=0;i<photos.length;i++){
       try{
-        await saveMem(album.id,[user],{year:now.getFullYear(),month:now.toLocaleString("default",{month:"long"}),place:null},bulkFiles[i].file,null,0,user);
-        setBulkDone(i+1);
+        const m=await saveMem(album.id,[user],{year:now.getFullYear(),month:now.toLocaleString("default",{month:"long"}),place:null},photos[i].file,user);
+        mems.push({...m,photo_url:m.photo_url,voices:[]});setDone(i+1);
       }catch(e){}
     }
-    setBulkSaving(false);onSaved();
+    setSaved(mems);setSaving(false);
+    if(mems.length===1){setVoiceFor(mems[0])}// single photo — offer voice immediately
   };
+
+  // After voice recorded for a saved memory
+  const afterVoice=()=>{setVoiceFor(null);onSaved()};
+
+  if(voiceFor){
+    return<RecSheet memory={voiceFor} speaker={user} color={C} members={album.members||[]} onSaved={afterVoice} onClose={afterVoice}/>
+  }
+
   return(
     <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-      <div onClick={e=>e.stopPropagation()} className="sheet" style={{maxHeight:"96vh",display:"flex",flexDirection:"column"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{display:"flex",flexDirection:"column",maxHeight:"94vh"}}>
         <div style={{padding:"13px 18px 0",flexShrink:0}}>
           <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
             <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505"}}>
-              {!mode?"Add memories":mode==="bulk"?"📸 Bulk upload":mode==="quick"?"📸 Quick drop":step===1?"📸 Photo":step===2?"🎙 Tell the story":"✏️ Review"}
+              {saved.length>0?"✅ Saved!":photos.length>0?photos.length+" photo"+(photos.length!==1?"s":"")+" selected":"Add photos"}
             </div>
-            <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:29,height:29,fontSize:13,cursor:"pointer",color:"#9c7a52"}}>✕</button>
+            <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:28,height:28,fontSize:13,cursor:"pointer",color:"#9c7a52"}}>✕</button>
           </div>
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"0 18px 22px"}}>
-          {/* Mode select */}
-          {!mode&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:16,lineHeight:1.6}}>How do you want to add?</div>
-              {[
-                {id:"bulk",icon:"🖼️",title:"Bulk upload",desc:"Drop 5, 10, 15 photos at once. Each becomes its own memory. Everyone adds voices later."},
-                {id:"story",icon:"🎙",title:"One photo + voice",desc:"Pick one photo and record your story about it now."},
-                {id:"quick",icon:"⚡",title:"One photo, no voice",desc:"Just drop a single photo. Add voice later."}
-              ].map(m=>(
-                <div key={m.id} onClick={()=>{setMode(m.id);setStep(1)}} style={{background:"#fff",borderRadius:17,padding:"14px 16px",border:"2px solid rgba(200,148,58,.18)",cursor:"pointer",marginBottom:10,boxShadow:"0 2px 10px rgba(150,100,40,.07)"}}>
-                  <div style={{fontSize:24,marginBottom:6}}>{m.icon}</div>
-                  <div style={{fontSize:14,fontWeight:700,color:"#2a1505",marginBottom:3}}>{m.title}</div>
-                  <div style={{fontSize:12,color:"#7a5c38",lineHeight:1.5}}>{m.desc}</div>
-                </div>
-              ))}
+          {/* no photos yet */}
+          {photos.length===0&&(
+            <div onClick={()=>fRef.current?.click()} style={{border:"2px dashed "+C+"55",borderRadius:17,padding:"32px 20px",textAlign:"center",cursor:"pointer",background:"rgba(200,148,58,.04)"}}>
+              <div style={{fontSize:44,marginBottom:10}}>📷</div>
+              <div style={{fontSize:16,fontWeight:600,color:"#3d2410",marginBottom:6}}>Tap to choose photos</div>
+              <div style={{fontSize:13,color:"#b09070",lineHeight:1.6}}>One photo or many — your choice.<br/>Each becomes its own memory card.</div>
             </div>
           )}
-          {/* Bulk upload */}
-          {mode==="bulk"&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <input ref={fBulkRef} type="file" accept="image/*" multiple onChange={onBulkPick} style={{display:"none"}}/>
-              {!bulkFiles.length?(
-                <div onClick={()=>fBulkRef.current?.click()} style={{border:"2px dashed "+C+"55",borderRadius:17,padding:"28px 20px",textAlign:"center",cursor:"pointer",background:"rgba(200,148,58,.04)",marginBottom:16}}>
-                  <div style={{fontSize:44,marginBottom:10}}>🖼️</div>
-                  <div style={{fontSize:15,fontWeight:600,color:"#3d2410",marginBottom:6}}>Tap to choose photos</div>
-                  <div style={{fontSize:13,color:"#b09070",lineHeight:1.5}}>Select as many as you want.<br/>Each will become its own memory card.</div>
-                </div>
-              ):(
-                <>
-                  {/* Photo grid preview */}
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:16}}>
-                    {bulkFiles.map((f,i)=>(
-                      <div key={i} style={{aspectRatio:"1",borderRadius:10,overflow:"hidden",background:"#1a0c06",position:"relative"}}>
-                        <img src={f.previewUrl} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
-                      </div>
-                    ))}
-                    <div onClick={()=>fBulkRef.current?.click()} style={{aspectRatio:"1",borderRadius:10,border:"2px dashed rgba(200,148,58,.4)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"rgba(200,148,58,.05)"}}>
-                      <div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:22}}>+</div><div style={{fontSize:10}}>Add more</div></div>
-                    </div>
-                  </div>
-                  <div style={{fontSize:13,color:"#7a5c38",marginBottom:14,textAlign:"center"}}>{bulkFiles.length} photo{bulkFiles.length!==1?"s":""} selected · each saves as a separate memory</div>
-                  {bulkSaving?(
-                    <div style={{textAlign:"center",padding:"16px 0"}}>
-                      <Spin sz={24} col={C}/>
-                      <div style={{fontSize:13,color:"#7a5c38",marginTop:10}}>Saving {bulkDone} of {bulkFiles.length}...</div>
-                    </div>
-                  ):(
-                    <button onClick={bulkSave} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-                      ✅ Save all {bulkFiles.length} photos
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-          {/* Quick single drop */}
-          {mode==="quick"&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
-              <div onClick={()=>fRef.current?.click()} style={{height:200,borderRadius:17,overflow:"hidden",cursor:"pointer",background:"#0a0502",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,flexShrink:0}}>
-                {!prev&&<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:38,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
-                {prev&&<img src={prev} style={{width:"100%",height:"100%",objectFit:"contain"}}/>}
-              </div>
-              {prev&&<button onClick={()=>fRef.current?.click()} style={{width:"100%",marginBottom:10,padding:"8px",background:"none",border:"none",color:"#b09070",fontSize:12,cursor:"pointer"}}>Tap to change photo</button>}
-              <button onClick={prev?qSave:()=>fRef.current?.click()} disabled={saving} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:prev?"✅ Drop it in":"📷 Choose photo"}</button>
-            </div>
-          )}
-          {/* Story step 1 — photo */}
-          {mode==="story"&&step===1&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
-              <div onClick={()=>fRef.current?.click()} style={{height:175,borderRadius:17,overflow:"hidden",cursor:"pointer",background:"#0a0502",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:15,flexShrink:0}}>
-                {prev?<img src={prev} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:34,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
-              </div>
-              <button onClick={()=>setStep(2)} className="bA" style={{width:"100%",fontSize:15}}>{photo?"Next: Record voice →":"Skip photo, add voice →"}</button>
-            </div>
-          )}
-          {/* Story step 2 — voice */}
-          {mode==="story"&&step===2&&(
-            <div style={{animation:"fadeIn .25s ease",display:"flex",flexDirection:"column",gap:12}}>
-              {prev&&<div style={{height:130,borderRadius:14,overflow:"hidden",background:"#0a0502",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><img src={prev} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain"}}/></div>}
-              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.5}}>Speak naturally — say when, where, who was there.</div>
-              <div style={{background:"rgba(200,148,58,.07)",borderRadius:14,padding:"14px 12px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:64}}>
-                {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap the button below to start</div>}
-                {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Waiting for microphone...</div>}
-                {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
-                  <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
-                  <div style={{fontSize:13,color:"#b09070",fontWeight:600}}>{fd(rec.dur)} · Recording...</div>
-                  {sp.transcript&&<div style={{fontSize:12,color:"#7a5c38",textAlign:"center",lineHeight:1.5,marginTop:4}}>{sp.transcript.substring(0,120)}</div>}
-                </div>}
-                {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
-                {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>Microphone blocked.<br/>Check Safari Settings → Microphone.</div>}
-              </div>
-              {(rec.state==="idle"||rec.state==="requesting"||rec.state==="error")&&(
-                <button onClick={()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)}} style={{width:"100%",padding:"16px",borderRadius:14,background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:17,fontWeight:700,cursor:"pointer"}}>🎙 Start Recording</button>
-              )}
-              {rec.state==="recording"&&(
-                <button onClick={()=>{rec.stop();sp.stop()}} style={{width:"100%",padding:"16px",borderRadius:14,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:17,fontWeight:700,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop Recording</button>
-              )}
-              {rec.state==="done"&&<div style={{display:"flex",gap:9}}>
-                <button onClick={rec.reset} className="bG" style={{fontSize:14}}>🔄 Redo</button>
-                <button onClick={()=>{const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setStep(3)}} className="bA" style={{flex:1,fontSize:15}}>Next →</button>
-              </div>}
-            </div>
-          )}
-          {/* Story step 3 — review */}
-          {mode==="story"&&step===3&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.6,marginBottom:14}}>Extracted from what you said. Fix anything off.</div>
-              <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:16}}>
-                {[["Year",year,setYear,"e.g. 2019"],["Place",place,setPlace,"e.g. Goa"]].map(([lbl,val,set,ph])=>(
-                  <div key={lbl}>
-                    <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:5}}>{lbl}</div>
-                    <input className="inp" value={val} onChange={e=>set(e.target.value)} placeholder={ph}/>
+          {/* photos selected, not yet saved */}
+          {photos.length>0&&saved.length===0&&!saving&&(
+            <>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:14}}>
+                {photos.map((p,i)=>(
+                  <div key={i} style={{aspectRatio:"1",borderRadius:10,overflow:"hidden",background:"#0a0502"}}>
+                    <img src={p.prev} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
                   </div>
                 ))}
-                {(album.members||[]).length>0&&(
-                  <div>
-                    <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>Who's in this memory</div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
-                      {album.members.map(m=><div key={m.id} onClick={()=>setTagged(ts=>ts.includes(m.name)?ts.filter(n=>n!==m.name):[...ts,m.name])} style={{padding:"6px 13px",borderRadius:18,background:tagged.includes(m.name)?C:"rgba(200,148,58,.1)",color:tagged.includes(m.name)?"#fff":"#7a5c38",fontSize:13,cursor:"pointer",border:"1px solid "+(tagged.includes(m.name)?C:"rgba(200,148,58,.22)"),transition:"all .2s"}}>{m.name}</div>)}
-                    </div>
-                  </div>
-                )}
+                <div onClick={()=>fRef.current?.click()} style={{aspectRatio:"1",borderRadius:10,border:"2px dashed rgba(200,148,58,.4)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"rgba(200,148,58,.05)"}}>
+                  <div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:22}}>+</div><div style={{fontSize:10}}>More</div></div>
+                </div>
               </div>
-              <button onClick={sSave} disabled={saving} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:"✅ Save this memory"}</button>
+              <button onClick={saveAll} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                ✅ Save {photos.length} photo{photos.length!==1?"s":""}
+              </button>
+            </>
+          )}
+          {/* saving progress */}
+          {saving&&(
+            <div style={{textAlign:"center",padding:"28px 0"}}>
+              <Spin sz={26} col={C}/>
+              <div style={{fontSize:14,color:"#7a5c38",marginTop:12}}>Saving {done} of {photos.length}...</div>
+            </div>
+          )}
+          {/* saved — offer voice if multiple photos */}
+          {saved.length>1&&(
+            <div style={{animation:"fadeIn .3s ease"}}>
+              <div style={{fontSize:14,color:"#7a5c38",fontStyle:"italic",lineHeight:1.7,marginBottom:16,textAlign:"center"}}>
+                {saved.length} memories saved 🎉<br/>Want to record your voice for any of them?
+              </div>
+              {saved.map((m,i)=>(
+                <div key={i} onClick={()=>setVoiceFor(m)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,padding:"11px 14px",marginBottom:9,cursor:"pointer",border:"1.5px solid rgba(200,148,58,.2)"}}>
+                  {m.photo_url&&<div style={{width:44,height:44,borderRadius:8,overflow:"hidden",background:"#0a0502",flexShrink:0}}><img src={m.photo_url} style={{width:"100%",height:"100%",objectFit:"contain"}}/></div>}
+                  <div style={{flex:1}}><div style={{fontSize:13,color:"#2a1505"}}>Memory {i+1}</div><div style={{fontSize:11,color:"#b09070"}}>Tap to add your voice</div></div>
+                  <div style={{fontSize:18}}>🎙</div>
+                </div>
+              ))}
+              <button onClick={onClose} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginTop:4}}>Done, skip voices for now</button>
             </div>
           )}
         </div>
       </div>
+      <input ref={fRef} type="file" accept="image/*" multiple onChange={onPick} style={{display:"none"}}/>
     </div>
   )
 }
 
 /* ── Search Sheet ── */
-function SearchSht({memories,apiKey,onResults,onClose}){
-  const sp=useSpeech();const[q,setQ]=useState("");const[searching,setSrch]=useState(false);const lv=useRef("");
-  useEffect(()=>{lv.current=sp.transcript;if(sp.transcript)setQ(sp.transcript)},[sp.transcript]);
-  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories,apiKey);setSrch(false);onResults(r,query,r.length)};
+function SearchSht({memories,onResults,onClose}){
+  const sp=useSpeech();const[q,setQ]=useState("");const[searching,setSrch]=useState(false);
+  useEffect(()=>{if(sp.transcript)setQ(sp.transcript)},[sp.transcript]);
+  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories);setSrch(false);if(!r.length){alert(`No memories found for "${query}". Try different words.`);return;}onResults(r,query+" ("+r.length+")")};
   return(
     <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(30px + env(safe-area-inset-bottom,0px))"}}>
-        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 18px"}}/>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
         <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Search memories</div>
-        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:10,lineHeight:1.6}}>Try "Goa holiday", "Sunny as a baby", "2019"</div>
-        {!apiKey&&<div style={{background:"rgba(200,148,58,.1)",border:"1px solid rgba(200,148,58,.3)",borderRadius:12,padding:"9px 13px",marginBottom:12,display:"flex",alignItems:"center",gap:9}}>
-          <span style={{fontSize:16}}>💡</span>
-          <div style={{fontSize:12,color:"#7a5c38",lineHeight:1.5}}>Basic keyword search is on. For smart AI search (Hindi, Punjabi, natural language) add your Claude API key in <b>Settings → Search</b>.</div>
-        </div>}
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:12,lineHeight:1.6}}>Try "Goa holiday", "Sunny as a baby", "2019"</div>
+        {!CL_KEY.startsWith("YOUR_")&&<div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"8px 12px",marginBottom:12,fontSize:12,color:"#7a5c38"}}>✨ Claude AI search is active — speak in any language</div>}
         <div style={{display:"flex",gap:9,marginBottom:13}}>
           <input className="inp" style={{flex:1}} value={q} onChange={e=>setQ(e.target.value)} placeholder="Speak or type..." onKeyDown={e=>e.key==="Enter"&&go(q)}/>
-          <button onClick={()=>sp.active?sp.stop():sp.start("en-IN")} style={{width:46,height:46,borderRadius:13,background:sp.active?"linear-gradient(135deg,#c06858,#8b3a28)":"rgba(200,148,58,.15)",border:"none",fontSize:19,cursor:"pointer",animation:sp.active?"pulse 1s ease infinite":"none",flexShrink:0}}>🎙</button>
+          <button onClick={()=>sp.active?sp.stop():sp.start("en-IN")} style={{width:46,height:46,borderRadius:13,background:sp.active?"linear-gradient(135deg,#c06858,#8b3a28)":"rgba(200,148,58,.15)",border:"none",fontSize:19,cursor:"pointer",flexShrink:0}}>🎙</button>
         </div>
-        {sp.active&&<div style={{fontSize:12,color:"#c8943a",textAlign:"center",marginBottom:11,animation:"pulse 1s ease infinite"}}>Listening... tap 🎙 to stop</div>}
-        <button onClick={()=>go(q)} disabled={searching||!q.trim()} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{searching?<><Spin col="#fff" sz={15}/>Searching...</>:"🔍 Find memories"}</button>
+        <button onClick={()=>go(q)} disabled={searching||!q.trim()} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{searching?<><Spin col="#fff" sz={15}/>Searching...</>:"🔍 Search"}</button>
       </div>
     </div>
   )
@@ -522,347 +415,350 @@ function SearchSht({memories,apiKey,onResults,onClose}){
 
 /* ── Frame Mode ── */
 function FrameMode({memories,albumLabel,onExit}){
-  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);
-  const wake=useWakeLock();const apiKey=localStorage.getItem("ourstory_claude_key")||"";
+  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);
+  const wake=useWakeLock();const audioRef=useRef(null);
   const shown=filter?filter.mems:memories;const cur=shown[idx]||null;
   useEffect(()=>{wake.acquire();return()=>wake.release()},[]);
-  useEffect(()=>{if(!shown.length)return;const t=setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1);setPlaying(false)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk]);
-  const sw=useSwipe(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1);setPlaying(false)},()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1);setPlaying(false)});
-  const tap=()=>{if(cur?.voices?.length>0&&!playing)setPlaying(true);else setSrch(true)};
-  if(!cur)return<div className="framebox" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><div style={{color:"rgba(255,255,255,.4)",fontSize:16}}>No memories yet</div><button onClick={onExit} style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",padding:"10px 20px",borderRadius:12,cursor:"pointer"}}>← Exit</button></div>;
+  useEffect(()=>{setPlaying(false);setVIdx(0);if(audioRef.current){audioRef.current.pause();audioRef.current=null}},[idx]);
+  useEffect(()=>{if(!shown.length)return;const t=setTimeout(()=>{playFlip();setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk]);
+  const sw=useSwipe(()=>{playFlip();setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},()=>{playFlip();setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)});
+  const playVoice=(i,vs)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
+  const playVoices=()=>{if(!cur?.voices?.length)return;setPlaying(true);playVoice(0,cur.voices)};
+  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setPlaying(false);setVIdx(0)};
+  if(!cur)return<div className="framebox" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><div style={{color:"rgba(255,255,255,.4)",fontSize:16}}>No memories</div><button onClick={onExit} style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",padding:"10px 20px",borderRadius:12,cursor:"pointer"}}>← Exit</button></div>;
   return(
-    <div className="framebox" {...sw} onClick={tap}>
-      {/* progress */}
+    <div className="framebox" {...sw}>
       <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.08)",zIndex:10}}>
         <div key={pk} style={{height:"100%",background:"#c8943a",animation:"bar 30s linear forwards"}}/>
       </div>
-      {/* top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:20,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(12px + env(safe-area-inset-top,0px)) 15px 10px"}}>
-        {filter?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",backdropFilter:"blur(8px)",borderRadius:18,padding:"5px 13px",display:"flex",alignItems:"center",gap:7}}><span style={{color:"#f0d080",fontSize:13}}>{filter.label}</span><span style={{color:"rgba(255,255,255,.5)",fontSize:11}}>✕</span></div>:<div style={{color:"rgba(255,255,255,.3)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".08em"}}>{albumLabel}</div>}
-        <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",color:"rgba(255,255,255,.5)",fontSize:11,cursor:"pointer"}}>Exit frame</button>
+        {filter?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",backdropFilter:"blur(8px)",borderRadius:18,padding:"5px 13px",fontSize:13,color:"#f0d080",cursor:"pointer"}}>{filter.label} ✕</div>:<div style={{color:"rgba(255,255,255,.3)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".08em"}}>{albumLabel}</div>}
+        <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",color:"rgba(255,255,255,.5)",fontSize:11,cursor:"pointer"}}>Exit</button>
       </div>
-      {/* photo */}
-      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 75% at 50% 46%, #232228 0%, #111014 55%, #060507 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      {/* photo mount */}
+      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 75% at 50% 46%,#232228 0%,#111014 55%,#060507 100%)",display:"flex",alignItems:"center",justifyContent:"center",paddingBottom:"5%"}}>
         {cur.photo_url
-          ?<div style={{position:"relative",padding:"10px 10px 30px",background:"#fdf8f0",boxShadow:"0 12px 48px rgba(0,0,0,.7),0 3px 12px rgba(0,0,0,.5)",borderRadius:2,maxWidth:"91vw",maxHeight:"91vh",transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
+          ?<div style={{position:"relative",padding:"11px 11px 32px",background:"#fdf8f0",boxShadow:"0 2px 4px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.5),0 24px 64px rgba(0,0,0,.45)",borderRadius:2,maxWidth:"91vw",maxHeight:"91vh",transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
               <img src={cur.photo_url} alt="" style={{display:"block",maxWidth:"100%",maxHeight:"calc(80vh - 60px)",objectFit:"contain"}}/>
-              <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontFamily:"Lora,serif",fontStyle:"italic",fontSize:10,color:"#8a7060",letterSpacing:".04em"}}>{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
+              <div style={{position:"absolute",bottom:7,left:8,right:8,textAlign:"center",fontFamily:"Lora,serif",fontStyle:"italic",fontSize:12,color:"#7a6454",letterSpacing:".05em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
             </div>
-          :<div style={{position:"absolute",inset:0,background:"linear-gradient(145deg,#2a1505,#180c04)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:80,opacity:.2}}>📷</div></div>}
+          :<div style={{color:"rgba(255,255,255,.2)",fontSize:48}}>📷</div>}
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.4) 100%)",pointerEvents:"none"}}/>
       </div>
-      {/* bottom */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"55px 22px calc(18px + env(safe-area-inset-bottom,0px))",background:"linear-gradient(transparent,rgba(0,0,0,.65))",zIndex:10,pointerEvents:"none"}}>
-        {cur.place&&cur.place!=="—"&&<div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:600,color:"#fff",marginBottom:4,textShadow:"0 2px 8px rgba(0,0,0,.5)"}}>{cur.place}</div>}
-        <div style={{fontSize:14,color:"rgba(255,255,255,.6)",fontStyle:"italic"}}>{[cur.month,cur.year].filter(Boolean).join(" ")}{cur.voices?.length>0&&<span style={{marginLeft:11}}>🎙 {cur.voices.length}</span>}</div>
+      {/* bottom play bar */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"18px 18px calc(18px + env(safe-area-inset-bottom,0px))",zIndex:10,display:"flex",gap:11,alignItems:"center"}}>
+        {cur.voices?.length>0
+          ?<button onClick={playing?stopVoices:playVoices} style={{flex:1,padding:"12px",borderRadius:14,background:playing?"rgba(192,104,88,.4)":"rgba(200,148,58,.3)",backdropFilter:"blur(16px)",border:"1px solid "+(playing?"rgba(192,104,88,.5)":"rgba(200,148,58,.45)"),color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,animation:!playing?"pulse 2.5s ease infinite":"none"}}>
+              {playing?<>⏹ {cur.voices[vIdx]?.name} speaking...</>:<>▶ Play {cur.voices.length} voice{cur.voices.length!==1?"s":""}</>}
+            </button>
+          :<div style={{flex:1,textAlign:"center",fontSize:12,color:"rgba(255,255,255,.25)",fontStyle:"italic"}}>No voices yet for this memory</div>}
+        <button onClick={e=>{e.stopPropagation();setSrch(true)}} style={{width:42,height:42,borderRadius:"50%",background:"rgba(255,255,255,.12)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",color:"rgba(255,255,255,.6)",fontSize:16,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>🔍</button>
       </div>
-      {/* hint */}
-      {!playing&&<div style={{position:"absolute",bottom:"28%",left:0,right:0,textAlign:"center",pointerEvents:"none"}}><div style={{color:"rgba(255,255,255,.2)",fontSize:12,fontStyle:"italic"}}>{cur.voices?.length>0?"Tap to hear voices":"Tap to search"} · {idx+1} / {shown.length}</div></div>}
-      {/* voice player */}
-      {playing&&cur.voices?.length>0&&(
-        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"7%",left:14,right:14,background:"rgba(253,246,236,.97)",borderRadius:19,padding:"15px 17px",zIndex:30,animation:"slideUp .3s ease"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
-            <div style={{fontSize:13,fontFamily:"Playfair Display,serif",fontWeight:600,color:"#2a1505"}}>Voices</div>
-            <button onClick={()=>setPlaying(false)} style={{background:"none",border:"none",color:"#b09070",fontSize:16,cursor:"pointer"}}>✕</button>
-          </div>
-          {cur.voices.map((v,i)=>(
-            <div key={i} style={{marginBottom:9}}>
-              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5}}><Av name={v.name} sz={25} col={v.col}/><div style={{fontSize:13,fontWeight:600,color:"#2a1505"}}>{v.name}</div><div style={{fontSize:11,color:"#b09070",marginLeft:"auto"}}>{fd(v.duration||0)}</div></div>
-              <audio controls src={v.audio_url} preload="auto" style={{width:"100%",accentColor:"#c8943a"}}/>
-            </div>
-          ))}
-        </div>
-      )}
-      {/* search */}
-      {showSrch&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,zIndex:50}}><SearchSht memories={memories} apiKey={apiKey} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setSrch(false)}} onClose={()=>setSrch(false)}/></div>}
+      <div style={{position:"absolute",bottom:"30%",left:0,right:0,textAlign:"center",pointerEvents:"none"}}><div style={{color:"rgba(255,255,255,.18)",fontSize:11,fontStyle:"italic"}}>{idx+1} / {shown.length}</div></div>
+      {showSrch&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,zIndex:50}}><SearchSht memories={memories} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setSrch(false)}} onClose={()=>setSrch(false)}/></div>}
     </div>
   )
 }
 
 /* ── Settings ── */
-function SettingsScreen({album,userName,allAlbums,onSwitch,onAdd,onClose,onRefresh}){
-  const[tab,setTab]=useState("album");const[key,setKey]=useState(localStorage.getItem("ourstory_claude_key")||"");
-  const[copied,setCopied]=useState(false);const[newN,setNewN]=useState("");const[adding,setAdding]=useState(false);
-  const saveKey=()=>{localStorage.setItem("ourstory_claude_key",key);alert("Saved!")};
-  const copy=()=>{const u=iUrl(album.code);try{navigator.clipboard.writeText(u)}catch(e){}setCopied(true);setTimeout(()=>setCopied(false),2000)};
-  const addM=async()=>{if(!newN.trim())return;await sb.from("members").insert({circle_id:album.id,name:newN.trim(),phone:"",joined:false,code:mkCode()});setNewN("");setAdding(false);onRefresh()};
+function Settings({album,user,onClose,onReload}){
+  const[members,setMembers]=useState(album.members||[]);const[newName,setNewName]=useState("");const[copied,setCopied]=useState(false);
+  const addMember=async()=>{const n=newName.trim();if(!n)return;await sb.from("members").insert({circle_id:album.id,name:n,phone:"",joined:false,code:mkCode()});setMembers(m=>[...m,{name:n}]);setNewName("");onReload()};
+  const copyLink=()=>{navigator.clipboard.writeText(iUrl(album.code)).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)})};
   return(
     <div className="settings">
-      <div style={{background:"linear-gradient(135deg,#3d2410,#6b3c18)",padding:"calc(15px + env(safe-area-inset-top,0px)) 18px 15px",flexShrink:0}}>
-        <button onClick={onClose} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:9,padding:"5px 13px",color:"#fff",fontSize:13,cursor:"pointer",marginBottom:11}}>← Back</button>
-        <div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#fff"}}>{album.label}</div>
-        <div style={{fontSize:12,color:"rgba(255,255,255,.55)",marginTop:3}}>{album.members?.length||0} members · {album.memories?.length||0} memories</div>
+      <div style={{background:"#f5ede0",borderBottom:"1px solid rgba(180,140,80,.2)",padding:"calc(16px + env(safe-area-inset-top,0px)) 18px 14px",display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:16,cursor:"pointer",color:"#9c7a52"}}>←</button>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505"}}>{album.label}</div>
       </div>
-      <div style={{display:"flex",background:"#ede5d8",borderBottom:"1px solid rgba(180,140,80,.2)",flexShrink:0}}>
-        {[["album","📖 Album"],["members","👥 Members"],["search","🔍 Search"]].map(([id,lbl])=>(
-          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"11px 7px",background:"none",border:"none",borderBottom:tab===id?"2px solid #c8943a":"2px solid transparent",fontSize:12,fontWeight:tab===id?700:400,color:tab===id?"#c8943a":"#7a5c38",cursor:"pointer"}}>
-            {lbl}
-          </button>
-        ))}
-      </div>
-      <div style={{flex:1,overflowY:"auto",padding:18}}>
-        {tab==="album"&&(
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            <div style={{background:"#fff",borderRadius:17,padding:17}}>
-              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Invite to this album</div>
-              <div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:13}}>Share this link. They tap it, enter their name, and land straight in the album.</div>
-              <div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"9px 13px",fontSize:12,color:"#7a5c38",wordBreak:"break-all",marginBottom:11,fontFamily:"monospace",border:"1px solid rgba(200,148,58,.2)"}}>{iUrl(album.code)}</div>
-              <button onClick={copy} className="bA" style={{width:"100%",textAlign:"center"}}>{copied?"✅ Copied!":"📋 Copy invite link"}</button>
+      <div style={{padding:"18px",display:"flex",flexDirection:"column",gap:18}}>
+        {/* invite */}
+        <div style={{background:"#fff",borderRadius:16,padding:"16px"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:10}}>Invite to this group</div>
+          <div style={{background:"rgba(200,148,58,.06)",borderRadius:11,padding:"10px 14px",fontFamily:"monospace",fontSize:14,color:"#2a1505",marginBottom:11,letterSpacing:".1em",textAlign:"center"}}>{album.code}</div>
+          <button onClick={copyLink} className="bA" style={{width:"100%",fontSize:14}}>{copied?"✅ Copied!":"📋 Copy invite link"}</button>
+          <div style={{fontSize:11,color:"#b09070",textAlign:"center",marginTop:8,lineHeight:1.6}}>Share this link via WhatsApp or iMessage.<br/>Anyone who opens it joins automatically.</div>
+        </div>
+        {/* members */}
+        <div style={{background:"#fff",borderRadius:16,padding:"16px"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:12}}>Members ({members.length})</div>
+          {members.map((m,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<members.length-1?"1px solid rgba(180,140,80,.12)":"none"}}>
+              <Av name={m.name} sz={32}/>
+              <div style={{fontSize:14,color:"#2a1505"}}>{m.name}{m.name===user?" (you)":""}</div>
             </div>
-            <div style={{background:"#fff",borderRadius:17,padding:17}}>
-              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:10}}>Your albums</div>
-              {allAlbums.map(a=>(
-                <div key={a.id} onClick={()=>{onSwitch(a);onClose()}} style={{display:"flex",alignItems:"center",gap:11,padding:11,borderRadius:11,background:a.id===album.id?"rgba(200,148,58,.1)":"transparent",cursor:"pointer",marginBottom:4,border:a.id===album.id?"1px solid rgba(200,148,58,.3)":"1px solid transparent"}}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:a.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📖</div>
-                  <div><div style={{fontSize:14,fontWeight:600,color:"#2a1505"}}>{a.label}</div><div style={{fontSize:11,color:"#b09070"}}>{a.memories?.length||0} memories</div></div>
-                  {a.id===album.id&&<div style={{marginLeft:"auto",fontSize:11,color:"#c8943a",fontWeight:600}}>Active</div>}
-                </div>
-              ))}
-              <button onClick={onAdd} className="bG" style={{width:"100%",marginTop:9,textAlign:"center"}}>+ Join or create album</button>
-            </div>
+          ))}
+          <div style={{display:"flex",gap:8,marginTop:12}}>
+            <input className="inp" style={{flex:1,fontSize:14}} value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Add member name" onKeyDown={e=>e.key==="Enter"&&addMember()}/>
+            <button onClick={addMember} style={{padding:"11px 14px",borderRadius:13,background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:14,cursor:"pointer"}}>Add</button>
           </div>
-        )}
-        {tab==="members"&&(
-          <div>
-            {(album.members||[]).map(m=>(
-              <div key={m.id} style={{display:"flex",alignItems:"center",gap:11,background:"#fff",borderRadius:15,padding:13,marginBottom:9}}>
-                <Av name={m.name} sz={38}/><div><div style={{fontSize:14,fontWeight:600,color:"#2a1505"}}>{m.name}</div><div style={{fontSize:12,color:"#b09070"}}>{m.relationship||"Member"}</div></div>
-              </div>
-            ))}
-            {adding?(
-              <div style={{background:"#fff",borderRadius:17,padding:17,marginTop:9}}>
-                <input className="inp" value={newN} onChange={e=>setNewN(e.target.value)} placeholder="Their name" style={{marginBottom:11}} onKeyDown={e=>e.key==="Enter"&&addM()}/>
-                <div style={{display:"flex",gap:9}}><button onClick={()=>setAdding(false)} className="bG" style={{flex:1,textAlign:"center"}}>Cancel</button><button onClick={addM} className="bA" style={{flex:1,textAlign:"center"}}>Add</button></div>
-              </div>
-            ):<button onClick={()=>setAdding(true)} className="bG" style={{width:"100%",marginTop:9,textAlign:"center"}}>+ Add member</button>}
-          </div>
-        )}
-        {tab==="search"&&(
-          <div>
-            <div style={{background:"#fff",borderRadius:17,padding:17}}>
-              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Claude voice search</div>
-              <div style={{fontSize:13,color:"#7a5c38",lineHeight:1.7,marginBottom:15}}>Add your Anthropic API key for smart search. Speak in any language — Hindi, Punjabi, English — Claude understands.<br/><br/>Without a key, basic keyword search still works.</div>
-              <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>Anthropic API key</div>
-              <input className="inp" type="password" value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-..." style={{marginBottom:11}}/>
-              <button onClick={saveKey} className="bA" style={{width:"100%",textAlign:"center"}}>Save key</button>
-              <div style={{fontSize:11,color:"#b09070",marginTop:11,lineHeight:1.6}}>Get your key at console.anthropic.com → API Keys. Stored only on this device.</div>
-            </div>
-            {key&&<div style={{background:"rgba(200,148,58,.1)",borderRadius:13,padding:"11px 15px",display:"flex",alignItems:"center",gap:9,marginTop:13}}><div style={{fontSize:19}}>✅</div><div style={{fontSize:13,color:"#3d2410"}}>Claude search is active</div></div>}
-          </div>
-        )}
+        </div>
+        {/* album info */}
+        <div style={{textAlign:"center",padding:"8px 0"}}><div style={{fontSize:11,color:"#b09070",letterSpacing:".04em"}}>OurStory · {album.label} · {album.memories?.length||0} memories</div></div>
       </div>
     </div>
   )
 }
 
-/* ── Album Mode ── */
-function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
-  const[idx,setIdx]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showRec,setShowRec]=useState(false);const[showSrch,setShowSrch]=useState(false);
-  const[filtered,setFiltered]=useState(null);const[flabel,setFlabel]=useState("");
-  const[ak,setAk]=useState(0);const[aDir,setADir]=useState("R");
-  const[voicePlaying,setVoicePlaying]=useState(false);const[voiceIdx,setVoiceIdx]=useState(0);
-  const audioRef=useRef(null);
-  const apiKey=localStorage.getItem("ourstory_claude_key")||"";
-  const mems=filtered!==null?filtered:(album.memories||[]);const cur=mems[idx]||null;const C=album.color||"#c8943a";
-  const voices=cur?.voices||[];
-  // reset voice player when memory changes
-  useEffect(()=>{setVoicePlaying(false);setVoiceIdx(0);if(audioRef.current){audioRef.current.pause();audioRef.current=null}},[idx,ak]);
-  const playVoices=()=>{if(!voices.length)return;setVoicePlaying(true);setVoiceIdx(0);playVoice(0,voices)};
-  const playVoice=(i,vs)=>{if(i>=vs.length){setVoicePlaying(false);setVoiceIdx(0);return;}setVoiceIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
-  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setVoicePlaying(false);setVoiceIdx(0)};
-  const go=d=>{if(mems.length<2)return;playFlip();setADir(d===1?"L":"R");setAk(k=>k+1);setIdx(i=>(i+d+mems.length)%mems.length)};
-  const sw=useSwipe(()=>go(1),()=>go(-1));
-  const refresh=async()=>{const f=await load(album.code);if(f)onUpdate(f)};
-
-  const portraitInfo=cur&&(
-    <div className="info-overlay">
-      <div style={{marginBottom:9}}}>
-        {(cur.place&&cur.place!=="—"||cur.year)&&<div style={{fontSize:14,color:"rgba(255,255,255,.85)",fontFamily:"Playfair Display,serif",fontStyle:"italic",marginBottom:3}}>{[cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</div>}
-        {(cur.people||[]).length>0&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)"}}>{cur.people.join(" · ")}</div>}
-      </div>
-      <div style={{display:"flex",gap:9,alignItems:"center"}}>
-        {voices.length===0
-          ?<button onClick={()=>setShowRec(true)} style={{flex:1,padding:"9px",background:"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid rgba(200,148,58,.4)",borderRadius:13,color:"#f0d080",fontSize:13,cursor:"pointer",fontStyle:"italic"}}>🎙 Be first to tell this story</button>
-          :<button onClick={voicePlaying?stopVoices:playVoices} style={{flex:1,padding:"9px",background:voicePlaying?"rgba(192,104,88,.3)":"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid "+(voicePlaying?"rgba(192,104,88,.5)":"rgba(200,148,58,.4)"),borderRadius:13,color:voicePlaying?"#f0a898":"#f0d080",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,animation:(!voicePlaying&&voices.length>0)?"pulse 2.5s ease infinite":"none"}}>
-            {voicePlaying?<>⏹ {voices[voiceIdx]?.name||""} speaking...</>:<>▶ Play {voices.length} voice{voices.length!==1?"s":""}</>}
-          </button>}
-        <button onClick={()=>setShowAdd(true)} className="bI" style={{width:42,height:42,fontSize:17}}>📸</button>
-        <button onClick={()=>setShowSrch(true)} className="bI" style={{width:42,height:42,fontSize:17}}>🔍</button>
-      </div>
-    </div>
-  );
-
-  const rightPanel=(
+/* ── Landscape Panel (right side on iPad) ── */
+function LandscapePanel({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteMemory,onEditSummary}){
+  if(!memory)return<div className="landscape-panel" style={{alignItems:"center",justifyContent:"center"}}><div style={{color:"#b09070",fontStyle:"italic",fontSize:14,textAlign:"center"}}>Swipe a photo to begin</div></div>;
+  const vs=memory.voices||[];const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showRec,setShowRec]=useState(false);const[editSum,setEditSum]=useState(false);const[sumTxt,setSumTxt]=useState(memory.summary||"");const aRef=useRef(null);
+  useEffect(()=>{setPlaying(false);setVIdx(0);if(aRef.current){aRef.current.pause();aRef.current=null}setSumTxt(memory.summary||"")},[memory.id]);
+  const playAll=()=>{if(!vs.length)return;setPlaying(true);play(0)};
+  const play=(i)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);aRef.current=a;a.play().catch(()=>{});a.onended=()=>play(i+1)};
+  const stopAll=()=>{if(aRef.current){aRef.current.pause();aRef.current=null}setPlaying(false);setVIdx(0)};
+  const saveSummary=async()=>{await updateSummary(memory.id,sumTxt);setEditSum(false);onEditSummary(memory.id,sumTxt)};
+  const C=album.color||"#c8943a";
+  return(
     <div className="landscape-panel">
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-        <div><div style={{fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:"#b09070",marginBottom:3}}>Our Story · {user}</div><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700}}>{album.label}</div></div>
-        <div style={{display:"flex",gap:7}}>
-          <button onClick={onFrame} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"#8a6030",cursor:"pointer"}}>🖼 Frame</button>
-          <button onClick={onSettings} style={{background:"rgba(55,28,8,.08)",border:"1px solid rgba(180,140,80,.2)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"#8a6030",cursor:"pointer"}}>⚙️</button>
-        </div>
+      {/* date/place header */}
+      <div>
+        <div style={{fontSize:12,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:2}}>{album.label}</div>
+        <div style={{fontFamily:"Playfair Display,serif",fontSize:17,fontWeight:700,color:"#2a1505",lineHeight:1.3}}>{[memory.place&&memory.place!=="—"?memory.place:null,memory.year].filter(Boolean).join(", ")||"A memory"}</div>
+        {memory.people?.length>0&&<div style={{fontSize:12,color:"#9c7a52",marginTop:3}}>{memory.people.join(", ")}</div>}
       </div>
       <Hr/>
-      {cur?(
-        <>
-          {(cur.place!=="—"||cur.year)&&<div style={{fontSize:16,fontFamily:"Playfair Display,serif",fontStyle:"italic"}}>{[cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</div>}
-          {(cur.people||[]).length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{cur.people.map((p,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,background:"rgba(200,148,58,.12)",borderRadius:18,padding:"3px 9px"}}><Av name={p} sz={19}/><span style={{fontSize:12}}>{p}</span></div>)}</div>}
-          <Hr label="Voices"/>
-          {voices.length===0
-            ?<div onClick={()=>setShowRec(true)} style={{background:"rgba(200,148,58,.08)",borderRadius:15,padding:15,textAlign:"center",cursor:"pointer",border:"1.5px dashed rgba(200,148,58,.3)"}}><div style={{fontSize:22,marginBottom:7}}>🎙</div><div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.5}}>Nobody has told this story yet.<br/>Be the first.</div></div>
-            :<div>
-              <button onClick={voicePlaying?stopVoices:playVoices} style={{width:"100%",marginBottom:12,padding:"11px",borderRadius:13,background:voicePlaying?"rgba(192,104,88,.12)":"rgba(200,148,58,.1)",border:"1.5px solid "+(voicePlaying?"rgba(192,104,88,.4)":"rgba(200,148,58,.3)"),color:voicePlaying?"#a05040":"#8a6030",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,animation:(!voicePlaying&&voices.length>0)?"pulse 2.5s ease infinite":"none"}}>
-                {voicePlaying?<>⏹ {voices[voiceIdx]?.name||""} speaking...</>:<>▶ Play {voices.length} voice{voices.length!==1?"s":""}</>}
-              </button>
-              {voices.map((v,i)=><div key={i} className="vp" style={{opacity:voicePlaying&&voiceIdx===i?1:.65,transition:"opacity .3s"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Av name={v.name} sz={22} col={v.col}/><div style={{fontSize:12,fontWeight:600}}>{v.name}</div><div style={{fontSize:11,color:"#b09070",marginLeft:"auto"}}>{fd(v.duration||0)}</div>{voicePlaying&&voiceIdx===i&&<div style={{width:7,height:7,borderRadius:"50%",background:"#c8943a",animation:"pulse .8s ease infinite"}}/>}</div></div>)}
-              <button onClick={()=>setShowRec(true)} style={{width:"100%",marginTop:8,padding:"8px",background:"none",border:"1px dashed rgba(200,148,58,.3)",borderRadius:11,color:"#b09070",fontSize:12,cursor:"pointer"}}>+ Add your voice</button>
+      {/* AI summary — editable */}
+      <div style={{flex:1}}>
+        {editSum
+          ?<div>
+              <textarea className="inp" rows={4} value={sumTxt} onChange={e=>setSumTxt(e.target.value)} style={{marginBottom:8,fontSize:13,lineHeight:1.6}} placeholder="Write a short description of this memory..."/>
+              <div style={{display:"flex",gap:8}}><button onClick={saveSummary} className="bA" style={{flex:1,padding:"9px",fontSize:13}}>✓ Save</button><button onClick={()=>setEditSum(false)} className="bG" style={{flex:1,padding:"9px",fontSize:13}}>Cancel</button></div>
+            </div>
+          :<div onClick={()=>setEditSum(true)} style={{cursor:"pointer",minHeight:44}}>
+              {memory.summary
+                ?<div className="summary-text">{memory.summary}<span style={{display:"inline-block",marginLeft:6,fontSize:10,color:"#c8943a",opacity:.7,verticalAlign:"middle"}}>✎</span></div>
+                :vs.length===0
+                  ?<div className="summary-placeholder">Be the first to tell this story — tap 🎙 to record your voice.</div>
+                  :<div className="summary-placeholder" style={{display:"flex",alignItems:"center",gap:7}}><Spin sz={13} col="#c8943a"/><span>Generating summary...</span></div>}
             </div>}
-        </>
-      ):<div style={{textAlign:"center",padding:"28px 0"}}><div style={{fontSize:38,marginBottom:11}}>📖</div><div style={{fontSize:14,color:"#7a5c38",fontStyle:"italic"}}>No memories yet.</div></div>}
-      {mems.length>0&&<div style={{marginTop:"auto",paddingTop:9,borderTop:"1px solid rgba(180,140,80,.15)",fontSize:11,color:"#b09070",textAlign:"center"}}>
-        {idx+1} of {mems.length}{filtered&&<span style={{marginLeft:7,color:"#c8943a"}}>· "{flabel}" <span style={{cursor:"pointer"}} onClick={()=>{setFiltered(null);setIdx(0)}}>✕</span></span>}
+      </div>
+      <Hr/>
+      {/* play + add voice buttons */}
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={playing?stopAll:playAll} disabled={!vs.length} style={{flex:1,padding:"12px 8px",borderRadius:13,background:vs.length?(playing?"linear-gradient(135deg,#c06858,#8b3a28)":"linear-gradient(135deg,"+C+",#a06820)"):"rgba(180,140,80,.15)",border:"none",color:vs.length?"#fff":"#b09070",fontSize:14,fontWeight:600,cursor:vs.length?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .2s",animation:vs.length&&!playing?"pulse 2.8s ease infinite":"none"}}>
+          {playing?<>⏹ {vs[vIdx]?.name}</>:vs.length>0?<>▶ Play {vs.length} voice{vs.length!==1?"s":""}</>:<>No voices yet</>}
+        </button>
+        <button onClick={()=>setShowRec(true)} style={{width:48,height:48,borderRadius:13,background:"rgba(200,148,58,.15)",border:"1.5px solid rgba(200,148,58,.35)",color:C,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} title="Add your voice">🎙</button>
+      </div>
+      {/* voices list */}
+      {vs.length>0&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {vs.map((v,i)=>(
+          <div key={v.id||i} className="vp">
+            <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:5}}>
+              <Av name={v.name} sz={26} col={v.col||pc(v.name)}/>
+              <div style={{flex:1}}><div style={{fontSize:13,color:"#2a1505",fontWeight:500}}>{v.name}</div>{v.duration&&<div style={{fontSize:10,color:"#9c7a52"}}>{fd(v.duration)}</div>}</div>
+              <button onClick={async()=>{if(window.confirm("Delete this voice?"))try{await deleteVoice(v.id||"");onDeleteVoice(memory.id,v.id)}catch(e){alert("Could not delete.")}}} style={{background:"none",border:"none",color:"#c06858",fontSize:13,cursor:"pointer",opacity:.6,padding:"2px 4px"}}>✕</button>
+            </div>
+            <audio controls src={v.audio_url} preload="none" style={{width:"100%",accentColor:C,height:28}}/>
+          </div>
+        ))}
       </div>}
-    </div>
-  );
-
-  return(
-    <div className="app">
-      {/* Portrait top bar */}
-      <div className="portrait-only" style={{position:"absolute",top:0,left:0,right:0,zIndex:50,justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 14px 9px",background:"linear-gradient(rgba(8,4,1,.65),transparent)"}}>
-        <button onClick={onSettings} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"rgba(255,255,255,.7)",cursor:"pointer"}}>{album.label} ⚙️</button>
-        <div style={{display:"flex",gap:7}}>
-          {filtered&&<button onClick={()=>{setFiltered(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",border:"none",borderRadius:9,padding:"5px 9px",fontSize:11,color:"#f0d080",cursor:"pointer"}}>"{flabel}" ✕</button>}
-          <button onClick={onFrame} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"rgba(255,255,255,.7)",cursor:"pointer"}}>🖼</button>
-        </div>
+      {/* delete memory */}
+      <div style={{textAlign:"center",marginTop:4}}>
+        <button onClick={async()=>{if(window.confirm("Delete this entire memory? This cannot be undone."))try{await deleteMem(memory.id);onDeleteMemory(memory.id)}catch(e){alert("Could not delete.")}}} style={{background:"none",border:"none",color:"#c06858",fontSize:12,cursor:"pointer",opacity:.5,textDecoration:"underline"}}>Delete this memory</button>
       </div>
-      {/* Frame */}
-      <div className="frame" {...sw}>
-        <div className="photo-col">
-          {/* Album background texture */}
-          <div className="album-bg"/>
-          {cur?(
-            <div key={ak} className="photo-print" style={{animation:aDir==="L"?"page-in-l .35s cubic-bezier(.2,0,.3,1) forwards":"page-in-r .35s cubic-bezier(.2,0,.3,1) forwards"}}>
-              <div className="photo-mount" style={{transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
-                {cur.photo_url
-                  ?<img src={cur.photo_url} alt="" style={{maxHeight:"calc(70vh - 60px)",width:"auto",maxWidth:"100%"}}/>
-                  :<div style={{width:220,height:180,background:"linear-gradient(145deg,#e8ddd0,#d5c8b8)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:48,opacity:.3}}>📷</div></div>
-                }
-                <div className="mount-caption">
-                  {[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}
-                </div>
-              </div>
-            </div>
-          ):(
-            <div className="empty" style={{position:"absolute",inset:0}}>
-              <div style={{textAlign:"center",padding:18}}>
-                <div style={{fontSize:52,marginBottom:12,opacity:.4}}>📖</div>
-                <div style={{fontSize:17,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,.55)",marginBottom:7}}>{album.label}</div>
-                <div style={{fontSize:13,color:"rgba(255,255,255,.28)",fontStyle:"italic",marginBottom:22}}>No memories yet.</div>
-                <button onClick={()=>setShowAdd(true)} className="bA" style={{padding:"13px 26px"}}>📸 Add first memory</button>
-              </div>
-            </div>
-          )}
-          {mems.length>1&&<>
-            <button onClick={()=>go(-1)} className="portrait-only" style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,.14)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:15,cursor:"pointer",zIndex:20,alignItems:"center",justifyContent:"center"}}>‹</button>
-            <button onClick={()=>go(1)} className="portrait-only" style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,.14)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:15,cursor:"pointer",zIndex:20,alignItems:"center",justifyContent:"center"}}>›</button>
-          </>}
-          {portraitInfo}
-        </div>
-        {rightPanel}
-      </div>
-      {/* Landscape bottom nav */}
-      <div className="landscape-nav">
-        <button onClick={()=>go(-1)} style={{background:"rgba(55,28,8,.1)",border:"1px solid rgba(180,140,80,.2)",borderRadius:11,padding:"9px 16px",fontSize:13,color:"#5a3a18",cursor:"pointer"}}>← Prev</button>
-        <div style={{display:"flex",gap:9}}>
-          <button onClick={()=>setShowAdd(true)} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:11,padding:"9px 15px",fontSize:13,color:"#8a6030",cursor:"pointer"}}>📸 Upload</button>
-          <button onClick={()=>setShowSrch(true)} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:11,padding:"9px 15px",fontSize:13,color:"#8a6030",cursor:"pointer"}}>🔍 Search</button>
-        </div>
-        <button onClick={()=>go(1)} style={{background:"rgba(55,28,8,.1)",border:"1px solid rgba(180,140,80,.2)",borderRadius:11,padding:"9px 16px",fontSize:13,color:"#5a3a18",cursor:"pointer"}}>Next →</button>
-      </div>
-      {/* Sheets */}
-      {showAdd&&<AddSheet album={album} user={user} onSaved={async()=>{setShowAdd(false);await refresh();setIdx(0)}} onClose={()=>setShowAdd(false)}/>}
-      {showRec&&cur&&<RecSheet memory={cur} speaker={user} color={C} onSaved={async()=>{setShowRec(false);await refresh()}} onClose={()=>setShowRec(false)}/>}
-      {showSrch&&<div style={{position:"absolute",inset:0,zIndex:300}}><SearchSht memories={album.memories||[]} apiKey={apiKey} onResults={(r,label,count)=>{if(count===0){alert(`No memories found for "${label}". Try different words.`);return;}setFiltered(r);setFlabel(label+" ("+count+")");setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/></div>}
+      {showRec&&<div style={{position:"fixed",inset:0,zIndex:600}}><RecSheet memory={memory} speaker={user} color={C} members={album.members||[]} onSaved={()=>{setShowRec(false);onVoiceAdded()}} onClose={()=>setShowRec(false)}/></div>}
     </div>
   )
 }
 
-/* ── Onboarding screens ── */
-function ScrName({onNext}){
-  const[name,setName]=useState("");
-  return<div className="ob"><div className="card"><div style={{fontSize:44,marginBottom:18,textAlign:"center"}}>📖</div><div style={{fontSize:28,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:5,lineHeight:1.2}}>Our Story</div><div style={{fontSize:15,color:"#7a5c38",fontStyle:"italic",marginBottom:26,lineHeight:1.6}}>A voice album for the people you love.</div><div style={{fontSize:12,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>What's your name?</div><input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" onKeyDown={e=>e.key==="Enter"&&name.trim()&&onNext(name.trim())} style={{marginBottom:14}} autoFocus/><button onClick={()=>name.trim()&&onNext(name.trim())} className="bA" style={{width:"100%",fontSize:16,padding:15,textAlign:"center"}}>Continue →</button></div></div>
-}
-function ScrSetup({userName,onNext,onJoin}){
-  const[label,setLabel]=useState("");
-  return<div className="ob"><div className="card"><div style={{fontSize:14,color:"#b09070",marginBottom:18,fontStyle:"italic"}}>Welcome, {userName}</div><div style={{fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7,lineHeight:1.3}}>Name your album</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:20}}>Your family's private memory album. Give it a name that feels right.</div><input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="e.g. Our Family, The Tuteja House…" style={{marginBottom:16}} onKeyDown={e=>e.key==="Enter"&&label.trim()&&onNext(label.trim())} autoFocus/><button onClick={()=>label.trim()&&onNext(label.trim())} className="bA" style={{width:"100%",fontSize:16,padding:15,marginBottom:12,textAlign:"center"}}>Create album →</button><button onClick={onJoin} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer"}}>Joining someone else's album →</button></div></div>
-}
-function ScrJoin({userName,onJoined,onBack}){
-  const[code,setCode]=useState(jCode()||"");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
-  useEffect(()=>{if(jCode()&&userName){setLoading(true);joinAlbum(jCode(),userName).then(a=>{if(a)onJoined(a);else{setErr("Album not found.");setLoading(false)}})}},[]);
-  const go=async()=>{if(!code.trim())return;setLoading(true);setErr("");const a=await joinAlbum(code,userName);if(a)onJoined(a);else{setErr("Album not found.");setLoading(false)}};
-  if(loading)return<div className="ob"><div className="card" style={{textAlign:"center",padding:38}}><Spin sz={30}/><div style={{marginTop:14,color:"#7a5c38",fontStyle:"italic"}}>Joining album...</div></div></div>;
-  return<div className="ob"><div className="card"><button onClick={onBack} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginBottom:16}}>← Back</button><div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Join an album</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:18}}>Enter the code from your invite link.</div><input className="inp" value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Album code (e.g. ABCD12)" style={{marginBottom:err?7:16,letterSpacing:".1em",fontWeight:600}} onKeyDown={e=>e.key==="Enter"&&go()}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:13}}>{err}</div>}<button onClick={go} disabled={!code.trim()} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Join →</button></div></div>
-}
-function ScrFirst({album,user,onDone,onSkip}){
-  const[showAdd,setShowAdd]=useState(false);
-  return<div className="ob">{!showAdd?<div className="card" style={{animation:"fadeIn .4s ease"}}><div style={{fontSize:34,marginBottom:14,textAlign:"center"}}>✨</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Add your first memory</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.7,marginBottom:22}}>This is the first thing your family sees when they open the invite. Make it a photo that means something.</div><button onClick={()=>setShowAdd(true)} className="bA" style={{width:"100%",fontSize:15,padding:15,marginBottom:11,textAlign:"center"}}>📸 Add first memory</button><button onClick={onSkip} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer"}}>Skip for now →</button></div>:<div style={{position:"fixed",inset:0,zIndex:600}}><AddSheet album={album} user={user} onSaved={async()=>{const f=await load(album.code);onDone(f||album)}} onClose={()=>setShowAdd(false)}/></div>}</div>
-}
-function AddAlbumFlow({userName,onDone,onBack}){
-  const[mode,setMode]=useState(null);const[label,setLabel]=useState("");const[code,setCode]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
-  const create=async()=>{if(!label.trim())return;setLoading(true);try{const c=mkCode();await createAlbum(label.trim(),ac(label.trim()),c);const f=await load(c);onDone(f||{code:c,label:label.trim(),color:ac(label.trim()),members:[],memories:[]})}catch(e){setErr("Could not create.");setLoading(false)}};
-  const join=async()=>{if(!code.trim())return;setLoading(true);setErr("");const a=await joinAlbum(code,userName);if(a)onDone(a);else{setErr("Album not found.");setLoading(false)}};
-  if(loading)return<div className="ob"><Spin sz={26}/></div>;
+/* ── Portrait overlay (phone) ── */
+function PortraitOverlay({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteMemory}){
+  const[showRec,setShowRec]=useState(false);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const aRef=useRef(null);
+  useEffect(()=>{setPlaying(false);setVIdx(0);if(aRef.current){aRef.current.pause();aRef.current=null}},[memory?.id]);
+  if(!memory)return null;
+  const vs=memory.voices||[];const C=album.color||"#c8943a";
+  const playAll=()=>{if(!vs.length)return;setPlaying(true);play(0)};
+  const play=(i)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);aRef.current=a;a.play().catch(()=>{});a.onended=()=>play(i+1)};
+  const stopAll=()=>{if(aRef.current){aRef.current.pause();aRef.current=null}setPlaying(false);setVIdx(0)};
   return(
-    <div className="ob"><div className="card">
-      <button onClick={mode?()=>setMode(null):onBack} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginBottom:18}}>← Back</button>
-      {!mode&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:18}}>Add another album</div>
-        {[{id:"join",icon:"🔗",title:"Join an album",desc:"Use a code or invite link"},{id:"create",icon:"✨",title:"Create new album",desc:"Start a fresh one"}].map(m=>(
-          <div key={m.id} onClick={()=>setMode(m.id)} style={{background:"#fff",borderRadius:15,padding:"14px 16px",border:"2px solid rgba(200,148,58,.18)",cursor:"pointer",marginBottom:10}}><div style={{fontSize:26,marginBottom:7}}>{m.icon}</div><div style={{fontSize:14,fontWeight:700,color:"#2a1505"}}>{m.title}</div><div style={{fontSize:12,color:"#7a5c38",marginTop:3}}>{m.desc}</div></div>
-        ))}</>}
-      {mode==="create"&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:14}}>New album name</div><input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="Album name" style={{marginBottom:14}}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:11}}>{err}</div>}<button onClick={create} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Create →</button></>}
-      {mode==="join"&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:14}}>Enter album code</div><input className="inp" value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Album code" style={{marginBottom:14,letterSpacing:".1em"}}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:11}}>{err}</div>}<button onClick={join} disabled={!code.trim()} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Join →</button></>}
-    </div></div>
+    <>
+      <div className="info-overlay portrait-only">
+        <div style={{fontSize:12,color:"rgba(255,255,255,.45)",letterSpacing:".05em",marginBottom:2}}>{[memory.place&&memory.place!=="—"?memory.place:null,memory.year].filter(Boolean).join(" · ")||album.label}</div>
+        {memory.summary&&<div style={{fontSize:13,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"rgba(255,255,255,.85)",lineHeight:1.55,marginBottom:8}}>{memory.summary}</div>}
+        <div style={{display:"flex",gap:9,marginTop:4}}>
+          <button onClick={playing?stopAll:playAll} disabled={!vs.length} style={{flex:1,padding:"11px 8px",borderRadius:12,background:vs.length?(playing?"rgba(192,104,88,.5)":"rgba(200,148,58,.3)"):"rgba(255,255,255,.08)",backdropFilter:"blur(10px)",border:"1px solid "+(vs.length?(playing?"rgba(192,104,88,.6)":"rgba(200,148,58,.5)"):"rgba(255,255,255,.15)"),color:vs.length?"#fff":"rgba(255,255,255,.3)",fontSize:13,fontWeight:600,cursor:vs.length?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:7,animation:vs.length&&!playing?"pulse 2.8s ease infinite":"none"}}>
+            {playing?<>⏹ {vs[vIdx]?.name||"Playing..."}</>:vs.length>0?<>▶ {vs.length} voice{vs.length!==1?"s":""}</>:<>No voices yet</>}
+          </button>
+          <button onClick={()=>setShowRec(true)} style={{width:46,height:46,borderRadius:12,background:"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid rgba(200,148,58,.45)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>🎙</button>
+        </div>
+      </div>
+      {showRec&&<RecSheet memory={memory} speaker={user} color={C} members={album.members||[]} onSaved={()=>{setShowRec(false);onVoiceAdded()}} onClose={()=>setShowRec(false)}/>}
+    </>
   )
 }
 
-/* ── App Root ── */
-function App(){
-  const[phase,setPhase]=useState("loading");
-  const[userName,setUser]=useState("");const[albums,setAlbums]=useState([]);const[aIdx,setAIdx]=useState(0);
-  const album=albums[aIdx]||null;
+/* ── Main Album Screen ── */
+function ScrName({album,user,onReload}){
+  const[idx,setIdx]=useState(0);const[aDir,setADir]=useState("L");const[pk,setPk]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);const[frameMode,setFrameMode]=useState(false);const[mems,setMems]=useState(album.memories||[]);const[filter,setFilter]=useState(null);
+  const shown=filter?filter.mems:mems;const cur=shown[idx]||null;
+  const go=(dir)=>{const n=mems.length;if(!n)return;playFlip();setADir(dir);setIdx(i=>{const ni=dir==="L"?(i+1)%shown.length:(i-1+shown.length)%shown.length;return ni});setPk(k=>k+1)};
+  const sw=useSwipe(()=>go("L"),()=>go("R"));
+  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);}};
+  const afterAdd=()=>{setShowAdd(false);reload()};
+  const afterVoice=()=>reload();
+  const handleDeleteVoice=(mid,vid)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,voices:(m.voices||[]).filter(v=>v.id!==vid)}:m))};
+  const handleDeleteMem=(mid)=>{setMems(ms=>{const updated=ms.filter(m=>m.id!==mid);setIdx(i=>Math.min(i,updated.length-1));return updated});setFilter(null)};
+  const handleEditSummary=(mid,sum)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,summary:sum}:m))};
+  const tint=album.color||"#c8943a";
+  if(frameMode)return<FrameMode memories={mems} albumLabel={album.label} onExit={()=>setFrameMode(false)}/>;
+  if(showSet)return<Settings album={{...album,memories:mems}} user={user} onClose={()=>setShowSet(false)} onReload={reload}/>;
+  return(
+    <div className="app" style={{"--tint":tint}}>
+      {/* top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"calc(12px + env(safe-area-inset-top,0px)) 14px 8px",background:"linear-gradient(rgba(0,0,0,.55),transparent)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          <div style={{width:9,height:9,borderRadius:"50%",background:tint}}/>
+          <div style={{fontFamily:"Playfair Display,serif",fontSize:14,color:"rgba(255,255,255,.75)",letterSpacing:".04em"}}>{album.label}</div>
+          {filter&&<div onClick={()=>{setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.35)",borderRadius:14,padding:"3px 10px",fontSize:11,color:"#f0d080",cursor:"pointer"}}>{filter.label} ✕</div>}
+        </div>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          <button onClick={()=>setShowSrch(true)} className="bI" style={{width:34,height:34,fontSize:15}}>🔍</button>
+          <button onClick={()=>setShowSet(true)} className="bI" style={{width:34,height:34,fontSize:15}}>⚙️</button>
+        </div>
+      </div>
+      {/* photo area */}
+      <div className="frame">
+        <div className="photo-col" {...sw}>
+          {mems.length===0
+            ?<div className="empty"><div style={{fontSize:52}}>📷</div><div style={{color:"rgba(255,255,255,.5)",fontSize:16,fontFamily:"Playfair Display,serif",fontStyle:"italic"}}>Your story begins here</div><button onClick={()=>setShowAdd(true)} style={{marginTop:12,background:"rgba(200,148,58,.3)",border:"1px solid rgba(200,148,58,.5)",borderRadius:14,padding:"10px 22px",color:"#f0d080",fontSize:14,cursor:"pointer"}}>+ Add first memory</button></div>
+            :<>
+              <div className="album-bg"/>
+              <div key={pk} className="photo-print" style={{animation:aDir==="L"?"pageInLeft .35s cubic-bezier(.2,0,.3,1) forwards":"pageInRight .35s cubic-bezier(.2,0,.3,1) forwards"}}>
+                {cur?.photo_url
+                  ?<div className="photo-mount" style={{transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
+                      <img src={cur.photo_url} alt=""/>
+                      <div className="mount-caption">{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
+                    </div>
+                  :<div style={{color:"rgba(255,255,255,.2)",fontSize:52}}>📷</div>}
+              </div>
+              {/* swipe arrows */}
+              {shown.length>1&&<>
+                <button onClick={()=>go("R")} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",backdropFilter:"blur(8px)",border:"none",borderRadius:"50%",width:36,height:36,color:"rgba(255,255,255,.5)",fontSize:16,cursor:"pointer",zIndex:50}}>‹</button>
+                <button onClick={()=>go("L")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",backdropFilter:"blur(8px)",border:"none",borderRadius:"50%",width:36,height:36,color:"rgba(255,255,255,.5)",fontSize:16,cursor:"pointer",zIndex:50}}>›</button>
+              </>}
+              {/* counter */}
+              <div style={{position:"absolute",bottom:60,left:0,right:0,textAlign:"center",pointerEvents:"none",zIndex:60}}><div style={{color:"rgba(255,255,255,.2)",fontSize:10}}>{idx+1} / {shown.length}</div></div>
+            </>}
+          {cur&&<PortraitOverlay memory={cur} album={album} user={user} onVoiceAdded={afterVoice} onDeleteVoice={handleDeleteVoice} onDeleteMemory={handleDeleteMem}/>}
+        </div>
+        {/* landscape right panel */}
+        <LandscapePanel memory={cur} album={album} user={user} onVoiceAdded={afterVoice} onDeleteVoice={handleDeleteVoice} onDeleteMemory={handleDeleteMem} onEditSummary={handleEditSummary}/>
+        {/* landscape bottom nav */}
+        <div className="landscape-nav">
+          <div style={{fontSize:12,color:"#9c7a52",fontStyle:"italic"}}>{mems.length} memor{mems.length!==1?"ies":"y"}</div>
+          <div style={{display:"flex",gap:10}}>
+            <button onClick={()=>setShowSrch(true)} className="bG" style={{padding:"8px 14px",fontSize:13}}>🔍 Search</button>
+            <button onClick={()=>setFrameMode(true)} className="bG" style={{padding:"8px 14px",fontSize:13}}>▶ Slideshow</button>
+            <button onClick={()=>setShowAdd(true)} className="bA" style={{padding:"8px 16px",fontSize:13}}>+ Add</button>
+          </div>
+        </div>
+      </div>
+      {/* portrait bottom bar */}
+      <div className="portrait-only" style={{background:"rgba(8,4,1,.96)",borderTop:"1px solid rgba(200,148,58,.15)",padding:"9px 16px calc(12px + env(safe-area-inset-bottom,0px))",flexDirection:"row",gap:10,alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <div style={{flex:1,display:"flex",gap:8}}>
+          <button onClick={()=>setFrameMode(true)} style={{flex:1,padding:"10px 8px",borderRadius:12,background:"rgba(200,148,58,.12)",border:"1px solid rgba(200,148,58,.25)",color:"#c8943a",fontSize:12,fontWeight:600,cursor:"pointer"}}>▶ Slideshow</button>
+          <button onClick={()=>setShowSrch(true)} style={{flex:1,padding:"10px 8px",borderRadius:12,background:"rgba(200,148,58,.12)",border:"1px solid rgba(200,148,58,.25)",color:"#c8943a",fontSize:12,fontWeight:600,cursor:"pointer"}}>🔍 Search</button>
+        </div>
+        <button onClick={()=>setShowAdd(true)} style={{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
+      </div>
+      {showAdd&&<AddSheet album={album} user={user} onSaved={afterAdd} onClose={()=>setShowAdd(false)}/>}
+      {showSrch&&<SearchSht memories={mems} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/>}
+    </div>
+  )
+}
 
-  useEffect(()=>{
-    const saved=(()=>{try{return JSON.parse(localStorage.getItem(SK)||"null")}catch(e){return null}})();
-    if(!saved){setPhase("name");return}
-    const{userName:u,codes}=saved;
-    if(!u||!codes?.length){setPhase("name");return}
-    setUser(u);
-    Promise.all(codes.map(c=>load(c))).then(results=>{
-      const valid=results.filter(Boolean);if(!valid.length){setPhase("name");return}
-      setAlbums(valid);setAIdx(0);setPhase("app")
-    }).catch(()=>setPhase("name"))
-  },[]);
-
-  const persist=(u,als)=>localStorage.setItem(SK,JSON.stringify({userName:u,codes:als.map(a=>a.code)}));
-  const enterApp=(u,al)=>{
-    setAlbums(prev=>{const n=[...prev];const i=n.findIndex(a=>a.code===al.code);if(i>=0)n[i]=al;else n.push(al);persist(u,n);setAIdx(n.length-1);return n});
-    setUser(u);setPhase("app")
+/* ── Onboarding ── */
+function ScrFirst({onDone}){
+  const[name,setName]=useState("");const[label,setLabel]=useState("");const[members,setMembers]=useState([]);const[nm,setNm]=useState("");const[creating,setCreating]=useState(false);const[step,setStep]=useState(1);
+  const next1=()=>{if(!name.trim())return;setStep(2)};
+  const addMember=()=>{const n=nm.trim();if(!n||members.includes(n))return;setMembers(m=>[...m,n]);setNm("")};
+  const create=async()=>{
+    if(!label.trim())return;setCreating(true);
+    try{
+      const code=mkCode();const color=ac(label);
+      const al=await createAlbum(label.trim(),color,code);
+      if(members.length){for(const mn of[name.trim(),...members])await sb.from("members").insert({circle_id:al.id,name:mn,phone:"",joined:true,code:mkCode()})}
+      else await sb.from("members").insert({circle_id:al.id,name:name.trim(),phone:"",joined:true,code:mkCode()});
+      const full=await load(code);
+      localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
+      onDone(full,name.trim())
+    }catch(e){alert("Could not create: "+e.message);setCreating(false)}
   };
-  const upd=fresh=>setAlbums(prev=>prev.map(a=>a.code===fresh.code?fresh:a));
-  const refresh=async()=>{if(!album)return;const f=await load(album.code);if(f)upd(f)};
-
-  if(phase==="loading")return<div style={{position:"fixed",inset:0,background:"#100804",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}><div style={{fontSize:46}}>📖</div><Spin sz={22} col="#c8943a"/></div>;
-  if(phase==="name")return<ScrName onNext={n=>{setUser(n);setPhase(jCode()?"join":"setup")}}/>;
-  if(phase==="setup")return<ScrSetup userName={userName} onNext={async label=>{const c=mkCode();const col=ac(label);try{await createAlbum(label,col,c);const f=await load(c);const al=f||{id:"",code:c,label,color:col,members:[],memories:[]};enterApp(userName,al);setPhase("first")}catch(e){alert("Could not create album. Check connection.")}}} onJoin={()=>setPhase("join")}/>;
-  if(phase==="join")return<ScrJoin userName={userName} onJoined={al=>{enterApp(userName,al)}} onBack={()=>setPhase("setup")}/>;
-  if(phase==="first"&&album)return<ScrFirst album={album} user={userName} onDone={fresh=>{if(fresh)upd(fresh);setPhase("app")}} onSkip={()=>setPhase("app")}/>;
-  if(phase==="addAlbum")return<AddAlbumFlow userName={userName} onDone={al=>{enterApp(userName,al)}} onBack={()=>setPhase("app")}/>;
-  if(phase==="settings"&&album)return<SettingsScreen album={album} userName={userName} allAlbums={albums} onSwitch={al=>{setAIdx(albums.findIndex(a=>a.code===al.code))}} onAdd={()=>setPhase("addAlbum")} onClose={()=>setPhase("app")} onRefresh={refresh}/>;
-  if(phase==="frame"&&album)return<FrameMode memories={album.memories||[]} albumLabel={album.label} onExit={()=>setPhase("app")}/>;
-  if(phase==="app"&&album)return<AlbumMode album={album} user={userName} onUpdate={upd} onSettings={()=>setPhase("settings")} onFrame={()=>setPhase("frame")}/>;
-  return<div style={{position:"fixed",inset:0,background:"#100804",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,color:"#fff",textAlign:"center",padding:22}}><div style={{fontSize:44}}>📡</div><div style={{fontSize:16,fontFamily:"Playfair Display,serif"}}>Connection issue</div><div style={{fontSize:13,color:"rgba(255,255,255,.5)",lineHeight:1.7}}>Could not reach the server.<br/>Check your connection and try again.</div><button onClick={()=>{localStorage.removeItem(SK);setPhase("name")}} className="bA" style={{marginTop:7}}>Start fresh</button></div>;
+  return(
+    <div className="ob">
+      <div className="card">
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:36,marginBottom:8}}>📖</div>
+          <div style={{fontFamily:"Playfair Display,serif",fontSize:22,fontWeight:700,color:"#2a1505",lineHeight:1.2}}>Our Story</div>
+          <div style={{fontSize:13,color:"#9c7a52",marginTop:4,fontStyle:"italic"}}>Family memories, alive in voices</div>
+        </div>
+        {step===1&&(
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:2}}>Your name</div>
+            <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Ashish" onKeyDown={e=>e.key==="Enter"&&next1()} autoFocus/>
+            <button onClick={next1} disabled={!name.trim()} className="bA" style={{marginTop:4}}>Continue →</button>
+          </div>
+        )}
+        {step===2&&(
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:2}}>Name this group</div>
+            <input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="e.g. Tuteja Family" autoFocus/>
+            <div style={{fontSize:13,color:"#7a5c38",marginTop:4}}>Who's in this group?</div>
+            <div style={{fontSize:11,color:"#b09070",marginTop:-6,lineHeight:1.5}}>Add names so the AI can recognise them in voice stories</div>
+            <div style={{display:"flex",gap:8}}>
+              <input className="inp" style={{flex:1,fontSize:14}} value={nm} onChange={e=>setNm(e.target.value)} placeholder="Add a name" onKeyDown={e=>e.key==="Enter"&&addMember()}/>
+              <button onClick={addMember} style={{padding:"11px 13px",borderRadius:13,background:"rgba(200,148,58,.2)",border:"1px solid rgba(200,148,58,.4)",color:"#9c7a52",fontSize:14,cursor:"pointer"}}>+</button>
+            </div>
+            {members.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:2}}>{members.map((m,i)=><div key={i} style={{background:"rgba(200,148,58,.12)",borderRadius:18,padding:"4px 12px",fontSize:13,color:"#6a4820",display:"flex",alignItems:"center",gap:7}}>{m}<span onClick={()=>setMembers(ms=>ms.filter((_,j)=>j!==i))} style={{cursor:"pointer",opacity:.5,fontSize:11}}>✕</span></div>)}</div>}
+            <button onClick={create} disabled={!label.trim()||creating} className="bA" style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{creating?<><Spin col="#fff" sz={15}/>Creating...</>:"✨ Create group"}</button>
+            <button onClick={()=>setStep(1)} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",textAlign:"center",padding:"4px"}}>← Back</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
-ReactDOM.render(React.createElement(App),document.getElementById("root"));
-</script>
-</body>
-</html>
+function ScrJoin({code,onDone}){
+  const[name,setName]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
+  const join=async()=>{if(!name.trim())return;setLoading(true);setErr("");
+    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
+    catch(e){setErr("Could not join: "+e.message);setLoading(false)}};
+  return(
+    <div className="ob">
+      <div className="card">
+        <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:36,marginBottom:8}}>📖</div><div style={{fontFamily:"Playfair Display,serif",fontSize:22,fontWeight:700,color:"#2a1505"}}>You're invited!</div><div style={{fontSize:13,color:"#9c7a52",marginTop:4,fontStyle:"italic"}}>Enter your name to join the family album</div></div>
+        <div style={{display:"flex",flexDirection:"column",gap:11}}>
+          <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" onKeyDown={e=>e.key==="Enter"&&join()} autoFocus/>
+          {err&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>{err}</div>}
+          <button onClick={join} disabled={!name.trim()||loading} className="bA" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{loading?<><Spin col="#fff" sz={15}/>Joining...</>:"Join album →"}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── App root ── */
+function App(){
+  const[scr,setScr]=useState("loading");const[album,setAlbum]=useState(null);const[user,setUser]=useState("");
+  useEffect(()=>{
+    (async()=>{
+      const jc=jCode();
+      if(jc){setScr("join");return}
+      try{const saved=JSON.parse(localStorage.getItem(SK)||"{}");
+        if(saved.user&&saved.code){const al=await load(saved.code);if(al){setAlbum(al);setUser(saved.user);setScr("album");return}}
+      }catch(e){}
+      setScr("first")
+    })()
+  },[]);
+  if(scr==="loading")return<div style={{width:"100vw",height:"100dvh",background:"#111014",display:"flex",alignItems:"center",justifyContent:"center"}}><Spin sz={28}/></div>;
+  if(scr==="join")return<ScrJoin code={jCode()} onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
+  if(scr==="first")return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
+  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}}/>;
+  return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>
