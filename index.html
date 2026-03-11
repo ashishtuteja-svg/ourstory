@@ -2,1859 +2,707 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Our Story"/>
+<meta name="theme-color" content="#100804"/>
 <title>Our Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exifr@7/dist/lite.umd.js"></script>
 <style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; }
-  #root { height: 100%; }
-  @media (max-width: 480px) {
-    .app-shell { width: 100vw !important; height: 100dvh !important; border-radius: 0 !important; box-shadow: none !important; }
-  }
-  @media (min-width: 481px) {
-    .app-shell { width: 390px !important; height: 844px !important; }
-  }
-*{box-sizing:border-box;margin:0;padding:0;font-family:Georgia,serif}
-body{background:#1a0c06;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body,#root{width:100%;height:100%;height:100dvh;overflow:hidden;background:#100804;font-family:'Lora',Georgia,serif}
 ::-webkit-scrollbar{display:none}
-@keyframes ripple{0%{transform:scale(0.85);opacity:0.5}100%{transform:scale(1.65);opacity:0}}
-@keyframes wv{0%{height:3px}100%{height:14px}}
+input,textarea,button{font-family:inherit}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes grow{from{width:0}to{width:100%}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-@keyframes pop{0%{transform:scale(0.8);opacity:0}100%{transform:scale(1);opacity:1}}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes slideInR{from{transform:translateX(55px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideInL{from{transform:translateX(-55px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bar{from{width:0}to{width:100%}}
+
+/* ── layout ── */
+.app{width:100vw;height:100dvh;overflow:hidden;background:#100804;display:flex;flex-direction:column;position:relative}
+.frame{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.photo-col{flex:1;position:relative;overflow:hidden}
+
+/* portrait info overlay */
+.info-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(8,4,1,.9) 32%,rgba(8,4,1,.98) 100%);padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.landscape-panel{display:none}
+.landscape-nav{display:none}
+.portrait-only{display:flex}
+
+/* ── iPad landscape ── */
+@media(orientation:landscape)and(min-width:768px){
+  .frame{flex-direction:row!important}
+  .photo-col{flex:0 0 62%;height:100%}
+  .info-overlay{display:none!important}
+  .portrait-only{display:none!important}
+  .landscape-panel{
+    display:flex!important;flex-direction:column;flex:1;
+    background:#f5ede0;padding:18px 20px;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;gap:11px;color:#2a1505
+  }
+  .landscape-nav{
+    display:flex!important;background:#ede5d8;
+    border-top:1px solid rgba(180,140,80,.2);
+    padding:9px 18px calc(9px + env(safe-area-inset-bottom,0px));
+    align-items:center;justify-content:space-between;flex-shrink:0
+  }
+}
+
+/* ── frame mode ── */
+.framebox{position:fixed;inset:0;background:#000;z-index:1000}
+
+/* ── onboarding ── */
+.ob{position:fixed;inset:0;background:#100804;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .4s ease}
+.card{width:100%;max-width:420px;background:linear-gradient(160deg,#fdf6ec,#f5ede0);border-radius:28px;padding:30px 26px;box-shadow:0 28px 72px rgba(0,0,0,.55)}
+
+/* ── settings ── */
+.settings{position:fixed;inset:0;background:#f5ede0;z-index:500;display:flex;flex-direction:column;overflow-y:auto;animation:fadeIn .3s ease}
+
+/* ── sheets ── */
+.sheet{background:#fdf6ec;border-radius:24px 24px 0 0;max-height:93vh;overflow-y:auto;animation:slideUp .3s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* ── photo ── */
+.fill{position:absolute;inset:0;background:#0a0502;display:flex;align-items:center;justify-content:center}
+.fill img{width:100%;height:100%;object-fit:cover}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#2a1505,#180c04)}
+
+/* ── voice pill ── */
+.vp{border-radius:13px;padding:9px 11px;margin-bottom:7px;background:rgba(255,255,255,.1)}
+@media(orientation:landscape)and(min-width:768px){.vp{background:rgba(55,28,8,.06);border:1px solid rgba(180,140,80,.18)}}
+
+/* ── buttons ── */
+.bA{background:linear-gradient(135deg,#c8943a,#a06820);color:#fff;border:none;border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer}
+.bG{background:transparent;border:1.5px solid rgba(200,148,58,.5);color:#c8943a;border-radius:13px;padding:11px 16px;font-size:13px;cursor:pointer}
+.bI{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+@media(orientation:landscape)and(min-width:768px){.bI{background:rgba(55,28,8,.1);border-color:rgba(180,140,80,.3);color:#3d2410}}
+
+/* ── inputs ── */
+.inp{width:100%;padding:12px 15px;border-radius:13px;border:1.5px solid rgba(200,148,58,.3);background:rgba(255,255,255,.7);font-size:15px;color:#2a1505;outline:none;transition:border .2s}
+.inp:focus{border-color:#c8943a;background:#fff}
 </style>
 </head>
-<body>
-<div id="root"></div>
+<body><div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const {useState,useEffect,useRef,useCallback} = React;
 
-// ── SUPABASE ──────────────────────────────────────────────────────────────────
-const sb = supabase.createClient(
-  "https://crwigyzwesxhpiktcalp.supabase.co",
-  "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F"
-);
+/* ── config ── */
+const SB_URL  = "https://crwigyzwesxhpiktcalp.supabase.co";
+const SB_KEY  = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
+const SK      = "ourstory_v19";
+const PAL     = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
+const COLS    = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-async function uploadFile(bucket, path, blob) {
-  const { data, error } = await sb.storage.from(bucket).upload(path, blob, { upsert: true });
-  if (error) throw error;
-  const { data: pub } = sb.storage.from(bucket).getPublicUrl(path);
-  return pub.publicUrl;
+/* ── db ── */
+async function up(bucket,path,blob){const{error}=await sb.storage.from(bucket).upload(path,blob,{upsert:true});if(error)throw error;return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}
+async function load(code){
+  const{data:c}=await sb.from("circles").select("*").eq("code",code.toUpperCase()).single();if(!c)return null;
+  const{data:members}=await sb.from("members").select("*").eq("circle_id",c.id);
+  const{data:mems}=await sb.from("memories").select("*").eq("circle_id",c.id).order("created_at",{ascending:false});
+  const memories=await Promise.all((mems||[]).map(async m=>{const{data:voices}=await sb.from("voices").select("*").eq("memory_id",m.id);return{...m,voices:voices||[]}}));
+  return{...c,members:members||[],memories}
+}
+async function createAlbum(label,color,code){const{data:c,error}=await sb.from("circles").insert({label,emoji:"📖",color,code}).select().single();if(error)throw error;return c}
+async function saveMem(cid,people,meta,photoFile,audioBlob,dur,user){
+  let pUrl=null,aUrl=null;const ts=Date.now();
+  if(photoFile)pUrl=await up("photos",cid+"/"+ts+".jpg",photoFile);
+  if(audioBlob){const ext=audioBlob.type.includes("mp4")?"mp4":audioBlob.type.includes("ogg")?"ogg":"webm";aUrl=await up("audio",cid+"/"+ts+"."+ext,audioBlob)}
+  const now=new Date();
+  const row={circle_id:cid,year:meta.year||now.getFullYear(),month:meta.month||now.toLocaleString("default",{month:"long"}),place:meta.place||"—",people,caption:(meta.transcript||"A memory.").substring(0,200),emoji:"📸",grad:"linear-gradient(145deg,#f5e0b8,#e8c070)",photo_url:pUrl};
+  try{row.transcript=meta.transcript||null;row.auto_tags=[]}catch(e){}
+  const{data:mem,error}=await sb.from("memories").insert(row).select().single();if(error)throw error;
+  if(aUrl)await sb.from("voices").insert({memory_id:mem.id,name:user,col:pc(user),audio_url:aUrl,duration:dur});
+  return mem.id
+}
+async function saveVoice(mid,name,blob,dur,tx){
+  const ext=blob.type.includes("mp4")?"mp4":blob.type.includes("ogg")?"ogg":"webm";
+  const url=await up("audio",mid+"/"+name+"-"+Date.now()+"."+ext,blob);
+  await sb.from("voices").insert({memory_id:mid,name,col:pc(name),audio_url:url,duration:dur});
+  if(tx){try{await sb.from("memories").update({transcript:tx}).eq("id",mid)}catch(e){}}
+  return url
+}
+async function joinAlbum(code,user){
+  const al=await load(code);if(!al)return null;
+  const exists=(al.members||[]).find(m=>m.name.toLowerCase()===user.toLowerCase());
+  if(!exists)await sb.from("members").insert({circle_id:al.id,name:user,phone:"",joined:true,code:mkCode()});
+  return load(code)
 }
 
-async function dbLoadCircle(code) {
-  const { data: c } = await sb.from("circles").select("*").eq("code", code.toUpperCase()).single();
-  if (!c) return null;
-  const { data: members } = await sb.from("members").select("*").eq("circle_id", c.id);
-  const { data: mems } = await sb.from("memories").select("*").eq("circle_id", c.id).order("created_at", { ascending: false });
-  const memories = await Promise.all((mems || []).map(async m => {
-    const { data: voices } = await sb.from("voices").select("*").eq("memory_id", m.id);
-    return { ...m, voices: voices || [] };
-  }));
-  return { ...c, members: members || [], memories };
+/* ── ai search ── */
+async function aiSearch(q,mems,key){
+  const local=kSearch(q,mems);if(!key?.trim())return local;
+  try{
+    const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.caption||"").substring(0,300)}));
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key.trim(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
+        system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. E.g. [\"id1\"]. Understand Hindi, Punjabi, mixed-language, Indian names.",
+        messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
+    const j=await r.json();const raw=j.content?.[0]?.text||"[]";
+    const ids=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    const res=mems.filter(m=>ids.includes(m.id));return res.length?res:local
+  }catch(e){return local}
+}
+function kSearch(q,mems){
+  const words=q.toLowerCase().split(/\s+/).filter(w=>w.length>1);if(!words.length)return mems;
+  return mems.filter(m=>{const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();return words.some(w=>h.includes(w))})
 }
 
-async function dbCreateCircle(label, emoji, color, code, members) {
-  const { data: c, error } = await sb.from("circles").insert({ label, emoji, color, code }).select().single();
-  if (error) throw error;
-  for (const m of members) {
-    await sb.from("members").insert({ circle_id: c.id, name: m.name, phone: m.phone || "", joined: false, code: m.code });
-  }
-  return c;
+/* ── helpers ── */
+function mkCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function ini(n){return(n||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)}
+function pc(n){let h=0;for(const c of(n||""))h+=c.charCodeAt(0);return PAL[h%PAL.length]}
+function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%COLS.length]}
+function fd(s){return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")}
+function jCode(){try{return new URL(window.location.href).searchParams.get("join")}catch(e){return null}}
+function iUrl(code){return window.location.origin+window.location.pathname+"?join="+code}
+function extr(text,members){
+  if(!text||text.length<3)return{};const r={},lo=text.toLowerCase();
+  const mons=["january","february","march","april","may","june","july","august","september","october","november","december"];
+  const yr=(text.match(/\d{4}/g)||[]).map(Number).find(n=>n>=1950&&n<=2030);if(yr)r.year=yr;
+  for(let i=0;i<mons.length;i++)if(lo.includes(mons[i])){r.month=mons[i].charAt(0).toUpperCase()+mons[i].slice(1);break}
+  const pm=lo.match(/\b(?:in|at|to|from|went to|trip to)\s+([a-z]+)/i);if(pm&&pm[1]&&pm[1].length>2)r.place=pm[1].charAt(0).toUpperCase()+pm[1].slice(1);
+  const mentioned=(members||[]).filter(m=>{const f=m.name.split(" ")[0].toLowerCase();return f.length>2&&lo.includes(f)}).map(m=>m.name);
+  if(mentioned.length)r.people=mentioned;return r
 }
 
-async function dbAddMember(circleId, member) {
-  await sb.from("members").insert({ circle_id: circleId, name: member.name, phone: member.phone || "", joined: false, code: member.code });
+/* ── hooks ── */
+function useWakeLock(){
+  const ref=useRef(null);
+  const acquire=useCallback(async()=>{try{if("wakeLock"in navigator)ref.current=await navigator.wakeLock.request("screen")}catch(e){}},[]);
+  const release=useCallback(()=>{if(ref.current){try{ref.current.release()}catch(e){}}ref.current=null},[]);
+  return{acquire,release}
+}
+function useSwipe(L,R){
+  const sx=useRef(null);
+  return{onTouchStart:e=>{sx.current=e.touches[0].clientX},onTouchEnd:e=>{if(sx.current===null)return;const dx=sx.current-e.changedTouches[0].clientX;if(Math.abs(dx)>44)dx>0?L():R();sx.current=null}}
+}
+function useSpeech(){
+  const[tx,setTx]=useState("");const[active,setActive]=useState(false);const ref=useRef(null);
+  const start=useCallback(lang=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+    try{const r=new SR();r.lang=lang||"en-IN";r.continuous=true;r.interimResults=true;
+      r.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript+" ";setTx(t.trim())};
+      r.onerror=()=>{};r.onend=()=>setActive(false);r.start();ref.current=r;setActive(true)}catch(e){}},[]);
+  const stop=useCallback(()=>{if(ref.current){try{ref.current.stop()}catch(e){}}ref.current=null;setActive(false)},[]);
+  const reset=useCallback(()=>setTx(""),[]);
+  return{transcript:tx,active,start,stop,reset}
+}
+function useRec(){
+  const[state,setState]=useState("idle");const[dur,setDur]=useState(0);
+  const[aUrl,setUrl]=useState(null);const[aBlob,setBlob]=useState(null);
+  const mRef=useRef(null);const ch=useRef([]);const tmr=useRef(null);
+  function mime(){const t=["audio/mp4","audio/webm;codecs=opus","audio/webm","audio/ogg"];for(const x of t)if(typeof MediaRecorder!="undefined"&&MediaRecorder.isTypeSupported(x))return x;return""}
+  const start=useCallback(async()=>{
+    try{setState("requesting");const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const m=mime();const rec=new MediaRecorder(stream,m?{mimeType:m}:{});ch.current=[];
+      rec.ondataavailable=e=>{if(e.data?.size>0)ch.current.push(e.data)};
+      rec.onstop=()=>{const b=new Blob(ch.current,{type:rec.mimeType||m||"audio/mp4"});setBlob(b);setUrl(URL.createObjectURL(b));setState("done");stream.getTracks().forEach(t=>t.stop())};
+      rec.start(250);mRef.current=rec;setState("recording");setDur(0);tmr.current=setInterval(()=>setDur(d=>d+1),1000)
+    }catch(e){setState("error")}
+  },[]);
+  const stop=useCallback(()=>{clearInterval(tmr.current);if(mRef.current?.state==="recording"){try{mRef.current.stop()}catch(e){}}},[]);
+  const reset=useCallback(()=>{setBlob(null);setUrl(null);setState("idle");setDur(0)},[]);
+  return{state,dur,aUrl,aBlob,start,stop,reset}
 }
 
-async function dbSaveMemory(circleId, people, meta, photoFile, audioBlob, audioDuration, userName) {
-  let photoUrl = null, audioUrl = null;
-  const ts = Date.now();
-  if (photoFile) photoUrl = await uploadFile("photos", circleId + "/" + ts + ".jpg", photoFile);
-  if (audioBlob) {
-    const ext = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("ogg") ? "ogg" : "webm";
-    audioUrl = await uploadFile("audio", circleId + "/" + ts + "." + ext, audioBlob);
-  }
-  const now = new Date();
-  const rawCaption = meta.caption || (audioUrl ? "Voice memory" : "A moment to remember.");
-  const caption = rawCaption.length > 140 ? rawCaption.slice(0, 140) + "..." : rawCaption;
-  const { data: mem, error } = await sb.from("memories").insert({
-    circle_id: circleId,
-    year: meta.year || now.getFullYear(),
-    month: meta.month || now.toLocaleString("default", { month: "long" }),
-    place: meta.place || "—",
-    people,
-    caption,
-    emoji: "📸",
-    grad: "linear-gradient(145deg,#f5e0b8,#e8c070)",
-    photo_url: photoUrl,
-  }).select().single();
-  if (error) throw error;
-  if (audioUrl) {
-    await sb.from("voices").insert({
-      memory_id: mem.id, name: userName, col: pc(userName), audio_url: audioUrl, duration: audioDuration
-    });
-  }
-  return mem.id;
-}
+/* ── tiny UI ── */
+function Spin({sz=20,col="#c8943a"}){return<div style={{width:sz,height:sz,border:"2px solid "+col+"30",borderTop:"2px solid "+col,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+function Av({name,sz=32,col}){return<div style={{width:sz,height:sz,borderRadius:"50%",background:col||pc(name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz*.36,fontWeight:700,color:"#fff",flexShrink:0}}>{ini(name)}</div>}
+function Hr({label}){return<div style={{display:"flex",alignItems:"center",gap:9}}><div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/>{label&&<span style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",opacity:.5}}>{label}</span>}<div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/></div>}
 
-async function dbSaveVoice(memoryId, name, audioBlob, duration) {
-  const ext2 = audioBlob.type.includes("mp4") ? "mp4" : audioBlob.type.includes("ogg") ? "ogg" : "webm";
-  const url = await uploadFile("audio", memoryId + "/" + name + "-" + Date.now() + "." + ext2, audioBlob);
-  await sb.from("voices").insert({ memory_id: memoryId, name, col: pc(name), audio_url: url, duration });
-  return url;
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-const PALETTE = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090","#c06858","#5a7a90"];
-const CIRCLE_COLORS = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5"];
-const CIRCLE_EMOJIS = ["🏡","🌴","📚","💼","🎵","⚽","🎨","🌸","🏔️","🌊","🎓","🎪"];
-
-function mkCode() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-function ini(n) { return (n || "?").trim().split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2); }
-function pc(n) { let h = 0; for (let c of (n || "")) h += c.charCodeAt(0); return PALETTE[h % PALETTE.length]; }
-function fmtDur(s) { return Math.floor(s / 60) + ":" + (String(Math.floor(s % 60)).padStart(2, "0")); }
-function cleanPhone(p) { if (!p) return ""; let d = p.replace(/[\s\-\(\)]/g, ""); if (!d.startsWith("+")) d = "+" + d; return d; }
-
-// Extract place / date / people from a voice transcript (no API needed)
-function extractFromText(text, circleMembers) {
-  if (!text || text.length < 3) return {};
-  const result = {};
-  const lower = text.toLowerCase();
-  const monthNames = ["january","february","march","april","may","june","july","august","september","october","november","december"];
-  const monthShort = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
-
-  // Year: grab any 4-digit number 1950-2030 from transcript (most reliable)
-  const yr4digit = (text.match(/\d{4}/g) || []).map(Number).find(n => n >= 1950 && n <= 2030);
-  if (yr4digit) {
-    result.year = yr4digit;
-  } else {
-    // Spoken year forms
-    const n = lower.replace(/-/g, " ");
-    const spoken = [
-      ["twenty twenty six",2026],["twenty twenty five",2025],["twenty twenty four",2024],
-      ["twenty twenty three",2023],["twenty twenty two",2022],["twenty twenty one",2021],
-      ["twenty twenty",2020],["twenty nineteen",2019],["twenty eighteen",2018],
-      ["twenty seventeen",2017],["twenty sixteen",2016],["twenty fifteen",2015],
-      ["twenty fourteen",2014],["twenty thirteen",2013],["twenty twelve",2012],
-      ["twenty eleven",2011],["twenty ten",2010],
-      ["two thousand and twenty five",2025],["two thousand and twenty four",2024],
-      ["two thousand and twenty two",2022],["two thousand and twenty",2020],
-      ["two thousand and nineteen",2019],["two thousand and fifteen",2015],
-      ["two thousand and ten",2010],["two thousand and five",2005],["two thousand",2000],
-    ];
-    for (const [p, y] of spoken) { if (n.includes(p)) { result.year = y; break; } }
-  }
-
-  // Month — skip "may" if it appears as a verb (short word heuristic)
-  for (let i = 0; i < monthNames.length; i++) {
-    const full = monthNames[i], short = monthShort[i];
-    if (i === 4) {
-      // "May" — only count if followed by a year or preceded by "in" / "last" / "this"
-      if (lower.match(/\b(?:in|last|this)\s+may\b/) || lower.match(/\bmay\s+20[0-9]{2}\b/)) {
-        result.month = "May"; break;
-      }
-    } else if (lower.includes(full) || lower.includes(short + " ") || lower.endsWith(short)) {
-      result.month = full.charAt(0).toUpperCase() + full.slice(1);
-      break;
-    }
-  }
-
-  // Place: case-insensitive — after "in", "at", "to", or before "mein"/"main"
-  const skipWords = new Set([...monthNames, ...monthShort,
-    "the","and","was","were","had","with","this","that","when","went","been","have",
-    "from","back","just","very","really","there","here","some","also","into","onto",
-    "twenty","nineteen","eighteen","seventeen","sixteen","fifteen","fourteen","thirteen",
-    "twelve","eleven","ten","two","thousand","hundred","zero","one","two","three"]);
-  const placeRe = [
-    /\b(?:in|at|to|from|visited|went to|trip to|we were in)\s+([a-zA-Z]+)/i,
-    /([a-zA-Z]+)\s+(?:mein|main|me\b)/i
-  ];
-  for (const re of placeRe) {
-    const m = lower.match(re);
-    if (m && m[1]) {
-      const candidate = m[1].trim();
-      const words = candidate.split(" ");
-      const firstWord = words[0];
-      if (firstWord.length > 2 && !skipWords.has(firstWord)) {
-        // Capitalise each word
-        result.place = words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-        break;
-      }
-    }
-  }
-
-  // People: match circle member first names
-  const mentioned = (circleMembers || []).filter(mem => {
-    const first = mem.name.split(" ")[0].toLowerCase();
-    return lower.includes(first) && first.length > 2;
-  }).map(m => m.name);
-  if (mentioned.length > 0) result.people = mentioned;
-
-  return result;
-}
-
-// ── SPEECH HOOK ───────────────────────────────────────────────────────────────
-function useSpeech() {
-  const [transcript, setTranscript] = useState("");
-  const [active, setActive] = useState(false);
-  const recRef = useRef(null);
-
-  const start = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return; // gracefully skip if not supported
-    try {
-      const r = new SR();
-      r.continuous = true;
-      r.interimResults = true;
-      r.onresult = e => {
-        let t = "";
-        for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + " ";
-        setTranscript(t.trim());
-      };
-      r.onerror = () => {};
-      r.onend = () => setActive(false);
-      r.start();
-      recRef.current = r;
-      setActive(true);
-    } catch(e) {}
-  }, []);
-
-  const stop = useCallback(() => {
-    if (recRef.current) { try { recRef.current.stop(); } catch(e) {} recRef.current = null; }
-    setActive(false);
-  }, []);
-
-  const reset = useCallback(() => setTranscript(""), []);
-  return { transcript, active, start, stop, reset };
-}
-
-// ── RECORDER HOOK ─────────────────────────────────────────────────────────────
-function useRecorder() {
-  const [state, setState] = useState("idle");
-  const [duration, setDuration] = useState(0);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [audioBlob, setAudioBlob] = useState(null);
-  const mediaRef = useRef(null);
-  const chunksRef = useRef([]);
-  const timerRef = useRef(null);
-
-  // Detect best supported audio format for this browser/OS
-  function getMimeType() {
-    const types = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg"];
-    for (const t of types) {
-      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(t)) return t;
-    }
-    return ""; // let browser decide
-  }
-
-  const start = useCallback(async () => {
-    try {
-      setState("requesting");
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Do NOT create AudioContext on iOS — it conflicts with MediaRecorder
-      const mimeType = getMimeType();
-      const recOpts = mimeType ? { mimeType } : {};
-      const rec = new MediaRecorder(stream, recOpts);
-      chunksRef.current = [];
-      rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
-      rec.onstop = () => {
-        const mime = rec.mimeType || mimeType || "audio/mp4";
-        const blob = new Blob(chunksRef.current, { type: mime });
-        setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        setState("done");
-        stream.getTracks().forEach(t => t.stop());
-      };
-      rec.start(250); // collect data every 250ms — ensures chunks arrive on iOS
-      mediaRef.current = rec;
-      setState("recording");
-      setDuration(0);
-      timerRef.current = setInterval(() => setDuration(d => d + 1), 1000);
-    } catch(e) {
-      setState("error");
-    }
-  }, []);
-
-  const stop = useCallback(() => {
-    clearInterval(timerRef.current);
-    if (mediaRef.current && mediaRef.current.state === "recording") {
-      mediaRef.current.stop();
-    }
-  }, []);
-
-  const reset = useCallback(() => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioUrl(null);
-    setAudioBlob(null);
-    setState("idle");
-    setDuration(0);
-  }, [audioUrl]);
-
-  return { state, duration, audioUrl, audioBlob, analyser: null, start, stop, reset };
-}
-
-// ── UI ATOMS ──────────────────────────────────────────────────────────────────
-function Av({ name, size = 36, col }) {
-  return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: col || pc(name || "?"), color: "#fff", fontWeight: 700, fontSize: size * 0.36, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-      {ini(name || "?")}
-    </div>
-  );
-}
-
-function Spin({ color = "#c8943a", size = 22 }) {
-  return <div style={{ width: size, height: size, borderRadius: "50%", border: "2.5px solid " + color + "44", borderTopColor: color, animation: "spin 0.7s linear infinite", flexShrink: 0 }} />;
-}
-
-function StaticWave({ color, playing }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 2, height: 20 }}>
-      {[...Array(12)].map((_, i) => (
-        <div key={i} style={{ width: 2.5, borderRadius: 2, height: playing ? (5 + Math.abs(Math.sin(i * 0.7)) * 10) + "px" : "3px", background: playing ? color : "rgba(180,140,80,0.3)", animation: playing ? "wv " + (0.55 + (i % 5) * 0.12) + "s ease-in-out infinite alternate" : "none" }} />
-      ))}
-    </div>
-  );
-}
-
-function LiveWave({ analyser, color }) {
-  const [heights, setHeights] = useState(Array(18).fill(3));
-  useEffect(() => {
-    if (!analyser) return;
-    let raf;
-    const buf = new Uint8Array(analyser.frequencyBinCount);
-    const tick = () => {
-      analyser.getByteFrequencyData(buf);
-      const step = Math.floor(buf.length / 18);
-      setHeights(Array.from({ length: 18 }, (_, i) => Math.max(3, Math.min(26, (buf[i * step] || 0) / 255 * 26))));
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [analyser]);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 2.5, height: 30 }}>
-      {heights.map((h, i) => <div key={i} style={{ width: 3, borderRadius: 2, height: h, background: color, transition: "height 0.05s" }} />)}
-    </div>
-  );
-}
-
-function MicBtn({ on, color, size = 68, onClick }) {
-  return (
-    <div onClick={onClick} style={{ position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-      {on && [1, 2, 3].map(i => (
-        <div key={i} style={{ position: "absolute", borderRadius: "50%", width: size + i * 18, height: size + i * 18, border: "1.5px solid " + color, opacity: 0.4 / i, animation: "ripple 1.6s ease-out " + (i * 0.28) + "s infinite" }} />
-      ))}
-      <div style={{ width: size, height: size, borderRadius: "50%", background: on ? "linear-gradient(135deg," + color + "," + color + "99)" : "linear-gradient(135deg,#f0e0c8,#e0c8a0)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: on ? "0 8px 26px " + color + "66" : "0 4px 12px rgba(160,100,40,0.13)", transition: "all 0.3s", border: "2px solid " + (on ? color : "rgba(196,154,60,0.20)") }}>
-        <span style={{ fontSize: size * 0.38 }}>{on ? "🔴" : "🎙️"}</span>
+/* ── Recorder Sheet ── */
+function RecSheet({memory,speaker,color,onSaved,onClose}){
+  const rec=useRec();const sp=useSpeech();const[saving,setSaving]=useState(false);const lv=useRef("");
+  useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
+  const go=()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)};
+  const halt=()=>{rec.stop();sp.stop()};
+  const C=color||"#c8943a";
+  const save=async()=>{if(!rec.aBlob)return;setSaving(true);try{const url=await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,lv.current);onSaved({url,name:speaker,dur:rec.dur})}catch(e){alert("Could not save voice.");setSaving(false)}};
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(22px + env(safe-area-inset-bottom,0px))"}}>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 18px"}}/>
+        <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Add your voice</div>
+        <div style={{fontSize:13,color:"#7a5c38",marginBottom:16}}>{memory.place&&memory.place!=="—"?memory.place:"This memory"} · {memory.year||""}</div>
+        <div style={{minHeight:60,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:14,background:"rgba(200,148,58,.07)",borderRadius:15,padding:12}}>
+          {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap below to start recording</div>}
+          {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Allow microphone...</div>}
+          {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
+            <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.65].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
+            <div style={{fontSize:12,color:"#b09070"}}>{fd(rec.dur)} · Recording</div>
+            {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5,maxHeight:34,overflow:"hidden"}}>{sp.transcript}</div>}
+          </div>}
+          {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
+          {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13}}>Microphone blocked</div>}
+        </div>
+        {(rec.state==="idle"||rec.state==="error")&&<button onClick={go} className="bA" style={{width:"100%",fontSize:15}}>🎙 Start Recording</button>}
+        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop</button>}
+        {rec.state==="done"&&<div style={{display:"flex",gap:9}}>
+          <button onClick={rec.reset} className="bG">🔄 Redo</button>
+          <button onClick={save} disabled={saving} className="bA" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:"✅ Save voice"}</button>
+        </div>}
       </div>
     </div>
-  );
+  )
 }
 
-
-// ── EXIF READER — uses exifr library ─────────────────────────────────────────
-async function readExif(file) {
-  try {
-    if (typeof exifr === "undefined") return {};
-    const data = await exifr.parse(file, { gps: true, pick: ["DateTimeOriginal", "latitude", "longitude"] });
-    if (!data) return {};
-    const result = {};
-    if (data.DateTimeOriginal) {
-      const d = new Date(data.DateTimeOriginal);
-      if (!isNaN(d)) {
-        result.year = d.getFullYear();
-        const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-        result.month = monthNames[d.getMonth()];
-      }
-    }
-    if (data.latitude && data.longitude) {
-      result.gps = { lat: data.latitude, lon: data.longitude };
-    }
-    return result;
-  } catch(e) { return {}; }
-}
-
-async function reverseGeocode(lat, lon) {
-  try {
-    const r = await fetch(
-      "https://nominatim.openstreetmap.org/reverse?lat=" + lat + "&lon=" + lon + "&format=json&zoom=10",
-      { headers: { "Accept-Language": "en" } }
-    );
-    const d = await r.json();
-    const addr = d.address || {};
-    return addr.city || addr.town || addr.village || addr.county || addr.state || "";
-  } catch(e) { return ""; }
-}
-
-// ── PLAYBACK: using native <audio controls> for iOS reliability ──────────────
-
-// ── RECORDER SHEET ────────────────────────────────────────────────────────────
-function RecorderSheet({ memory, speakerName, color, onSaved, onClose }) {
-  const rec = useRecorder();
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    if (!rec.audioBlob || !memory) return;
-    setSaving(true);
-    try {
-      const url = await dbSaveVoice(memory.id, speakerName, rec.audioBlob, rec.duration);
-      onSaved({ name: speakerName, col: pc(speakerName), audio_url: url, duration: rec.duration });
-      rec.reset();
-    } catch(e) {
-      alert("Could not save voice. Please try again.");
-    }
-    setSaving(false);
-  };
-
-  return (
-    <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(18,8,2,0.88)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end", borderRadius: 42 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fdf6ec", borderRadius: "28px 28px 0 0", padding: "20px 20px calc(32px + env(safe-area-inset-bottom,16px))", animation: "slideUp 0.3s ease" }}>
-        <div style={{ width: 32, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 18px" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-          <Av name={speakerName} size={42} col={color} />
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410" }}>{speakerName}'s voice</div>
-            <div style={{ fontSize: 11, color: "#b09070", fontStyle: "italic", marginTop: 2 }}>
-              {rec.state === "idle" && "Tap the mic to start"}
-              {rec.state === "requesting" && "Allow microphone access..."}
-              {rec.state === "recording" && "Recording — " + fmtDur(rec.duration)}
-              {rec.state === "done" && "Recorded — " + fmtDur(rec.duration)}
-              {rec.state === "error" && "Could not access microphone"}
+/* ── Add Memory Sheet ── */
+function AddSheet({album,user,onSaved,onClose}){
+  const[mode,setMode]=useState(null);const[step,setStep]=useState(1);
+  const[photo,setPhoto]=useState(null);const[prev,setPrev]=useState(null);
+  const[saving,setSaving]=useState(false);
+  const[place,setPlace]=useState("");const[month,setMonth]=useState("");const[year,setYear]=useState("");const[tagged,setTagged]=useState([]);const[tx,setTx]=useState("");
+  const fRef=useRef(null);const lv=useRef("");
+  const rec=useRec();const sp=useSpeech();const C=album.color||"#c8943a";
+  useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
+  useEffect(()=>{if(rec.state==="done"&&mode==="story"){const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setTimeout(()=>setStep(3),400)}},[rec.state]);
+  const onPick=e=>{const f=e.target.files?.[0];if(!f)return;setPhoto(f);setPrev(URL.createObjectURL(f))};
+  const qSave=async()=>{if(!photo)return;setSaving(true);try{await saveMem(album.id,[user],{year:new Date().getFullYear(),month:new Date().toLocaleString("default",{month:"long"}),place:null},photo,null,0,user);onSaved()}catch(e){alert("Could not save.");setSaving(false)}};
+  const sSave=async()=>{setSaving(true);try{const ppl=[user,...tagged.filter(t=>t!==user)];await saveMem(album.id,ppl,{year:year?parseInt(year):null,month:month||null,place:place||null,transcript:tx},photo,rec.aBlob,rec.dur,user);onSaved()}catch(e){alert("Could not save.");setSaving(false)}};
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{maxHeight:"93vh",display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"13px 18px 0",flexShrink:0}}>
+          <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
+            <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505"}}>
+              {!mode?"Add a memory":mode==="quick"?"📸 Quick drop":step===1?"📸 Photo":step===2?"🎙 Tell the story":"✏️ Review"}
             </div>
+            <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:29,height:29,fontSize:13,cursor:"pointer",color:"#9c7a52"}}>✕</button>
           </div>
         </div>
-
-        <div style={{ background: "rgba(196,148,58,0.06)", borderRadius: 18, padding: "18px", marginBottom: 20, minHeight: 72, display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid " + color + "22" }}>
-          {rec.state === "idle" && <div style={{ color: "#c0a080", fontSize: 12, fontStyle: "italic" }}>Your voice will appear here</div>}
-          {rec.state === "requesting" && <div style={{ color: "#b09070", fontSize: 12 }}>Waiting for mic permission...</div>}
-          {rec.state === "recording" && <div style={{ display: "flex", gap: 3, alignItems: "center", height: 28 }}>{[0.6,1,0.7,0.9,0.5].map((h,i) => <div key={i} style={{ width: 3, borderRadius: 2, background: color, height: h*22, opacity: 0.8, animation: "pulse " + (0.6+i*0.1) + "s ease-in-out infinite alternate" }} />)}</div>}
-          {rec.state === "done" && (
-            <div style={{ width: "100%" }}>
-              <audio controls src={rec.audioUrl} preload="auto"
-                style={{ width: "100%", accentColor: color }} />
+        <div style={{flex:1,overflowY:"auto",padding:"0 18px 22px"}}>
+          {!mode&&(
+            <div style={{animation:"fadeIn .25s ease"}}>
+              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:18,lineHeight:1.6}}>Choose how to add this memory.</div>
+              {[{id:"quick",icon:"⚡",title:"Quick drop",desc:"Just the photo. Add voices later."},{id:"story",icon:"🎙",title:"Tell the story",desc:"Photo + your voice about this moment."}].map(m=>(
+                <div key={m.id} onClick={()=>{setMode(m.id);setStep(1)}} style={{background:"#fff",borderRadius:17,padding:"15px 17px",border:"2px solid rgba(200,148,58,.18)",cursor:"pointer",marginBottom:11,boxShadow:"0 2px 10px rgba(150,100,40,.07)"}}>
+                  <div style={{fontSize:26,marginBottom:7}}>{m.icon}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:"#2a1505",marginBottom:3}}>{m.title}</div>
+                  <div style={{fontSize:12,color:"#7a5c38",lineHeight:1.5}}>{m.desc}</div>
+                </div>
+              ))}
             </div>
           )}
-          {rec.state === "error" && <div style={{ color: "#c06858", fontSize: 12, textAlign: "center" }}>Mic blocked — needs https://</div>}
-        </div>
-
-        {(rec.state === "idle" || rec.state === "error") && (
-          <button onClick={rec.start} style={{ width: "100%", padding: "15px", borderRadius: 18, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>🎙 Start Recording</button>
-        )}
-        {rec.state === "requesting" && <div style={{ textAlign: "center", padding: "12px", color: "#b09070", fontSize: 13 }}>Allow microphone in the browser popup</div>}
-        {rec.state === "recording" && (
-          <button onClick={rec.stop} style={{ width: "100%", padding: "15px", borderRadius: 18, background: "linear-gradient(135deg,#c06858,#8b3a28)", border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", animation: "pulse 1.5s ease infinite" }}>⏹ Stop Recording</button>
-        )}
-        {rec.state === "done" && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={rec.reset} style={{ padding: "13px 18px", borderRadius: 16, background: "transparent", border: "1.5px solid " + color, color: color, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>🔄 Redo</button>
-            <button onClick={save} disabled={saving} style={{ flex: 1, padding: "13px", borderRadius: 16, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              {saving ? <Spin color="#fff" size={16} /> : "✅ Save this voice"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── ADD MEMORY SHEET ──────────────────────────────────────────────────────────
-// Flow: Step 1 = Photo  |  Step 2 = Voice  |  Step 3 = Review & Edit  |  Step 4 = Done
-function AddMemorySheet({ circle, userName, onSaved, onClose }) {
-  const [step, setStep] = useState(1);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [playing, setPlaying] = useState(false);
-
-  // Editable review fields — populated from voice extraction
-  const [place, setPlace] = useState("");
-  const [month, setMonth] = useState("");
-  const [year, setYear] = useState("");
-  const [tagged, setTagged] = useState([]);
-  const [transcript, setTranscript] = useState("");
-
-  const fileRef = useRef(null);
-  const audioRef = useRef(null);
-  const rec = useRecorder();
-  const speech = useSpeech();
-  const color = circle.color || "#c8943a";
-
-  const handlePhoto = async e => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-    // Read EXIF silently — pre-fill date and location if found
-    try {
-      const exif = await readExif(file);
-      if (exif.year) setYear(String(exif.year));
-      if (exif.month) setMonth(exif.month);
-      if (exif.gps) {
-        const city = await reverseGeocode(exif.gps.lat, exif.gps.lon);
-        if (city) setPlace(city);
-      }
-    } catch(e) {}
-  };
-
-  // Capture transcript at stop time via ref — most reliable on iOS
-  const liveTranscriptRef = useRef("");
-  useEffect(() => { liveTranscriptRef.current = speech.transcript; }, [speech.transcript]);
-
-  const handleStartRec = () => {
-    speech.reset();
-    liveTranscriptRef.current = "";
-    speech.start();
-    setTimeout(() => rec.start(), 200);
-  };
-
-  const handleStopRec = () => {
-    // Snapshot transcript NOW before speech recognition clears it
-    const snapTx = liveTranscriptRef.current || speech.transcript || "";
-    rec.stop();
-    speech.stop();
-    // Extract after a delay to let rec.state update
-    // Voice only fills EMPTY fields — never overwrites what EXIF already found
-    setTimeout(() => {
-      const tx = snapTx || liveTranscriptRef.current || "";
-      const data = extractFromText(tx, circle.members || []);
-      if (data.place) setPlace(prev => prev || data.place);
-      if (data.month) setMonth(prev => prev || data.month);
-      if (data.year)  setYear(prev => prev || String(data.year));
-      if (data.people && data.people.length > 0) setTagged(data.people);
-      setTranscript(tx);
-    }, 300);
-  };
-
-  // Auto-advance to review when recording is done
-  useEffect(() => {
-    if (rec.state === "done") {
-      setTimeout(() => setStep(3), 600);
-    }
-  }, [rec.state]);
-
-  const toggleTag = name => setTagged(ts => ts.includes(name) ? ts.filter(n => n !== name) : [...ts, name]);
-
-  const finish = async () => {
-    setSaving(true);
-    try {
-      const people = [userName, ...tagged.filter(t => t !== userName)];
-      const meta = {
-        place: place || null,
-        year: year ? parseInt(year) : null,
-        month: month || null,
-        caption: null,
-      };
-      await dbSaveMemory(circle.id, people, meta, photoFile, rec.audioBlob, rec.duration, userName);
-      // Don't reload entire circle — just signal success and let parent refresh lazily
-      onSaved(null);
-      setStep(4);
-      setTimeout(onClose, 1800);
-    } catch(e) {
-      alert("Could not save. Please check your connection.");
-      setSaving(false);
-    }
-  };
-
-  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-  return (
-    <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(18,8,2,0.9)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end", borderRadius: 42 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fdf6ec", borderRadius: "28px 28px 0 0", maxHeight: "94%", display: "flex", flexDirection: "column", animation: "slideUp 0.3s ease", paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
-
-        {/* Header */}
-        <div style={{ padding: "14px 18px 0", flexShrink: 0 }}>
-          <div style={{ width: 32, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 14px" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410" }}>
-              {step === 1 && "📸 Add a photo"}
-              {step === 2 && "🎙 Tell the story"}
-              {step === 3 && "✏️ Looks right?"}
-              {step === 4 && "🎉 Saved!"}
-            </div>
-            <button onClick={onClose} style={{ background: "rgba(196,154,60,0.12)", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", color: "#9c7a52" }}>✕</button>
-          </div>
-          {step < 4 && (
-            <div style={{ display: "flex", gap: 4, marginBottom: 14 }}>
-              {[1, 2, 3].map(s => <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, transition: "background 0.3s", background: step >= s ? color : "rgba(196,154,60,0.2)" }} />)}
+          {mode==="quick"&&(
+            <div style={{animation:"fadeIn .25s ease"}}>
+              <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
+              <div onClick={()=>fRef.current?.click()} style={{height:195,borderRadius:17,overflow:"hidden",cursor:"pointer",background:prev?"url("+prev+") center/cover":"rgba(200,148,58,.07)",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
+                {!prev&&<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:38,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
+              </div>
+              <button onClick={prev?qSave:()=>fRef.current?.click()} disabled={saving} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:prev?"✅ Drop it in":"📷 Choose photo"}</button>
             </div>
           )}
-        </div>
-
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 18px 24px" }}>
-
-          {/* ── STEP 1: Photo ─────────────────────────────────────────── */}
-          {step === 1 && (
-            <div style={{ animation: "fadeIn 0.2s ease" }}>
-              <div style={{ fontSize: 13, color: "#7a5c38", fontStyle: "italic", marginBottom: 16, lineHeight: 1.6 }}>Start with a photo, or skip straight to the voice.</div>
-              <div
-                onClick={() => fileRef.current && fileRef.current.click()}
-                style={{ height: 190, borderRadius: 20, marginBottom: 20, overflow: "hidden", position: "relative", cursor: "pointer", background: photoPreview ? "url(" + photoPreview + ") center/cover" : "rgba(196,148,58,0.07)", border: "2px dashed " + (photoPreview ? "transparent" : color + "55"), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
-              >
-                {photoPreview
-                  ? <div style={{ position: "absolute", bottom: 10, right: 10, background: "rgba(0,0,0,0.5)", borderRadius: 20, padding: "4px 10px", fontSize: 11, color: "#fff" }}>Tap to change</div>
-                  : (
-                    <React.Fragment>
-                      <div style={{ fontSize: 44, marginBottom: 8, opacity: 0.4 }}>📷</div>
-                      <div style={{ fontSize: 13, color: color, fontWeight: 600 }}>Tap to add photo</div>
-                      <div style={{ fontSize: 11, color: "#b09070", marginTop: 4 }}>Optional</div>
-                    </React.Fragment>
-                  )
-                }
+          {mode==="story"&&step===1&&(
+            <div style={{animation:"fadeIn .25s ease"}}>
+              <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
+              <div onClick={()=>fRef.current?.click()} style={{height:175,borderRadius:17,overflow:"hidden",cursor:"pointer",background:prev?"url("+prev+") center/cover":"rgba(200,148,58,.07)",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:15}}>
+                {!prev&&<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:34,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
               </div>
-              <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handlePhoto} style={{ display: "none" }} />
-              <div style={{ display: "flex", gap: 10 }}>
-                {photoPreview && (
-                  <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); }} style={{ padding: "12px 16px", borderRadius: 16, background: "transparent", border: "1.5px solid " + color, color: color, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>✕</button>
-                )}
-                <button onClick={() => setStep(2)} style={{ flex: 1, padding: "14px", borderRadius: 17, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
-                  {photoPreview ? "Next: Add voice →" : "Skip → Add voice"}
-                </button>
-              </div>
+              <button onClick={()=>setStep(2)} className="bA" style={{width:"100%",fontSize:15}}>{photo?"Next: Record voice →":"Skip photo, add voice →"}</button>
             </div>
           )}
-
-          {/* ── STEP 2: Voice ─────────────────────────────────────────── */}
-          {step === 2 && (
-            <div style={{ animation: "fadeIn 0.2s ease" }}>
-              {photoPreview && <div style={{ height: 90, borderRadius: 16, marginBottom: 16, background: "url(" + photoPreview + ") center/cover", overflow: "hidden" }} />}
-
-              <div style={{ background: "rgba(196,148,58,0.06)", borderRadius: 22, padding: "20px", marginBottom: 16, border: "1px solid " + color + "22" }}>
-
-                {/* Hint text — only when idle */}
-                {(rec.state === "idle" || rec.state === "error") && (
-                  <div style={{ fontSize: 12, color: "#b09070", fontStyle: "italic", textAlign: "center", lineHeight: 1.8, marginBottom: 18 }}>
-                    Speak naturally — just describe the moment.<br />
-                    <span style={{ color: color, fontStyle: "normal", fontWeight: 600 }}>"This was Shimla, March 2022.<br />Papa and Dadi were there — we were all laughing..."</span>
-                  </div>
-                )}
-
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-                  {rec.state === "requesting" && <div style={{ fontSize: 13, color: "#b09070" }}>Allow microphone access...</div>}
-
-                  {rec.state === "recording" && (
-                    <React.Fragment>
-                      <LiveWave analyser={rec.analyser} color={color} />
-                      <div style={{ fontSize: 13, color: color, fontWeight: 700 }}>Recording — {fmtDur(rec.duration)}</div>
-                      {speech.transcript && speech.transcript.length > 0 && (
-                        <div style={{ fontSize: 11, color: "#7a5c38", fontStyle: "italic", textAlign: "center", lineHeight: 1.6, padding: "0 4px", wordBreak: "break-word" }}>
-                          "{speech.transcript.length > 120 ? speech.transcript.slice(0, 120) + "..." : speech.transcript}"
-                        </div>
-                      )}
-                    </React.Fragment>
-                  )}
-
-                  {rec.state === "done" && (
-                    <React.Fragment>
-                      <Spin color={color} size={20} />
-                      <div style={{ fontSize: 12, color: color }}>Reading your voice...</div>
-                    </React.Fragment>
-                  )}
-
-                  {(rec.state === "idle" || rec.state === "error" || rec.state === "recording") && (
-                    <MicBtn
-                      on={rec.state === "recording"}
-                      color={color}
-                      size={84}
-                      onClick={rec.state === "recording" ? handleStopRec : handleStartRec}
-                    />
-                  )}
-
-                  <div style={{ fontSize: 11, color: rec.state === "recording" ? "#c06858" : color, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" }}>
-                    {rec.state === "idle" && "Tap to record"}
-                    {rec.state === "recording" && "Tap to stop"}
-                    {rec.state === "error" && "Mic blocked — needs https://"}
-                    {rec.state === "done" && ""}
-                  </div>
-                </div>
+          {mode==="story"&&step===2&&(
+            <div style={{animation:"fadeIn .25s ease"}}>
+              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.6,marginBottom:14}}>Speak naturally. Say when, where, who. Your words become the memory.</div>
+              <div style={{minHeight:75,background:"rgba(200,148,58,.06)",borderRadius:15,padding:13,marginBottom:13,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap below to start</div>}
+                {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
+                  <div style={{display:"flex",gap:3,height:22}}>{[.6,1,.7,.9,.5].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*20,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
+                  <div style={{fontSize:12,color:"#b09070"}}>{fd(rec.dur)}</div>
+                  {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5}}>{sp.transcript.substring(0,100)}</div>}
+                </div>}
+                {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
               </div>
-
-              <div style={{ display: "flex", gap: 10 }}>
-                <button onClick={() => setStep(1)} style={{ padding: "12px 16px", borderRadius: 16, background: "transparent", border: "1.5px solid " + color, color: color, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>← Back</button>
-                <button onClick={() => setStep(3)} style={{ flex: 1, padding: "12px", borderRadius: 16, background: "rgba(196,154,60,0.15)", border: "none", color: "#9c7a52", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                  Skip → Review
-                </button>
-              </div>
+              {rec.state==="idle"&&<button onClick={()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)}} className="bA" style={{width:"100%",fontSize:15}}>🎙 Start Recording</button>}
+              {rec.state==="recording"&&<button onClick={()=>{rec.stop();sp.stop()}} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop</button>}
+              {rec.state==="done"&&<div style={{display:"flex",gap:9}}>
+                <button onClick={rec.reset} className="bG">🔄 Redo</button>
+                <button onClick={()=>{const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setStep(3)}} className="bA" style={{flex:1}}>Next →</button>
+              </div>}
             </div>
           )}
-
-          {/* ── STEP 3: Review & Edit ──────────────────────────────────── */}
-          {step === 3 && (
-            <div style={{ animation: "fadeIn 0.25s ease" }}>
-
-              {/* Photo thumbnail */}
-              {photoPreview && <div style={{ height: 90, borderRadius: 16, marginBottom: 16, background: "url(" + photoPreview + ") center/cover", overflow: "hidden" }} />}
-
-              {/* Voice playback */}
-              {rec.audioUrl && (
-                <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 6 }}>🎙 Your recording</div>
-                  <audio controls src={rec.audioUrl} preload="auto"
-                    style={{ width: "100%", accentColor: color }} />
-                </div>
-              )}
-
-              {transcript.length > 0 && (
-                <div style={{ background: "rgba(196,148,58,0.07)", borderRadius: 12, padding: "9px 14px", marginBottom: 12, border: "1px solid rgba(196,154,60,0.15)" }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 4 }}>🎙 We heard</div>
-                  <div style={{ fontSize: 12, color: "#7a5c38", fontStyle: "italic", lineHeight: 1.6 }}>"{transcript.length > 160 ? transcript.slice(0, 160) + "..." : transcript}"</div>
-                </div>
-              )}
-              {transcript.length === 0 && rec.audioUrl && (
-                <div style={{ background: "rgba(196,148,58,0.05)", borderRadius: 12, padding: "9px 14px", marginBottom: 12, border: "1px dashed rgba(196,154,60,0.2)", textAlign: "center" }}>
-                  <div style={{ fontSize: 11, color: "#b09070", fontStyle: "italic" }}>Couldn't catch the words — fill in the fields below</div>
-                </div>
-              )}
-              <div style={{ fontSize: 11, color: "#b09070", fontStyle: "italic", marginBottom: 12, textAlign: "center" }}>
-                {!rec.audioUrl && "Fill in the details below"}
-              </div>
-
-              {/* Editable fields */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
-
-                {/* Place + Year in one row */}
-                <div style={{ display: "flex", gap: 10 }}>
-                  <div style={{ flex: 1.4, background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 6 }}>📍 Place</div>
-                    <input value={place} onChange={e => setPlace(e.target.value)} placeholder="London, Shimla..." style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, color: "#3d2410", outline: "none", fontFamily: "Georgia,serif" }} />
+          {mode==="story"&&step===3&&(
+            <div style={{animation:"fadeIn .25s ease"}}>
+              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.6,marginBottom:14}}>Extracted from what you said. Fix anything off.</div>
+              <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:16}}>
+                {[["Year",year,setYear,"e.g. 2019"],["Place",place,setPlace,"e.g. Goa"]].map(([lbl,val,set,ph])=>(
+                  <div key={lbl}>
+                    <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:5}}>{lbl}</div>
+                    <input className="inp" value={val} onChange={e=>set(e.target.value)} placeholder={ph}/>
                   </div>
-                  <div style={{ flex: 1, background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 6 }}>📅 Year</div>
-                    <input value={year} onChange={e => setYear(e.target.value)} placeholder="2025" type="number" style={{ width: "100%", border: "none", background: "transparent", fontSize: 13, color: "#3d2410", outline: "none", fontFamily: "Georgia,serif" }} />
-                  </div>
-                </div>
-
-                {/* Month picker */}
-                <div style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 8 }}>🗓 Month</div>
-                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                    {MONTHS.map(m => (
-                      <button key={m} onClick={() => setMonth(month === m ? "" : m)} style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10, cursor: "pointer", border: "1px solid " + (month === m ? color : "rgba(196,154,60,0.22)"), background: month === m ? color + "18" : "transparent", color: month === m ? color : "#7a5c38", fontWeight: month === m ? 700 : 400 }}>
-                        {m.slice(0, 3)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* People */}
-                <div style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 8 }}>👥 People</div>
-                  {/* Always-on: current user */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <Av name={userName} size={28} col={color} />
-                    <span style={{ fontSize: 12, color: "#3d2410", flex: 1 }}>{userName}</span>
-                    <span style={{ fontSize: 11, color: color }}>✅</span>
-                  </div>
-                  {(circle.members || []).map(mem => (
-                    <div key={mem.id} onClick={() => toggleTag(mem.name)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", cursor: "pointer", borderTop: "1px solid rgba(196,154,60,0.08)" }}>
-                      <Av name={mem.name} size={28} />
-                      <span style={{ fontSize: 12, color: "#3d2410", flex: 1 }}>{mem.name}</span>
-                      <div style={{ width: 20, height: 20, borderRadius: "50%", background: tagged.includes(mem.name) ? color : "rgba(196,154,60,0.12)", border: "1.5px solid " + (tagged.includes(mem.name) ? color : "rgba(196,154,60,0.3)"), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {tagged.includes(mem.name) && <span style={{ fontSize: 10, color: "#fff" }}>✓</span>}
-                      </div>
+                ))}
+                {(album.members||[]).length>0&&(
+                  <div>
+                    <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>Who's in this memory</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                      {album.members.map(m=><div key={m.id} onClick={()=>setTagged(ts=>ts.includes(m.name)?ts.filter(n=>n!==m.name):[...ts,m.name])} style={{padding:"6px 13px",borderRadius:18,background:tagged.includes(m.name)?C:"rgba(200,148,58,.1)",color:tagged.includes(m.name)?"#fff":"#7a5c38",fontSize:13,cursor:"pointer",border:"1px solid "+(tagged.includes(m.name)?C:"rgba(200,148,58,.22)"),transition:"all .2s"}}>{m.name}</div>)}
                     </div>
-                  ))}
-                  {(circle.members || []).length === 0 && <div style={{ fontSize: 11, color: "#c0a080", fontStyle: "italic" }}>No circle members yet</div>}
-                </div>
-
-              </div>
-
-              {/* Save button */}
-              <button onClick={finish} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: 17, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                {saving ? <Spin color="#fff" size={18} /> : "✅ Save Memory"}
-              </button>
-
-              {/* Re-record option */}
-              {rec.audioUrl && (
-                <button onClick={() => { rec.reset(); speech.reset(); setStep(2); setPlace(""); setMonth(""); setYear(""); setTagged([]); setTranscript(""); }} style={{ width: "100%", marginTop: 8, padding: "8px", background: "none", border: "none", color: "#b09070", fontSize: 11, cursor: "pointer", textDecoration: "underline" }}>
-                  🎙 Re-record voice
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── STEP 4: Done ──────────────────────────────────────────── */}
-          {step === 4 && (
-            <div style={{ textAlign: "center", padding: "28px 10px", animation: "pop 0.4s ease" }}>
-              <div style={{ fontSize: 60, marginBottom: 14 }}>🎉</div>
-              <div style={{ fontSize: 19, fontWeight: 800, color: "#3d2410", marginBottom: 8 }}>Memory saved!</div>
-              <div style={{ fontSize: 13, color: "#b09070", fontStyle: "italic", lineHeight: 1.8 }}>
-                {place && <span>📍 {place}<br /></span>}
-                {month && year && <span>📅 {month} {year}<br /></span>}
-                Stored safely in the cloud.
-              </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── ADD MEMBER FORM ───────────────────────────────────────────────────────────
-function AddMemberForm({ color, onAdd }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [showPhone, setShowPhone] = useState(false);
-  const doAdd = () => {
-    if (!name.trim()) return;
-    onAdd({ id: Date.now(), name: name.trim(), phone: phone.trim(), joined: false, code: mkCode() });
-    setName(""); setPhone(""); setShowPhone(false);
-  };
-  return (
-    <div style={{ background: "#fff", borderRadius: 15, padding: "13px", marginBottom: 14, border: "1px solid rgba(196,154,60,0.14)" }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#b09070", marginBottom: 9 }}>Add a Member</div>
-      <div style={{ display: "flex", gap: 7, marginBottom: showPhone ? 8 : 0 }}>
-        <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && doAdd()} placeholder="Their name..." style={{ flex: 1, padding: "9px 12px", borderRadius: 11, border: "1.5px solid rgba(196,154,60,0.25)", background: "#fdf6ec", fontSize: 13, color: "#3d2410", outline: "none" }} />
-        {!showPhone && <button onClick={() => name.trim() && setShowPhone(true)} style={{ padding: "9px 12px", borderRadius: 11, background: "rgba(196,154,60,0.08)", border: "1px solid rgba(196,154,60,0.2)", color: "#9c7a52", fontSize: 18, cursor: "pointer", opacity: name.trim() ? 1 : 0.4 }}>📱</button>}
-        {!showPhone && <button onClick={doAdd} style={{ padding: "9px 15px", borderRadius: 11, background: name.trim() ? "linear-gradient(135deg," + color + "," + color + "cc)" : "rgba(196,154,60,0.15)", border: "none", color: name.trim() ? "#fff" : "#c0a080", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Add</button>}
-      </div>
-      {showPhone && (
-        <div style={{ animation: "fadeIn 0.2s ease" }}>
-          <div style={{ fontSize: 10, color: "#b09070", marginBottom: 5, fontStyle: "italic" }}>📱 Phone for WhatsApp invite</div>
-          <div style={{ display: "flex", gap: 7 }}>
-            <input value={phone} onChange={e => setPhone(e.target.value)} onKeyDown={e => e.key === "Enter" && doAdd()} placeholder="+91 98765 43210" type="tel" style={{ flex: 1, padding: "9px 12px", borderRadius: 11, border: "1.5px solid rgba(196,154,60,0.25)", background: "#fdf6ec", fontSize: 13, color: "#3d2410", outline: "none", fontFamily: "monospace" }} />
-            <button onClick={doAdd} style={{ padding: "9px 15px", borderRadius: 11, background: name.trim() ? "linear-gradient(135deg," + color + "," + color + "cc)" : "rgba(196,154,60,0.15)", border: "none", color: name.trim() ? "#fff" : "#c0a080", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Add</button>
-          </div>
-          <button onClick={() => setShowPhone(false)} style={{ background: "none", border: "none", color: "#b09070", fontSize: 10, cursor: "pointer", marginTop: 4 }}>Skip phone</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function InviteActions({ mem, circle, copied, onCopied }) {
-  const link = "ourstory.app/join/" + circle.code + "/" + mem.code;
-  const msg = "Hi " + mem.name + "! I've added you to *" + circle.label + "* on Our Story 🏡\n\nTap to join: https://" + link + "\n\nJust type your name — no password needed!";
-  const hasPhone = mem.phone && cleanPhone(mem.phone).length >= 8;
-  const waUrl = hasPhone ? "https://wa.me/" + cleanPhone(mem.phone).replace("+", "") + "?text=" + encodeURIComponent(msg) : "https://wa.me/?text=" + encodeURIComponent(msg);
-  const doCopy = () => { if (navigator.clipboard) navigator.clipboard.writeText("https://" + link).catch(() => {}); onCopied(mem.id); };
-  return (
-    <div>
-      <div style={{ background: "rgba(196,148,58,0.07)", borderRadius: 8, padding: "6px 10px", fontSize: 10, color: "#7a5c38", fontFamily: "monospace", marginBottom: 8, wordBreak: "break-all" }}>{link}</div>
-      <div style={{ display: "flex", gap: 7 }}>
-        <button onClick={doCopy} style={{ flex: 1, padding: "8px", borderRadius: 10, background: copied === mem.id ? "#e8f5e0" : circle.color + "14", border: "1px solid " + circle.color + "33", color: copied === mem.id ? "#5a8060" : circle.color, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>{copied === mem.id ? "✅ Copied!" : "📋 Copy link"}</button>
-        <button onClick={() => window.open(waUrl, "_blank")} style={{ flex: hasPhone ? 1.4 : 1, padding: "8px", borderRadius: 10, background: "#25D366", border: "none", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>💬 {hasPhone ? "WhatsApp " + mem.name.split(" ")[0] : "WhatsApp"}</button>
-      </div>
-      {!hasPhone && <div style={{ fontSize: 9.5, color: "#b09070", marginTop: 5, fontStyle: "italic", textAlign: "center" }}>Add phone for direct WhatsApp</div>}
-    </div>
-  );
-}
-
-// ── MEMORY CARD ───────────────────────────────────────────────────────────────
-function Card({ m, compact, accent, userName, onAddVoice, onEdit }) {
-  const [liked, setLiked] = useState(false);
-  const voices = m.voices || [];
-  const coverBg = m.photo_url ? "url(" + m.photo_url + ") center/cover" : (m.grad || "linear-gradient(145deg,#f5e0b8,#e8c070)");
-
-  return (
-    <div style={{ background: "#fffbf3", borderRadius: 14, overflow: "hidden", marginBottom: 10, boxShadow: "0 3px 12px rgba(150,100,40,0.08)", border: "1px solid rgba(196,154,60,0.12)" }}>
-      <div onClick={() => onEdit && onEdit(m)} style={{ height: compact ? 82 : 124, background: coverBg, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", cursor: onEdit ? "pointer" : "default" }}>
-        {!m.photo_url && <span style={{ fontSize: compact ? 28 : 42, opacity: 0.55 }}>{m.emoji || "📸"}</span>}
-        {onEdit && <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,0.35)", borderRadius: 20, padding: "2px 8px", fontSize: 9, color: "#fff" }}>▶ Open</div>}
-        <div style={{ position: "absolute", bottom: 7, left: 8, right: 8, display: "flex", justifyContent: "space-between" }}>
-          <span style={{ background: "rgba(255,255,255,0.88)", borderRadius: 10, padding: "2px 7px", fontSize: 9, color: "#7a5c38" }}>📍 {m.place || "—"}</span>
-          <span style={{ background: "rgba(255,255,255,0.88)", borderRadius: 10, padding: "2px 7px", fontSize: 9, color: "#9c7a52" }}>{m.month} {m.year}</span>
-        </div>
-      </div>
-      <div style={{ padding: "9px 11px" }}>
-        <p style={{ fontSize: 11, color: "#9c7a52", lineHeight: 1.5, margin: 0 }}>{(m.people||[]).length > 0 ? "👤 " + (m.people||[]).join(", ") : <span style={{ fontStyle: "italic", color: "#c0a080" }}>No people tagged</span>}</p>
-        <div style={{ marginTop: 7, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            {voices.length > 0
-              ? voices.map((v, i) => <div key={i} style={{ marginLeft: i > 0 ? -5 : 0, border: "1.5px solid #fffbf3", borderRadius: "50%" }}><Av name={v.name} size={20} col={v.col} /></div>)
-              : <span style={{ fontSize: 10, color: "#c0a080", fontStyle: "italic" }}>No voices yet</span>
-            }
-            {voices.length > 0 && <span style={{ fontSize: 9, color: "#b09070", marginLeft: 6 }}>{voices.length} voice{voices.length !== 1 ? "s" : ""}</span>}
-          </div>
-          <button onClick={() => setLiked(!liked)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>{liked ? "❤️" : "🤍"}</button>
-        </div>
-        {!compact && voices.map((v, i) => (
-          <div key={i} style={{ marginTop: 8, background: "rgba(255,255,255,0.6)", borderRadius: 14, padding: "8px 10px", border: "1px solid rgba(196,154,60,0.10)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: v.audio_url ? 6 : 0 }}>
-              <Av name={v.name} size={22} col={v.col} />
-              <span style={{ fontSize: 10, color: "#7a5c38", flex: 1, fontWeight: 600 }}>{v.name}</span>
-              {v.duration && <span style={{ fontSize: 9, color: "#b09070" }}>{fmtDur(v.duration)}</span>}
-            </div>
-            {v.audio_url && (
-              <audio controls src={v.audio_url} preload="none"
-                style={{ width: "100%", height: 32, accentColor: v.col || "#c8943a" }} />
-            )}
-          </div>
-        ))}
-        {!compact && (
-          <button onClick={() => onAddVoice && onAddVoice(m)} style={{ width: "100%", marginTop: 8, padding: "7px", background: "transparent", border: "1.5px dashed " + accent, borderRadius: 20, color: "#9c7a52", fontSize: 10.5, cursor: "pointer", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-            🎙 Add {userName}'s voice
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-
-
-// ── MEMORY DETAIL VIEW ────────────────────────────────────────────────────────
-function MemoryDetail({ memory, circle, userName, onAddVoice, onEdit, onClose }) {
-  const [play, setPlay] = useState(null);
-  const audioRefs = useRef({});
-  const voices = memory.voices || [];
-  const color = circle.color || "#c8943a";
-  const coverBg = memory.photo_url
-    ? "url(" + memory.photo_url + ") center/cover"
-    : (memory.grad || "linear-gradient(145deg,#f5e0b8,#e8c070)");
-
-
-  return (
-    <div style={{ position: "absolute", inset: 0, background: "#fdf6ec", zIndex: 300, borderRadius: 42, display: "flex", flexDirection: "column", animation: "fadeIn 0.2s ease", overflow: "hidden" }}>
-
-      {/* Hero photo / gradient */}
-      <div style={{ height: 240, background: coverBg, position: "relative", flexShrink: 0 }}>
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, transparent 40%, rgba(26,14,5,0.7) 100%)" }} />
-
-        {/* Back button */}
-        <button onClick={onClose} style={{ position: "absolute", top: 14, left: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.35)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
-
-        {/* Edit button */}
-        <button onClick={() => onEdit && onEdit(memory)} style={{ position: "absolute", top: 14, right: 14, background: "rgba(0,0,0,0.35)", border: "none", borderRadius: 20, padding: "6px 12px", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>✏️ Edit</button>
-
-        {/* Place + date chips */}
-        <div style={{ position: "absolute", bottom: 14, left: 14, right: 14, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {memory.place && memory.place !== "—" && (
-            <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#fff", fontWeight: 600 }}>📍 {memory.place}</span>
-          )}
-          {(memory.month || memory.year) && (
-            <span style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "#fff", fontWeight: 600 }}>📅 {memory.month} {memory.year}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "18px 18px 24px" }}>
-
-        {/* People row */}
-        {(memory.people || []).length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
-            <div style={{ display: "flex" }}>
-              {(memory.people || []).slice(0, 6).map((name, i) => (
-                <div key={i} style={{ marginLeft: i > 0 ? -8 : 0, border: "2px solid #fdf6ec", borderRadius: "50%" }}>
-                  <Av name={name} size={32} />
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 12, color: "#7a5c38" }}>
-              {(memory.people || []).join(", ")}
-            </div>
-          </div>
-        )}
-
-        {/* Voices section */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 12 }}>
-            🎙 {voices.length === 0 ? "No voices yet" : voices.length === 1 ? "1 Voice" : voices.length + " Voices"}
-          </div>
-
-          {voices.length === 0 && (
-            <div style={{ background: "rgba(196,148,58,0.06)", borderRadius: 16, padding: "20px", textAlign: "center", border: "1.5px dashed " + color + "44" }}>
-              <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.4 }}>🎙</div>
-              <div style={{ fontSize: 12, color: "#b09070", marginBottom: 12, fontStyle: "italic" }}>Be the first to add a voice to this memory</div>
-              <button onClick={() => onAddVoice && onAddVoice(memory)} style={{ padding: "9px 20px", background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", borderRadius: 20, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>🎙 Record your voice</button>
-            </div>
-          )}
-
-          {voices.map((v, i) => (
-            <div key={i} style={{ background: "#fff", borderRadius: 18, padding: "14px", marginBottom: 10, border: "1px solid rgba(196,154,60,0.12)", boxShadow: "0 2px 8px rgba(150,100,40,0.06)" }}>
-              {/* Hidden audio element — DOM-based for iOS */}
-              {v.audio_url && <audio ref={el => audioRefs.current[i] = el} preload="none" style={{ display: "none" }} />}
-
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: v.audio_url ? 10 : 0 }}>
-                <Av name={v.name} size={38} col={v.col} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#3d2410" }}>{v.name}</div>
-                  <div style={{ fontSize: 10, color: "#b09070", marginTop: 1 }}>{v.duration ? fmtDur(v.duration) : ""}</div>
-                </div>
-              </div>
-              {v.audio_url && (
-                <audio controls src={v.audio_url} preload="none"
-                  style={{ width: "100%", accentColor: v.col || color }} />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Add your voice CTA */}
-        {voices.length > 0 && (
-          <button onClick={() => onAddVoice && onAddVoice(memory)} style={{ width: "100%", padding: "13px", background: "transparent", border: "1.5px dashed " + color, borderRadius: 18, color: color, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            🎙 Add {userName}'s voice
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── EDIT MEMORY SHEET ────────────────────────────────────────────────────────
-function EditMemorySheet({ memory, circle, userName, onSaved, onClose }) {
-  const [place, setPlace] = useState(memory.place || "");
-  const [month, setMonth] = useState(memory.month || "");
-  const [year, setYear] = useState(memory.year ? String(memory.year) : "");
-  const [tagged, setTagged] = useState(memory.people || []);
-  const [saving, setSaving] = useState(false);
-  const color = circle.color || "#c8943a";
-  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-  const toggleTag = name => setTagged(ts => ts.includes(name) ? ts.filter(n => n !== name) : [...ts, name]);
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await sb.from("memories").update({
-        place: place || "—",
-        month: month || memory.month,
-        year: year ? parseInt(year) : memory.year,
-        people: [userName, ...tagged.filter(t => t !== userName)],
-      }).eq("id", memory.id);
-      const updated = await dbLoadCircle(circle.code);
-      onSaved(updated);
-      onClose();
-    } catch(e) {
-      alert("Could not save. Please try again.");
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(18,8,2,0.9)", zIndex: 200, display: "flex", flexDirection: "column", justifyContent: "flex-end", borderRadius: 42 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fdf6ec", borderRadius: "28px 28px 0 0", maxHeight: "88%", display: "flex", flexDirection: "column", animation: "slideUp 0.3s ease", paddingBottom: "env(safe-area-inset-bottom,0px)" }}>
-        <div style={{ padding: "14px 18px 0", flexShrink: 0 }}>
-          <div style={{ width: 32, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 14px" }} />
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410" }}>✏️ Edit Memory</div>
-            <button onClick={onClose} style={{ background: "rgba(196,154,60,0.12)", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 14, cursor: "pointer", color: "#9c7a52" }}>✕</button>
-          </div>
-        </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 18px 24px", display: "flex", flexDirection: "column", gap: 10 }}>
-
-          {memory.photo_url && <div style={{ height: 90, borderRadius: 16, background: "url(" + memory.photo_url + ") center/cover", overflow: "hidden", flexShrink: 0 }} />}
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1.4, background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 6 }}>📍 Place</div>
-              <input value={place} onChange={e => setPlace(e.target.value)} placeholder="London, Shimla..." style={{ width: "100%", border: "none", background: "transparent", fontSize: 14, color: "#3d2410", outline: "none", fontFamily: "Georgia,serif" }} />
-            </div>
-            <div style={{ flex: 1, background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 6 }}>📅 Year</div>
-              <input value={year} onChange={e => setYear(e.target.value)} placeholder="2025" type="number" style={{ width: "100%", border: "none", background: "transparent", fontSize: 14, color: "#3d2410", outline: "none", fontFamily: "Georgia,serif" }} />
-            </div>
-          </div>
-
-          <div style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 8 }}>🗓 Month</div>
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-              {MONTHS.map(mo => (
-                <button key={mo} onClick={() => setMonth(month === mo ? "" : mo)} style={{ padding: "4px 10px", borderRadius: 20, fontSize: 10, cursor: "pointer", border: "1px solid " + (month === mo ? color : "rgba(196,154,60,0.22)"), background: month === mo ? color + "18" : "transparent", color: month === mo ? color : "#7a5c38", fontWeight: month === mo ? 700 : 400 }}>
-                  {mo.slice(0, 3)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ background: "#fff", borderRadius: 14, padding: "12px 14px", border: "1.5px solid rgba(196,154,60,0.18)" }}>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#b09070", marginBottom: 8 }}>👥 People</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-              <Av name={userName} size={28} col={color} />
-              <span style={{ fontSize: 12, color: "#3d2410", flex: 1 }}>{userName}</span>
-              <span style={{ fontSize: 11, color: color }}>✅</span>
-            </div>
-            {(circle.members || []).map(mem => (
-              <div key={mem.id} onClick={() => toggleTag(mem.name)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", cursor: "pointer", borderTop: "1px solid rgba(196,154,60,0.08)" }}>
-                <Av name={mem.name} size={28} />
-                <span style={{ fontSize: 12, color: "#3d2410", flex: 1 }}>{mem.name}</span>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", background: tagged.includes(mem.name) ? color : "rgba(196,154,60,0.12)", border: "1.5px solid " + (tagged.includes(mem.name) ? color : "rgba(196,154,60,0.3)"), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {tagged.includes(mem.name) && <span style={{ fontSize: 10, color: "#fff" }}>✓</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button onClick={save} disabled={saving} style={{ width: "100%", padding: "14px", borderRadius: 17, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-            {saving ? <Spin color="#fff" size={18} /> : "✅ Save Changes"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ONBOARDING SCREENS
-// ═══════════════════════════════════════════════════════════════════════════════
-function ScreenName({ onNext }) {
-  const [name, setName] = useState("");
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "28px 24px", textAlign: "center", background: "#fdf6ec" }}>
-      <div style={{ fontSize: 54, marginBottom: 12 }}>📖</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color: "#3d2410", marginBottom: 8 }}>Our Story</div>
-      <div style={{ fontSize: 13, color: "#b09070", fontStyle: "italic", lineHeight: 1.65, marginBottom: 32, maxWidth: 260 }}>A private place for memories — voices, moments, and stories only you share.</div>
-      <div style={{ width: "100%", marginBottom: 12 }}>
-        <div style={{ fontSize: 11, color: "#9c7a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 7, textAlign: "left" }}>What shall we call you?</div>
-        <input value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && name.trim() && onNext(name.trim())} placeholder="Your name..." style={{ width: "100%", padding: "14px 18px", borderRadius: 15, border: "2px solid rgba(196,154,60,0.25)", background: "rgba(255,255,255,0.88)", fontSize: 16, color: "#3d2410", outline: "none" }} />
-      </div>
-      <button onClick={() => name.trim() && onNext(name.trim())} style={{ width: "100%", padding: "14px", borderRadius: 17, background: name.trim() ? "linear-gradient(135deg,#c8943a,#8b5e28)" : "rgba(196,154,60,0.18)", border: "none", color: name.trim() ? "#fff" : "#c0a080", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Let's begin →</button>
-    </div>
-  );
-}
-
-function ScreenChoosePath({ userName, onJoin, onCreate, onBack }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fdf6ec" }}>
-      <div style={{ background: "linear-gradient(135deg,#3d2410,#6b3c18)", padding: "20px 18px", flexShrink: 0 }}>
-        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700, marginBottom: 12, display: "block" }}>← Back</button>
-        <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 4 }}>Hello, {userName} 👋</div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", fontStyle: "italic" }}>How would you like to start?</div>
-      </div>
-      <div style={{ flex: 1, padding: "20px 18px", display: "flex", flexDirection: "column", gap: 14, justifyContent: "center" }}>
-        {[
-          { icon: "🔗", title: "Join a Circle", desc: "Someone invited you — join using your invite link.", tags: ["Got an invite", "Joining family"], cb: onJoin },
-          { icon: "✨", title: "Create a Circle", desc: "Start your own group and invite people in.", tags: ["Starting fresh", "I'm the organiser"], cb: onCreate }
-        ].map(p => (
-          <div key={p.title} onClick={p.cb} style={{ background: "#fff", borderRadius: 20, padding: "20px", border: "2px solid rgba(196,154,60,0.18)", cursor: "pointer", boxShadow: "0 4px 18px rgba(150,100,40,0.09)", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,#c8943a,#e8c070)" }} />
-            <div style={{ fontSize: 32, marginBottom: 10 }}>{p.icon}</div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410", marginBottom: 5 }}>{p.title}</div>
-            <div style={{ fontSize: 12, color: "#7a5c38", lineHeight: 1.6, marginBottom: 12 }}>{p.desc}</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{p.tags.map(t => <span key={t} style={{ background: "rgba(196,148,58,0.10)", borderRadius: 20, padding: "3px 10px", fontSize: 10, color: "#9c7a52" }}>{t}</span>)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ScreenJoinCode({ onJoined, onBack }) {
-  const [code, setCode] = useState("");
-  const [status, setStatus] = useState("idle");
-  const [err, setErr] = useState("");
-  const tryJoin = async () => {
-    if (!code.trim()) return;
-    setStatus("loading"); setErr("");
-    try {
-      const circleCode = code.trim().split("/").pop().toUpperCase();
-      const c = await dbLoadCircle(circleCode);
-      if (!c) { setStatus("idle"); setErr("Circle not found. Check your invite link."); return; }
-      setStatus("found");
-      setTimeout(() => onJoined(c), 1000);
-    } catch(e) {
-      setStatus("idle");
-      setErr("Connection error — check your internet and try again.");
-    }
-  };
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fdf6ec" }}>
-      <div style={{ background: "linear-gradient(135deg,#c8943a,#8b5e28)", padding: "16px 18px", flexShrink: 0 }}>
-        <button onClick={onBack} style={{ background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700, marginBottom: 10, display: "block" }}>← Back</button>
-        <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)", marginBottom: 4 }}>Joining a Circle</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>Enter your invite code</div>
-      </div>
-      <div style={{ flex: 1, padding: "22px 18px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <div style={{ background: "#fff", borderRadius: 16, padding: "16px", border: "1px solid rgba(196,154,60,0.14)" }}>
-          <div style={{ fontSize: 11, color: "#9c7a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 9 }}>Paste your invite link or code</div>
-          <input value={code} onChange={e => setCode(e.target.value)} placeholder="ourstory.app/join/... or ABC123" style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1.5px solid rgba(196,154,60,0.25)", background: "#fdf6ec", fontSize: 13, color: "#3d2410", outline: "none", fontFamily: "monospace" }} />
-          {err && <div style={{ fontSize: 11, color: "#c06858", marginTop: 6 }}>{err}</div>}
-        </div>
-        {status === "idle" && <button onClick={tryJoin} style={{ width: "100%", padding: "14px", borderRadius: 16, background: code.trim() ? "linear-gradient(135deg,#c8943a,#8b5e28)" : "rgba(196,154,60,0.18)", border: "none", color: code.trim() ? "#fff" : "#c0a080", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Find my circle →</button>}
-        {status === "loading" && <div style={{ textAlign: "center", padding: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}><Spin /><div style={{ fontSize: 13, color: "#b09070" }}>Looking up your circle...</div></div>}
-        {status === "found" && <div style={{ background: "#fff", borderRadius: 16, padding: "16px", border: "1px solid rgba(196,154,60,0.14)" }}><div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410", marginBottom: 8 }}>Circle found! Joining...</div><div style={{ height: 4, borderRadius: 2, background: "rgba(196,154,60,0.15)", overflow: "hidden" }}><div style={{ height: "100%", background: "#c8943a", animation: "grow 1s linear forwards" }} /></div></div>}
-      </div>
-    </div>
-  );
-}
-
-function ScreenCreateCircle({ onBack, onCreate }) {
-  const [step, setStep] = useState(1);
-  const [label, setLabel] = useState("");
-  const [emoji, setEmoji] = useState("🏡");
-  const [colorIdx, setColorIdx] = useState(0);
-  const [members, setMembers] = useState([]);
-  const [creating, setCreating] = useState(false);
-  const color = CIRCLE_COLORS[colorIdx];
-
-  const finish = async () => {
-    setCreating(true);
-    try {
-      const code = mkCode();
-      await dbCreateCircle(label, emoji, color, code, members);
-      const full = await dbLoadCircle(code);
-      onCreate(full);
-    } catch(e) {
-      alert("Could not create circle. Please try again.");
-      setCreating(false);
-    }
-  };
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fdf6ec" }}>
-      <div style={{ background: "linear-gradient(135deg," + color + "," + color + "cc)", padding: "16px 18px", flexShrink: 0, transition: "background 0.4s" }}>
-        <button onClick={step > 1 ? () => setStep(s => s - 1) : onBack} style={{ background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700, marginBottom: 10, display: "block" }}>← Back</button>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ fontSize: 24 }}>{emoji}</div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{label || "Give it a name..."}</div>
-        </div>
-        <div style={{ display: "flex", gap: 5, marginTop: 10 }}>{[1, 2, 3].map(s => <div key={s} style={{ height: 3, flex: 1, borderRadius: 2, background: step >= s ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.25)", transition: "background 0.3s" }} />)}</div>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "18px 16px" }}>
-        {step === 1 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410", marginBottom: 4 }}>What's this circle called?</div>
-            <div style={{ fontSize: 12, color: "#b09070", fontStyle: "italic", marginBottom: 16 }}>Family, School Gang, SG Friends — anything that feels right.</div>
-            <input value={label} onChange={e => setLabel(e.target.value)} onKeyDown={e => e.key === "Enter" && label.trim() && setStep(2)} placeholder="Circle name..." style={{ width: "100%", padding: "14px 16px", borderRadius: 14, border: "2px solid rgba(196,154,60,0.25)", background: "rgba(255,255,255,0.88)", fontSize: 15, color: "#3d2410", outline: "none", marginBottom: 10 }} />
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 20 }}>
-              {["Family", "School Gang", "College Batch", "Work Friends", "Cousins"].map(s => (
-                <button key={s} onClick={() => setLabel(s)} style={{ padding: "5px 12px", borderRadius: 20, background: label === s ? color + "22" : "rgba(255,255,255,0.7)", border: "1px solid " + (label === s ? color : "rgba(196,154,60,0.2)"), color: label === s ? color : "#7a5c38", fontSize: 11, cursor: "pointer" }}>{s}</button>
-              ))}
-            </div>
-            <button onClick={() => label.trim() && setStep(2)} style={{ width: "100%", padding: "13px", borderRadius: 16, background: label.trim() ? "linear-gradient(135deg," + color + "," + color + "cc)" : "rgba(196,154,60,0.18)", border: "none", color: label.trim() ? "#fff" : "#c0a080", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Next →</button>
-          </div>
-        )}
-        {step === 2 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410", marginBottom: 16 }}>Give it a look</div>
-            <div style={{ fontSize: 11, color: "#9c7a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Icon</div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-              {CIRCLE_EMOJIS.map(e => <button key={e} onClick={() => setEmoji(e)} style={{ width: 42, height: 42, borderRadius: 12, fontSize: 20, cursor: "pointer", background: emoji === e ? color + "22" : "rgba(255,255,255,0.7)", border: "2px solid " + (emoji === e ? color : "transparent") }}>{e}</button>)}
-            </div>
-            <div style={{ fontSize: 11, color: "#9c7a52", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Colour</div>
-            <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-              {CIRCLE_COLORS.map((c, i) => <button key={c} onClick={() => setColorIdx(i)} style={{ width: 34, height: 34, borderRadius: "50%", background: c, cursor: "pointer", border: colorIdx === i ? "3px solid #3d2410" : "3px solid transparent" }} />)}
-            </div>
-            <button onClick={() => setStep(3)} style={{ width: "100%", padding: "13px", borderRadius: 16, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Next →</button>
-          </div>
-        )}
-        {step === 3 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410", marginBottom: 4 }}>Who's in this circle?</div>
-            <div style={{ fontSize: 12, color: "#b09070", fontStyle: "italic", marginBottom: 16 }}>Add name + phone for direct WhatsApp invites.</div>
-            <AddMemberForm color={color} onAdd={m => setMembers(ms => [...ms, m])} />
-            {members.map(m => (
-              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 10px", background: "#fff", borderRadius: 12, marginBottom: 6, border: "1px solid rgba(196,154,60,0.12)" }}>
-                <Av name={m.name} size={32} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#3d2410" }}>{m.name}</div>
-                  {m.phone && <div style={{ fontSize: 10, color: "#5a8060" }}>📱 {m.phone}</div>}
-                </div>
-                <button onClick={() => setMembers(ms => ms.filter(x => x.id !== m.id))} style={{ background: "none", border: "none", color: "#d4a0a0", fontSize: 16, cursor: "pointer" }}>×</button>
-              </div>
-            ))}
-            {members.length === 0 && (
-              <div style={{ textAlign: "center", background: "rgba(196,148,58,0.05)", borderRadius: 14, padding: "18px", marginBottom: 14, border: "1.5px dashed " + color + "44" }}>
-                <div style={{ fontSize: 22, marginBottom: 6, opacity: 0.4 }}>👥</div>
-                <div style={{ fontSize: 12, color: "#b09070", fontStyle: "italic" }}>Add people above, or skip and invite later</div>
-              </div>
-            )}
-            <button onClick={finish} disabled={creating} style={{ width: "100%", padding: "13px", borderRadius: 16, background: "linear-gradient(135deg," + color + "," + color + "cc)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              {creating ? <Spin color="#fff" size={16} /> : members.length > 0 ? "Create + " + members.length + " invite" + (members.length > 1 ? "s" : "") + " →" : "Create circle →"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ScreenInvitesReady({ circle, onDone }) {
-  const [copied, setCopied] = useState(null);
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fdf6ec" }}>
-      <div style={{ background: "linear-gradient(135deg," + circle.color + "," + circle.color + "cc)", padding: "22px 20px 18px", flexShrink: 0, textAlign: "center" }}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🎉</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{circle.emoji} {circle.label} is live!</div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.78)" }}>Send each person their personal invite</div>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 14px" }}>
-        {(circle.members || []).length === 0 && <div style={{ textAlign: "center", padding: "20px", color: "#b09070", fontStyle: "italic", fontSize: 13 }}>No members yet — add them from the People tab.</div>}
-        {(circle.members || []).map(m => (
-          <div key={m.id} style={{ background: "#fff", borderRadius: 14, padding: "12px", marginBottom: 10, border: "1px solid rgba(196,154,60,0.13)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-              <Av name={m.name} size={38} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#3d2410" }}>{m.name}</div>
-                {m.phone ? <div style={{ fontSize: 10, color: "#5a8060", marginTop: 2 }}>📱 {m.phone}</div> : <div style={{ fontSize: 10, color: "#b09070", marginTop: 2 }}>No phone saved</div>}
-              </div>
-            </div>
-            <InviteActions mem={m} circle={circle} copied={copied} onCopied={setCopied} />
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: "12px 16px 20px", borderTop: "1px solid rgba(196,154,60,0.10)", flexShrink: 0 }}>
-        <button onClick={onDone} style={{ width: "100%", padding: "14px", borderRadius: 17, background: "linear-gradient(135deg," + circle.color + "," + circle.color + "cc)", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>Open {circle.emoji} {circle.label} →</button>
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MAIN APP TABS
-// ═══════════════════════════════════════════════════════════════════════════════
-function HomeTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
-  const [voiceOn, setVoiceOn] = useState(false);
-  const [idx, setIdx] = useState(0);
-  const [hint, setHint] = useState(0);
-  const [query, setQuery] = useState("");
-  const [voiceSearch, setVoiceSearch] = useState(false);
-  const [vsRef] = useState({ rec: null });
-
-  const startVoiceSearch = () => {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) { alert("Voice search not supported on this browser"); return; }
-    if (vsRef.rec) { try { vsRef.rec.stop(); } catch(e) {} }
-    const r = new SpeechRec();
-    r.continuous = false;
-    r.interimResults = true;
-    r.lang = "en-IN";
-    r.onstart = () => setVoiceSearch(true);
-    r.onresult = e => {
-      const tx = Array.from(e.results).map(r => r[0].transcript).join(" ");
-      setQuery(tx);
-    };
-    r.onend = () => setVoiceSearch(false);
-    r.onerror = () => setVoiceSearch(false);
-    vsRef.rec = r;
-    r.start();
-  };
-  const hints = ["Try: \"" + (circle.members[0] ? circle.members[0].name : "Papa") + "'s memories\"", "Try: \"Best moments in Shimla\"", "Try: \"What happened in 2023\""];
-  const mems = circle.memories || [];
-  const mem = mems[idx] || null;
-  const q = query.toLowerCase().trim();
-  const searchResults = q.length < 2 ? [] : mems.filter(m => {
-    const fields = [m.place, String(m.year||""), m.month, ...(m.people||[]), m.caption].join(" ").toLowerCase();
-    return q.split(" ").every(word => fields.includes(word));
-  });
-
-  useEffect(() => {
-    const t = setInterval(() => setHint(h => (h + 1) % hints.length), 2800);
-    return () => clearInterval(t);
-  }, []);
-
-  const coverBg = mem ? (mem.photo_url ? "url(" + mem.photo_url + ") center/cover" : (mem.grad || "linear-gradient(145deg,#f5e0b8,#e8c070)")) : "linear-gradient(145deg,#3d2410,#1a0c06)";
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ flex: "0 0 52%", position: "relative", overflow: "hidden", background: coverBg }}>
-        {(!mem || !mem.photo_url) && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ fontSize: 82, opacity: 0.35 }}>{mem ? mem.emoji : "📖"}</span></div>}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "68%", background: "linear-gradient(to top,rgba(26,14,5,0.85),transparent)" }} />
-        <div style={{ position: "absolute", top: 11, left: 12, background: "rgba(255,255,255,0.16)", backdropFilter: "blur(8px)", borderRadius: 17, padding: "3px 10px", fontSize: 9, color: "rgba(255,255,255,0.88)", letterSpacing: "0.1em", textTransform: "uppercase" }}>Memory of the Day</div>
-        {mems.length > 1 && (
-          <div style={{ position: "absolute", top: 11, right: 12, display: "flex", gap: 4 }}>
-            {mems.slice(0, 5).map((_, i) => <div key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 14 : 5, height: 5, borderRadius: 3, background: i === idx ? "#fff" : "rgba(255,255,255,0.38)", cursor: "pointer", transition: "width 0.3s" }} />)}
-          </div>
-        )}
-        {mem ? (
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "11px 13px" }}>
-            <div style={{ display: "flex", gap: 5, marginBottom: 5 }}>
-              <span style={{ background: "rgba(255,255,255,0.18)", borderRadius: 9, padding: "2px 7px", fontSize: 9, color: "rgba(255,255,255,0.9)" }}>📍 {mem.place || "—"}</span>
-              <span style={{ background: "rgba(255,255,255,0.18)", borderRadius: 9, padding: "2px 7px", fontSize: 9, color: "rgba(255,255,255,0.85)" }}>{mem.month} {mem.year}</span>
-            </div>
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.85)", lineHeight: 1.42, margin: "0 0 7px" }}>{(mem.people||[]).length > 0 ? "👤 " + (mem.people||[]).join(", ") : ""}</p>
-            <div style={{ display: "flex", gap: 5 }}>
-              {(mem.voices || []).map((v, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.14)", borderRadius: 15, padding: "3px 8px 3px 3px" }}>
-                  <Av name={v.name} size={16} col={v.col} />
-                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.88)" }}>{v.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px", textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>Your memories will appear here</div>
-          </div>
-        )}
-      </div>
-      <div style={{ flex: "0 0 48%", background: "#fdf6ec", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px 18px", gap: 7 }}>
-        <div style={{ fontSize: 12.5, color: "#3d2410", fontWeight: 600, textAlign: "center" }}>What memory, {userName}?</div>
-        <div style={{ fontSize: 10.5, color: "#b09070", fontStyle: "italic", minHeight: 13, textAlign: "center" }}>{hints[hint]}</div>
-        <MicBtn on={voiceOn} color={circle.color} size={68} onClick={() => setVoiceOn(!voiceOn)} />
-        <div style={{ fontSize: 9.5, color: voiceOn ? circle.color : "#c0a080", fontWeight: voiceOn ? 700 : 400, letterSpacing: "0.07em", textTransform: "uppercase" }}>{voiceOn ? "Listening..." : "Tap to speak"}</div>
-        <div style={{ width: "100%", display: "flex", alignItems: "center", background: "rgba(255,255,255,0.8)", borderRadius: 22, padding: "6px 12px", border: "1px solid " + (voiceSearch ? circle.color : circle.color + "28"), gap: 6, transition: "border 0.2s" }}>
-          <span style={{ fontSize: 11, opacity: 0.3 }}>🔍</span>
-          <input
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder={voiceSearch ? "Listening..." : "Search name, place, year..."}
-            style={{ border: "none", background: "transparent", outline: "none", fontSize: 11, color: "#5a3e28", flex: 1, fontStyle: voiceSearch ? "italic" : "normal" }} />
-          {query
-            ? <span onClick={() => setQuery("")} style={{ fontSize: 11, cursor: "pointer", opacity: 0.4 }}>✕</span>
-            : <span onClick={startVoiceSearch} style={{ fontSize: 15, cursor: "pointer", opacity: voiceSearch ? 1 : 0.45, animation: voiceSearch ? "pulse 1s infinite" : "none" }}>🎙</span>
-          }
-        </div>
-        {query && searchResults.length > 0 && (
-          <div style={{ width: "100%", background: "#fff", borderRadius: 14, border: "1px solid rgba(196,154,60,0.18)", maxHeight: 200, overflowY: "auto", boxShadow: "0 4px 16px rgba(150,100,40,0.12)" }}>
-            {searchResults.map(m => (
-              <div key={m.id} onClick={() => { onEdit(m); setQuery(""); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderBottom: "1px solid rgba(196,154,60,0.08)", cursor: "pointer" }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: m.photo_url ? "url(" + m.photo_url + ") center/cover" : (m.grad || "linear-gradient(145deg,#f5e0b8,#e8c070)"), flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {!m.photo_url && <span style={{ fontSize: 16 }}>{m.emoji || "📸"}</span>}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3d2410", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {m.place || "—"} · {m.month} {m.year}
                   </div>
-                  <div style={{ fontSize: 10, color: "#b09070" }}>{(m.people || []).join(", ")}</div>
-                </div>
-                <span style={{ fontSize: 10, color: circle.color, fontWeight: 700 }}>{(m.voices || []).length} 🎙</span>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-        {query && searchResults.length === 0 && (
-          <div style={{ fontSize: 11, color: "#b09070", fontStyle: "italic" }}>No memories found for "{query}"</div>
-        )}
-        <div style={{ display: "flex", gap: 8, width: "100%" }}>
-          <button onClick={onAddMemory} style={{ flex: 1, padding: "8px", background: "linear-gradient(135deg," + circle.color + "," + circle.color + "bb)", border: "none", borderRadius: 19, color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>📸 Add Memory</button>
-          {mem && <button onClick={() => onAddVoice(mem)} style={{ flex: 1, padding: "8px", background: "transparent", border: "1.5px solid " + circle.color, borderRadius: 19, color: circle.color, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>🎙 Add Voice</button>}
+              <button onClick={sSave} disabled={saving} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:"✅ Save this memory"}</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-function TimelineTab({ circle, userName, onAddVoice, onAddMemory, onEdit }) {
-  const [filter, setFilter] = useState("Years");
-  const [sel, setSel] = useState(null);
-  const [search, setSearch] = useState("");
-  const [tlVoice, setTlVoice] = useState(false);
-  const [tlVsRef] = useState({ rec: null });
+/* ── Search Sheet ── */
+function SearchSht({memories,apiKey,onResults,onClose}){
+  const sp=useSpeech();const[q,setQ]=useState("");const[searching,setSrch]=useState(false);const lv=useRef("");
+  useEffect(()=>{lv.current=sp.transcript;if(sp.transcript)setQ(sp.transcript)},[sp.transcript]);
+  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories,apiKey);setSrch(false);onResults(r,query)};
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(30px + env(safe-area-inset-bottom,0px))"}}>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 18px"}}/>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Search memories</div>
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:16,lineHeight:1.6}}>Try "Goa holiday", "Sunny as a baby", "2019"</div>
+        <div style={{display:"flex",gap:9,marginBottom:13}}>
+          <input className="inp" style={{flex:1}} value={q} onChange={e=>setQ(e.target.value)} placeholder="Speak or type..." onKeyDown={e=>e.key==="Enter"&&go(q)}/>
+          <button onClick={()=>sp.active?sp.stop():sp.start("en-IN")} style={{width:46,height:46,borderRadius:13,background:sp.active?"linear-gradient(135deg,#c06858,#8b3a28)":"rgba(200,148,58,.15)",border:"none",fontSize:19,cursor:"pointer",animation:sp.active?"pulse 1s ease infinite":"none",flexShrink:0}}>🎙</button>
+        </div>
+        {sp.active&&<div style={{fontSize:12,color:"#c8943a",textAlign:"center",marginBottom:11,animation:"pulse 1s ease infinite"}}>Listening... tap 🎙 to stop</div>}
+        <button onClick={()=>go(q)} disabled={searching||!q.trim()} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{searching?<><Spin col="#fff" sz={15}/>Searching...</>:"🔍 Find memories"}</button>
+      </div>
+    </div>
+  )
+}
 
-  const startTlVoice = () => {
-    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRec) { alert("Voice search not supported on this browser"); return; }
-    if (tlVsRef.rec) { try { tlVsRef.rec.stop(); } catch(e) {} }
-    const r = new SpeechRec();
-    r.continuous = false;
-    r.interimResults = true;
-    r.lang = "en-IN";
-    r.onstart = () => setTlVoice(true);
-    r.onresult = e => {
-      const tx = Array.from(e.results).map(r => r[0].transcript).join(" ");
-      setSearch(tx);
-    };
-    r.onend = () => setTlVoice(false);
-    r.onerror = () => setTlVoice(false);
-    tlVsRef.rec = r;
-    r.start();
-  };
-  const mems = circle.memories || [];
-  const years = [...new Set(mems.map(m => m.year))].sort((a, b) => b - a).map(String);
-  const places = [...new Set(mems.map(m => m.place).filter(p => p && p !== "—"))];
-  const people = (circle.members || []).map(m => m.name);
-  const opts = { Years: years, Places: places, People: people };
-  const chipFiltered = sel ? mems.filter(m => filter === "Years" ? String(m.year) === sel : filter === "Places" ? m.place === sel : (m.people || []).includes(sel)) : mems;
-  const sq = search.toLowerCase().trim();
-  const filtered = sq.length < 2 ? chipFiltered : chipFiltered.filter(m => {
-    const fields = [m.place, String(m.year||""), m.month, ...(m.people||[]), m.caption].join(" ").toLowerCase();
-    return sq.split(" ").every(word => fields.includes(word));
-  });
-
-  return (
-    <div style={{ padding: "0 12px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 11 }}>
-        <div style={{ display: "flex", gap: 6, flex: 1 }}>
-          {["Years", "Places", "People"].map(t => (
-            <button key={t} onClick={() => { setFilter(t); setSel(null); }} style={{ flex: 1, padding: "7px 0", borderRadius: 16, fontWeight: 700, fontSize: 11, cursor: "pointer", background: filter === t ? "linear-gradient(135deg," + circle.color + "," + circle.color + "99)" : "rgba(255,255,255,0.65)", border: "1.5px solid " + (filter === t ? "transparent" : "rgba(196,154,60,0.18)"), color: filter === t ? "#fff" : "#9c7a52" }}>{t}</button>
+/* ── Frame Mode ── */
+function FrameMode({memories,albumLabel,onExit}){
+  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);
+  const wake=useWakeLock();const apiKey=localStorage.getItem("ourstory_claude_key")||"";
+  const shown=filter?filter.mems:memories;const cur=shown[idx]||null;
+  useEffect(()=>{wake.acquire();return()=>wake.release()},[]);
+  useEffect(()=>{if(!shown.length)return;const t=setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1);setPlaying(false)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk]);
+  const sw=useSwipe(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1);setPlaying(false)},()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1);setPlaying(false)});
+  const tap=()=>{if(cur?.voices?.length>0&&!playing)setPlaying(true);else setSrch(true)};
+  if(!cur)return<div className="framebox" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><div style={{color:"rgba(255,255,255,.4)",fontSize:16}}>No memories yet</div><button onClick={onExit} style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",padding:"10px 20px",borderRadius:12,cursor:"pointer"}}>← Exit</button></div>;
+  return(
+    <div className="framebox" {...sw} onClick={tap}>
+      {/* progress */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.08)",zIndex:10}}>
+        <div key={pk} style={{height:"100%",background:"#c8943a",animation:"bar 30s linear forwards"}}/>
+      </div>
+      {/* top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:20,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(12px + env(safe-area-inset-top,0px)) 15px 10px"}}>
+        {filter?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",backdropFilter:"blur(8px)",borderRadius:18,padding:"5px 13px",display:"flex",alignItems:"center",gap:7}}><span style={{color:"#f0d080",fontSize:13}}>{filter.label}</span><span style={{color:"rgba(255,255,255,.5)",fontSize:11}}>✕</span></div>:<div style={{color:"rgba(255,255,255,.3)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".08em"}}>{albumLabel}</div>}
+        <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",color:"rgba(255,255,255,.5)",fontSize:11,cursor:"pointer"}}>Exit frame</button>
+      </div>
+      {/* photo */}
+      <div style={{position:"absolute",inset:0}}>
+        {cur.photo_url?<img src={cur.photo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{position:"absolute",inset:0,background:"linear-gradient(145deg,#2a1505,#180c04)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:80,opacity:.2}}>📷</div></div>}
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.5) 100%)"}}/>
+      </div>
+      {/* bottom */}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"55px 22px calc(18px + env(safe-area-inset-bottom,0px))",background:"linear-gradient(transparent,rgba(0,0,0,.65))",zIndex:10,pointerEvents:"none"}}>
+        {cur.place&&cur.place!=="—"&&<div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:600,color:"#fff",marginBottom:4,textShadow:"0 2px 8px rgba(0,0,0,.5)"}}>{cur.place}</div>}
+        <div style={{fontSize:14,color:"rgba(255,255,255,.6)",fontStyle:"italic"}}>{[cur.month,cur.year].filter(Boolean).join(" ")}{cur.voices?.length>0&&<span style={{marginLeft:11}}>🎙 {cur.voices.length}</span>}</div>
+      </div>
+      {/* hint */}
+      {!playing&&<div style={{position:"absolute",bottom:"28%",left:0,right:0,textAlign:"center",pointerEvents:"none"}}><div style={{color:"rgba(255,255,255,.2)",fontSize:12,fontStyle:"italic"}}>{cur.voices?.length>0?"Tap to hear voices":"Tap to search"} · {idx+1} / {shown.length}</div></div>}
+      {/* voice player */}
+      {playing&&cur.voices?.length>0&&(
+        <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:"7%",left:14,right:14,background:"rgba(253,246,236,.97)",borderRadius:19,padding:"15px 17px",zIndex:30,animation:"slideUp .3s ease"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+            <div style={{fontSize:13,fontFamily:"Playfair Display,serif",fontWeight:600,color:"#2a1505"}}>Voices</div>
+            <button onClick={()=>setPlaying(false)} style={{background:"none",border:"none",color:"#b09070",fontSize:16,cursor:"pointer"}}>✕</button>
+          </div>
+          {cur.voices.map((v,i)=>(
+            <div key={i} style={{marginBottom:9}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5}}><Av name={v.name} sz={25} col={v.col}/><div style={{fontSize:13,fontWeight:600,color:"#2a1505"}}>{v.name}</div><div style={{fontSize:11,color:"#b09070",marginLeft:"auto"}}>{fd(v.duration||0)}</div></div>
+              <audio controls src={v.audio_url} preload="auto" style={{width:"100%",accentColor:"#c8943a"}}/>
+            </div>
           ))}
         </div>
-        <button onClick={onAddMemory} style={{ marginLeft: 8, padding: "7px 12px", borderRadius: 16, background: "linear-gradient(135deg," + circle.color + "," + circle.color + "cc)", border: "none", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>+ Add</button>
+      )}
+      {/* search */}
+      {showSrch&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,zIndex:50}}><SearchSht memories={memories} apiKey={apiKey} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setSrch(false)}} onClose={()=>setSrch(false)}/></div>}
+    </div>
+  )
+}
+
+/* ── Settings ── */
+function SettingsScreen({album,userName,allAlbums,onSwitch,onAdd,onClose,onRefresh}){
+  const[tab,setTab]=useState("album");const[key,setKey]=useState(localStorage.getItem("ourstory_claude_key")||"");
+  const[copied,setCopied]=useState(false);const[newN,setNewN]=useState("");const[adding,setAdding]=useState(false);
+  const saveKey=()=>{localStorage.setItem("ourstory_claude_key",key);alert("Saved!")};
+  const copy=()=>{const u=iUrl(album.code);try{navigator.clipboard.writeText(u)}catch(e){}setCopied(true);setTimeout(()=>setCopied(false),2000)};
+  const addM=async()=>{if(!newN.trim())return;await sb.from("members").insert({circle_id:album.id,name:newN.trim(),phone:"",joined:false,code:mkCode()});setNewN("");setAdding(false);onRefresh()};
+  return(
+    <div className="settings">
+      <div style={{background:"linear-gradient(135deg,#3d2410,#6b3c18)",padding:"calc(15px + env(safe-area-inset-top,0px)) 18px 15px",flexShrink:0}}>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,.15)",border:"none",borderRadius:9,padding:"5px 13px",color:"#fff",fontSize:13,cursor:"pointer",marginBottom:11}}>← Back</button>
+        <div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#fff"}}>{album.label}</div>
+        <div style={{fontSize:12,color:"rgba(255,255,255,.55)",marginTop:3}}>{album.members?.length||0} members · {album.memories?.length||0} memories</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.8)", borderRadius: 22, padding: "6px 12px", border: "1px solid rgba(196,154,60,0.2)", gap: 6, marginBottom: 8 }}>
-        <span style={{ fontSize: 11, opacity: 0.35 }}>🔍</span>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={tlVoice ? "Listening..." : "Search memories..."} style={{ border: "none", background: "transparent", outline: "none", fontSize: 11, color: "#5a3e28", flex: 1, fontStyle: tlVoice ? "italic" : "normal" }} />
-        {search
-          ? <span onClick={() => setSearch("")} style={{ fontSize: 11, cursor: "pointer", opacity: 0.4 }}>✕</span>
-          : <span onClick={startTlVoice} style={{ fontSize: 15, cursor: "pointer", opacity: tlVoice ? 1 : 0.45 }}>🎙</span>
-        }
-      </div>
-      <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 3, marginBottom: 11 }}>
-        <button onClick={() => setSel(null)} style={{ flexShrink: 0, padding: "4px 11px", borderRadius: 16, background: !sel ? circle.color : "rgba(255,255,255,0.65)", border: "none", color: !sel ? "#fff" : "#9c7a52", fontSize: 10.5, fontWeight: 600, cursor: "pointer" }}>All</button>
-        {opts[filter].map(o => (
-          <button key={o} onClick={() => setSel(sel === o ? null : o)} style={{ flexShrink: 0, padding: "4px 11px", borderRadius: 16, fontSize: 10.5, cursor: "pointer", border: "none", background: sel === o ? circle.color : "rgba(255,255,255,0.65)", color: sel === o ? "#fff" : "#7a5c38" }}>
-            {filter === "Years" ? "📅 " + o : filter === "Places" ? "📍 " + o : "👤 " + o}
+      <div style={{display:"flex",background:"#ede5d8",borderBottom:"1px solid rgba(180,140,80,.2)",flexShrink:0}}>
+        {[["album","📖 Album"],["members","👥 Members"],["search","🔍 Search"]].map(([id,lbl])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{flex:1,padding:"11px 7px",background:"none",border:"none",borderBottom:tab===id?"2px solid #c8943a":"2px solid transparent",fontSize:12,fontWeight:tab===id?700:400,color:tab===id?"#c8943a":"#7a5c38",cursor:"pointer"}}>
+            {lbl}
           </button>
         ))}
       </div>
-      {filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "32px 0", color: "#c0a080", fontStyle: "italic", fontSize: 13 }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
-          No memories yet.<br />
-          <button onClick={onAddMemory} style={{ marginTop: 12, padding: "8px 20px", background: "linear-gradient(135deg," + circle.color + "," + circle.color + "cc)", border: "none", borderRadius: 16, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>+ Add the first one</button>
-        </div>
-      )}
-      {filtered.map(m => <Card key={m.id} m={m} accent={circle.color} userName={userName} onAddVoice={onAddVoice} />)}
-      <div style={{ height: 20 }} />
-    </div>
-  );
-}
-
-function PeopleTab({ circle, onManage, userName, onAddVoice, onEdit }) {
-  const [sel, setSel] = useState(null);
-  const person = (circle.members || []).find(m => m.name === sel);
-  const mems = sel ? (circle.memories || []).filter(m => (m.people || []).includes(sel)) : [];
-
-  if (sel && person) return (
-    <div style={{ padding: "0 12px" }}>
-      <button onClick={() => setSel(null)} style={{ background: "none", border: "none", color: circle.color, fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 11 }}>← Back</button>
-      <div style={{ textAlign: "center", marginBottom: 14 }}>
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><Av name={person.name} size={56} /></div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#3d2410" }}>{person.name}</div>
-        {person.phone && <div style={{ fontSize: 10.5, color: "#5a8060", marginTop: 2 }}>📱 {person.phone}</div>}
-        <div style={{ fontSize: 10.5, color: person.joined ? "#5a8060" : "#b09070", marginTop: 3 }}>{person.joined ? "✅ Active member" : "⏳ Invite pending"}</div>
-      </div>
-      {mems.length === 0 ? <div style={{ textAlign: "center", color: "#c0a080", fontStyle: "italic", fontSize: 12, padding: "24px 0" }}>No tagged memories yet</div> : mems.map(m => <Card key={m.id} m={m} compact accent={circle.color} userName={userName} onAddVoice={onAddVoice} />)}
-    </div>
-  );
-
-  return (
-    <div style={{ padding: "0 12px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: "#3d2410" }}>{circle.label}</div>
-        <button onClick={onManage} style={{ background: circle.color + "18", border: "1px solid " + circle.color + "33", borderRadius: 11, padding: "5px 11px", color: circle.color, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>⚙️ Manage</button>
-      </div>
-      <div style={{ fontStyle: "italic", fontSize: 10.5, color: "#b09070", marginBottom: 13 }}>Tap a face to see their memories</div>
-      {(circle.members || []).length === 0 && (
-        <div style={{ textAlign: "center", background: "rgba(196,148,58,0.05)", borderRadius: 16, padding: "24px", border: "1.5px dashed " + circle.color + "44", marginBottom: 12 }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
-          <div style={{ fontSize: 12, color: "#b09070", marginBottom: 12 }}>No members yet</div>
-          <button onClick={onManage} style={{ padding: "8px 20px", background: "linear-gradient(135deg," + circle.color + "," + circle.color + "bb)", border: "none", borderRadius: 16, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>+ Add members</button>
-        </div>
-      )}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 9 }}>
-        {(circle.members || []).map(mem => (
-          <div key={mem.id} onClick={() => setSel(mem.name)} style={{ background: "#fffbf3", borderRadius: 14, padding: "14px 10px", textAlign: "center", cursor: "pointer", border: "1px solid rgba(196,154,60,0.13)" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 7 }}><Av name={mem.name} size={44} /></div>
-            <div style={{ fontWeight: 700, fontSize: 12.5, color: "#3d2410" }}>{mem.name}</div>
-            <div style={{ fontSize: 10, color: mem.joined ? "#5a8060" : "#b09070", marginTop: 2 }}>{mem.joined ? "✅ Joined" : "⏳ Pending"}</div>
-          </div>
-        ))}
-        <div onClick={onManage} style={{ background: "rgba(196,148,58,0.05)", borderRadius: 14, padding: "14px 10px", textAlign: "center", cursor: "pointer", border: "1.5px dashed " + circle.color + "44", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, minHeight: 96 }}>
-          <div style={{ fontSize: 22, opacity: 0.4 }}>➕</div>
-          <div style={{ fontSize: 11, color: "#b09070" }}>Add someone</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ManageTab({ circle, onClose, onUpdate }) {
-  const [copied, setCopied] = useState(null);
-  const addMember = async m => {
-    try { await dbAddMember(circle.id, m); onUpdate({ ...circle, members: [...circle.members, m] }); }
-    catch(e) { alert("Could not add member."); }
-  };
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fdf6ec" }}>
-      <div style={{ background: "linear-gradient(135deg," + circle.color + "," + circle.color + "bb)", padding: "13px 15px", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700 }}>← Back</button>
-          <div>
-            <div style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(255,255,255,0.65)" }}>Managing</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>{circle.emoji} {circle.label}</div>
-          </div>
-        </div>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 13px 8px" }}>
-        <AddMemberForm color={circle.color} onAdd={addMember} />
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#b09070", marginBottom: 10 }}>{(circle.members || []).length} Members</div>
-        {(circle.members || []).map(mem => (
-          <div key={mem.id} style={{ background: "#fff", borderRadius: 13, padding: "11px 12px", marginBottom: 10, border: "1px solid rgba(196,154,60,0.12)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
-              <Av name={mem.name} size={36} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#3d2410" }}>{mem.name}</div>
-                {mem.phone ? <div style={{ fontSize: 10, color: "#5a8060", marginTop: 1 }}>📱 {mem.phone}</div> : <div style={{ fontSize: 10, color: "#b09070", marginTop: 1 }}>No phone saved</div>}
-                <div style={{ fontSize: 10, color: mem.joined ? "#5a8060" : "#b09070", marginTop: 1 }}>{mem.joined ? "✅ Joined" : "⏳ Not yet joined"}</div>
-              </div>
+      <div style={{flex:1,overflowY:"auto",padding:18}}>
+        {tab==="album"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{background:"#fff",borderRadius:17,padding:17}}>
+              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Invite to this album</div>
+              <div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:13}}>Share this link. They tap it, enter their name, and land straight in the album.</div>
+              <div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"9px 13px",fontSize:12,color:"#7a5c38",wordBreak:"break-all",marginBottom:11,fontFamily:"monospace",border:"1px solid rgba(200,148,58,.2)"}}>{iUrl(album.code)}</div>
+              <button onClick={copy} className="bA" style={{width:"100%",textAlign:"center"}}>{copied?"✅ Copied!":"📋 Copy invite link"}</button>
             </div>
-            <InviteActions mem={mem} circle={circle} copied={copied} onCopied={setCopied} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CirclesSheet({ circles, active, onSelect, onClose, onAdd }) {
-  return (
-    <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(18,8,2,0.82)", zIndex: 100, display: "flex", flexDirection: "column", justifyContent: "flex-end", borderRadius: 42 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#fdf6ec", borderRadius: "24px 24px 0 0", padding: "16px 14px 26px" }}>
-        <div style={{ width: 30, height: 3, borderRadius: 2, background: "#d4b896", margin: "0 auto 14px" }} />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#3d2410" }}>Your Circles</div>
-          <button onClick={e => { e.stopPropagation(); onAdd(); }} style={{ background: "linear-gradient(135deg,#c8943a,#8b5e28)", border: "none", borderRadius: 16, padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>+ Join / Create</button>
-        </div>
-        {circles.map(c => (
-          <div key={c.id} onClick={() => onSelect(c)} style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 12px", borderRadius: 13, marginBottom: 7, cursor: "pointer", background: active === c.id ? c.color + "14" : "rgba(255,255,255,0.6)", border: "1.5px solid " + (active === c.id ? c.color : "rgba(196,154,60,0.14)") }}>
-            <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg," + c.color + "," + c.color + "99)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>{c.emoji}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: "#3d2410" }}>{c.label}</div>
-              <div style={{ fontSize: 10, color: "#b09070", marginTop: 1 }}>{(c.members || []).length} members · {(c.memories || []).length} memories</div>
-            </div>
-            {active === c.id && <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.color }} />}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ROOT APP
-// ═══════════════════════════════════════════════════════════════════════════════
-function App() {
-  const [phase, setPhase] = useState("loading");
-  const [userName, setUserName] = useState("");
-  const [tab, setTab] = useState("home");
-  const [showCircles, setShowCircles] = useState(false);
-  const [managing, setManaging] = useState(false);
-  const [circles, setCircles] = useState([]);
-  const [activeCircleId, setActiveCircleId] = useState(null);
-  const [newCircle, setNewCircle] = useState(null);
-  const [recorderTarget, setRecorderTarget] = useState(null);
-  const [addingMemory, setAddingMemory] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
-  const [detailTarget, setDetailTarget] = useState(null);
-  const [addingCircle, setAddingCircle] = useState(false);
-
-  const circle = circles.find(c => c.id === activeCircleId) || circles[0] || null;
-  const upd = updated => setCircles(cs => cs.map(c => c.id === updated.id ? updated : c));
-
-  const enterApp = (name, circ) => {
-    localStorage.setItem("ourstory_v14", JSON.stringify({ name, codes: [circ.code] }));
-    setUserName(name);
-    setCircles([circ]);
-    setActiveCircleId(circ.id);
-    setPhase("app");
-  };
-
-  const addCircleToApp = async (circ) => {
-    // Add a new circle to existing session
-    const saved = localStorage.getItem("ourstory_v14");
-    const existing = saved ? JSON.parse(saved) : { name: userName, codes: [] };
-    const codes = [...new Set([...(existing.codes || [existing.code].filter(Boolean)), circ.code])];
-    localStorage.setItem("ourstory_v14", JSON.stringify({ name: userName, codes }));
-    setCircles(cs => [...cs.filter(c => c.id !== circ.id), circ]);
-    setActiveCircleId(circ.id);
-    setTab("home");
-    setShowCircles(false);
-    setAddingCircle(false);
-  };
-
-  useEffect(() => {
-    const saved = localStorage.getItem("ourstory_v14");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        const name = parsed.name;
-        // Support both old { code } and new { codes: [] } format
-        const codes = parsed.codes || (parsed.code ? [parsed.code] : []);
-        setUserName(name);
-        if (codes.length === 0) { setPhase("name"); return; }
-        Promise.all(codes.map(code => dbLoadCircle(code).catch(() => null)))
-          .then(results => {
-            const loaded = results.filter(Boolean);
-            if (loaded.length > 0) {
-              setCircles(loaded);
-              setActiveCircleId(loaded[0].id);
-              setPhase("app");
-            } else {
-              localStorage.removeItem("ourstory_v14");
-              setPhase("name");
-            }
-          })
-          .catch(() => setPhase("retry"));
-      } catch(e) { setPhase("name"); }
-    } else {
-      setPhase("name");
-    }
-  }, []);
-
-  const retryLoad = () => {
-    setPhase("loading");
-    const saved = localStorage.getItem("ourstory_v14");
-    if (!saved) { setPhase("name"); return; }
-    try {
-      const { name, code } = JSON.parse(saved);
-      setUserName(name);
-      dbLoadCircle(code)
-        .then(c => {
-          if (c) { setCircles([c]); setActiveCircleId(c.id); setPhase("app"); }
-          else { localStorage.removeItem("ourstory_v14"); setPhase("name"); }
-        })
-        .catch(() => setPhase("retry"));
-    } catch(e) { setPhase("name"); }
-  };
-
-  const saveVoice = voiceData => {
-    if (!recorderTarget || !circle) return;
-    const updMems = (circle.memories || []).map(m => {
-      if (m.id !== recorderTarget.id) return m;
-      const existing = (m.voices || []).findIndex(v => v.name === userName);
-      const voices = existing >= 0
-        ? m.voices.map((v, i) => i === existing ? voiceData : v)
-        : [...(m.voices || []), voiceData];
-      return { ...m, voices };
-    });
-    upd({ ...circle, memories: updMems });
-    setRecorderTarget(null);
-  };
-
-  const switchCircle = c => {
-    setActiveCircleId(c.id);
-    localStorage.setItem("ourstory_v14", JSON.stringify({ name: userName, code: c.code }));
-    setTab("home");
-    setManaging(false);
-    setShowCircles(false);
-  };
-
-  const TABS = [
-    { id: "home", icon: "🏠", label: "Home" },
-    { id: "timeline", icon: "📖", label: "Timeline" },
-    { id: "people", icon: "👥", label: "People" },
-  ];
-
-  if (phase === "loading") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06", flexDirection: "column", gap: 16 }}>
-      <div style={{ fontSize: 48 }}>📖</div>
-      <Spin color="#c8943a" size={28} />
-      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>Loading Our Story...</div>
-    </div>
-  );
-
-  if (phase === "retry") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06", flexDirection: "column", gap: 16, padding: 24, textAlign: "center" }}>
-      <div style={{ fontSize: 48 }}>📡</div>
-      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Connection issue</div>
-      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>Could not reach the server.<br/>Check your connection and try again.</div>
-      <button onClick={retryLoad} style={{ padding: "14px 32px", borderRadius: 20, background: "linear-gradient(135deg,#c8943a,#8b5e28)", border: "none", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Try again</button>
-      <button onClick={() => { localStorage.removeItem("ourstory_v14"); setPhase("name"); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}>Start fresh instead</button>
-    </div>
-  );
-
-  // In-app circle addition flows
-  if (phase === "joinCode2") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <ScreenJoinCode onJoined={c => { addCircleToApp(c); setPhase("app"); }} onBack={() => setPhase("app")} />
-      </div>
-    </div>
-  );
-
-  if (phase === "createCircle2") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <ScreenCreateCircle onBack={() => setPhase("app")} onCreate={async c => { const full = await dbLoadCircle(c.code); addCircleToApp(full || c); setPhase("app"); }} />
-      </div>
-    </div>
-  );
-
-  if (phase !== "app") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        {phase === "name" && <ScreenName onNext={n => { setUserName(n); setPhase("choosePath"); }} />}
-        {phase === "choosePath" && <ScreenChoosePath userName={userName} onJoin={() => setPhase("joinCode")} onCreate={() => setPhase("createCircle")} onBack={() => setPhase("name")} />}
-        {phase === "joinCode" && <ScreenJoinCode onJoined={c => enterApp(userName, c)} onBack={() => setPhase("choosePath")} />}
-        {phase === "createCircle" && <ScreenCreateCircle onBack={() => setPhase("choosePath")} onCreate={c => { setNewCircle(c); setPhase("invitesReady"); }} />}
-        {phase === "invitesReady" && newCircle && <ScreenInvitesReady circle={newCircle} onDone={() => enterApp(userName, newCircle)} />}
-      </div>
-    </div>
-  );
-
-  if (!circle) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <Spin color="#c8943a" size={28} />
-    </div>
-  );
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#1a0c06" }}>
-      <div className="app-shell" style={{ borderRadius: 42, background: "#fdf6ec", boxShadow: "0 30px 75px rgba(0,0,0,0.55)", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
-
-        {recorderTarget && <RecorderSheet memory={recorderTarget} speakerName={userName} color={circle.color} onSaved={saveVoice} onClose={() => setRecorderTarget(null)} />}
-        {detailTarget && <MemoryDetail memory={detailTarget} circle={circle} userName={userName} onAddVoice={m => { setDetailTarget(null); setRecorderTarget(m); }} onEdit={m => { setDetailTarget(null); setEditTarget(m); }} onClose={() => setDetailTarget(null)} />}
-        {editTarget && <EditMemorySheet memory={editTarget} circle={circle} userName={userName} onSaved={updCircle => { if (updCircle) upd(updCircle); }} onClose={() => setEditTarget(null)} />}
-        {addingMemory && <AddMemorySheet circle={circle} userName={userName} onSaved={updCircle => {
-              setAddingMemory(false);
-              setTab("timeline");
-              // Refresh circle data in background
-              dbLoadCircle(circle.code).then(c => { if (c) upd(c); }).catch(() => {});
-            }} onClose={() => setAddingMemory(false)} />}
-        {showCircles && <CirclesSheet circles={circles} active={activeCircleId} onSelect={switchCircle} onClose={() => setShowCircles(false)} onAdd={() => { setShowCircles(false); setAddingCircle(true); }} />}
-        {addingCircle && (
-          <div style={{ position: "absolute", inset: 0, background: "#fdf6ec", zIndex: 200, borderRadius: 42, display: "flex", flexDirection: "column" }}>
-            <div style={{ background: "linear-gradient(135deg,#3d2410,#6b3c18)", padding: "16px 18px", flexShrink: 0 }}>
-              <button onClick={() => setAddingCircle(false)} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 9, padding: "5px 10px", color: "#fff", fontSize: 12, cursor: "pointer", fontWeight: 700, marginBottom: 10, display: "block" }}>← Back</button>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>Add another Circle</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>Join an existing one or create new</div>
-            </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, padding: "20px 18px", justifyContent: "center" }}>
-              {[{ icon: "🔗", title: "Join a Circle", desc: "Use an invite link or code", cb: "join" }, { icon: "✨", title: "Create a Circle", desc: "Start a new group", cb: "create" }].map(p => (
-                <div key={p.title} onClick={() => { setAddingCircle(false); setPhase(p.cb === "join" ? "joinCode2" : "createCircle2"); }} style={{ background: "#fff", borderRadius: 20, padding: "20px", border: "2px solid rgba(196,154,60,0.18)", cursor: "pointer", boxShadow: "0 4px 18px rgba(150,100,40,0.09)" }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>{p.icon}</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: "#3d2410", marginBottom: 5 }}>{p.title}</div>
-                  <div style={{ fontSize: 12, color: "#7a5c38" }}>{p.desc}</div>
+            <div style={{background:"#fff",borderRadius:17,padding:17}}>
+              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:10}}>Your albums</div>
+              {allAlbums.map(a=>(
+                <div key={a.id} onClick={()=>{onSwitch(a);onClose()}} style={{display:"flex",alignItems:"center",gap:11,padding:11,borderRadius:11,background:a.id===album.id?"rgba(200,148,58,.1)":"transparent",cursor:"pointer",marginBottom:4,border:a.id===album.id?"1px solid rgba(200,148,58,.3)":"1px solid transparent"}}>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:a.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>📖</div>
+                  <div><div style={{fontSize:14,fontWeight:600,color:"#2a1505"}}>{a.label}</div><div style={{fontSize:11,color:"#b09070"}}>{a.memories?.length||0} memories</div></div>
+                  {a.id===album.id&&<div style={{marginLeft:"auto",fontSize:11,color:"#c8943a",fontWeight:600}}>Active</div>}
                 </div>
               ))}
+              <button onClick={onAdd} className="bG" style={{width:"100%",marginTop:9,textAlign:"center"}}>+ Join or create album</button>
             </div>
           </div>
         )}
-
-        <div style={{ padding: "10px 14px 7px", background: "#fdf6ec", flexShrink: 0, borderBottom: "1px solid rgba(196,154,60,0.09)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: 8, letterSpacing: "0.13em", textTransform: "uppercase", color: "#b09070" }}>Our Story · {userName}</div>
-              <button onClick={() => setShowCircles(true)} style={{ display: "flex", alignItems: "center", gap: 5, background: circle.color + "16", border: "1px solid " + circle.color + "40", borderRadius: 17, padding: "3px 10px 3px 7px", cursor: "pointer", marginTop: 2 }}>
-                <span style={{ fontSize: 13 }}>{circle.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#3d2410" }}>{circle.label}</span>
-                <span style={{ fontSize: 8, color: "#b09070", marginLeft: 1 }}>▾</span>
-              </button>
-            </div>
-            <button onClick={() => setAddingMemory(true)} style={{ width: 33, height: 33, borderRadius: "50%", background: "linear-gradient(135deg," + circle.color + "," + circle.color + "aa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, border: "none", cursor: "pointer", boxShadow: "0 4px 12px " + circle.color + "44" }}>＋</button>
-          </div>
-        </div>
-
-        <div style={{ flex: 1, overflowY: (tab === "home" && !managing) ? "hidden" : "auto", paddingTop: (tab === "home" && !managing) ? 0 : 12 }}>
-          {managing
-            ? <ManageTab circle={circle} onClose={() => setManaging(false)} onUpdate={upd} />
-            : tab === "home" ? <HomeTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
-              : tab === "timeline" ? <TimelineTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
-              : tab === "search" ? <TimelineTab circle={circle} userName={userName} onAddVoice={m => setRecorderTarget(m)} onAddMemory={() => setAddingMemory(true)} onEdit={m => setDetailTarget(m)} />
-                : <PeopleTab circle={circle} onManage={() => setManaging(true)} userName={userName} onAddVoice={m => setRecorderTarget(m)} onEdit={m => setDetailTarget(m)} />
-          }
-        </div>
-
-        {!managing && (
-          <div style={{ background: "#fdf6ec", borderTop: "1px solid rgba(196,154,60,0.12)", display: "flex", alignItems: "flex-start", paddingTop: 7, paddingBottom: "calc(8px + env(safe-area-inset-bottom,0px))", flexShrink: 0 }}>
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, background: "none", border: "none", cursor: "pointer" }}>
-                <span style={{ fontSize: 17, opacity: tab === t.id ? 1 : 0.48 }}>{t.icon}</span>
-                <span style={{ fontSize: 9, fontWeight: tab === t.id ? 700 : 500, color: tab === t.id ? circle.color : "#b09070" }}>{t.label}</span>
-                {tab === t.id && <div style={{ width: 12, height: 2, borderRadius: 2, background: circle.color }} />}
-              </button>
+        {tab==="members"&&(
+          <div>
+            {(album.members||[]).map(m=>(
+              <div key={m.id} style={{display:"flex",alignItems:"center",gap:11,background:"#fff",borderRadius:15,padding:13,marginBottom:9}}>
+                <Av name={m.name} sz={38}/><div><div style={{fontSize:14,fontWeight:600,color:"#2a1505"}}>{m.name}</div><div style={{fontSize:12,color:"#b09070"}}>{m.relationship||"Member"}</div></div>
+              </div>
             ))}
+            {adding?(
+              <div style={{background:"#fff",borderRadius:17,padding:17,marginTop:9}}>
+                <input className="inp" value={newN} onChange={e=>setNewN(e.target.value)} placeholder="Their name" style={{marginBottom:11}} onKeyDown={e=>e.key==="Enter"&&addM()}/>
+                <div style={{display:"flex",gap:9}}><button onClick={()=>setAdding(false)} className="bG" style={{flex:1,textAlign:"center"}}>Cancel</button><button onClick={addM} className="bA" style={{flex:1,textAlign:"center"}}>Add</button></div>
+              </div>
+            ):<button onClick={()=>setAdding(true)} className="bG" style={{width:"100%",marginTop:9,textAlign:"center"}}>+ Add member</button>}
+          </div>
+        )}
+        {tab==="search"&&(
+          <div>
+            <div style={{background:"#fff",borderRadius:17,padding:17}}>
+              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Claude voice search</div>
+              <div style={{fontSize:13,color:"#7a5c38",lineHeight:1.7,marginBottom:15}}>Add your Anthropic API key for smart search. Speak in any language — Hindi, Punjabi, English — Claude understands.<br/><br/>Without a key, basic keyword search still works.</div>
+              <div style={{fontSize:11,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>Anthropic API key</div>
+              <input className="inp" type="password" value={key} onChange={e=>setKey(e.target.value)} placeholder="sk-ant-..." style={{marginBottom:11}}/>
+              <button onClick={saveKey} className="bA" style={{width:"100%",textAlign:"center"}}>Save key</button>
+              <div style={{fontSize:11,color:"#b09070",marginTop:11,lineHeight:1.6}}>Get your key at console.anthropic.com → API Keys. Stored only on this device.</div>
+            </div>
+            {key&&<div style={{background:"rgba(200,148,58,.1)",borderRadius:13,padding:"11px 15px",display:"flex",alignItems:"center",gap:9,marginTop:13}}><div style={{fontSize:19}}>✅</div><div style={{fontSize:13,color:"#3d2410"}}>Claude search is active</div></div>}
           </div>
         )}
       </div>
     </div>
-  );
+  )
 }
 
-ReactDOM.render(React.createElement(App), document.getElementById("root"));
+/* ── Album Mode ── */
+function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
+  const[idx,setIdx]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showRec,setShowRec]=useState(false);const[showSrch,setShowSrch]=useState(false);
+  const[filtered,setFiltered]=useState(null);const[flabel,setFlabel]=useState("");
+  const[ak,setAk]=useState(0);const[aDir,setADir]=useState("R");
+  const apiKey=localStorage.getItem("ourstory_claude_key")||"";
+  const mems=filtered!==null?filtered:(album.memories||[]);const cur=mems[idx]||null;const C=album.color||"#c8943a";
+  const go=d=>{if(mems.length<2)return;setADir(d===1?"L":"R");setAk(k=>k+1);setIdx(i=>(i+d+mems.length)%mems.length)};
+  const sw=useSwipe(()=>go(1),()=>go(-1));
+  const refresh=async()=>{const f=await load(album.code);if(f)onUpdate(f)};
+  const voices=cur?.voices||[];
+
+  const portraitInfo=cur&&(
+    <div className="info-overlay">
+      <div style={{marginBottom:9}}>
+        {(cur.place&&cur.place!=="—"||cur.year)&&<div style={{fontSize:14,color:"rgba(255,255,255,.85)",fontFamily:"Playfair Display,serif",fontStyle:"italic",marginBottom:3}}>{[cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</div>}
+        {(cur.people||[]).length>0&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)"}}>{cur.people.join(" · ")}</div>}
+      </div>
+      <div style={{display:"flex",gap:9,alignItems:"center"}}>
+        {voices.length===0
+          ?<button onClick={()=>setShowRec(true)} style={{flex:1,padding:"9px",background:"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid rgba(200,148,58,.4)",borderRadius:13,color:"#f0d080",fontSize:13,cursor:"pointer",fontStyle:"italic"}}>🎙 Be first to tell this story</button>
+          :<button onClick={()=>setShowRec(true)} className="bI" style={{width:42,height:42,fontSize:17}}>🎙</button>}
+        <button onClick={()=>setShowAdd(true)} className="bI" style={{width:42,height:42,fontSize:17}}>📸</button>
+        <button onClick={()=>setShowSrch(true)} className="bI" style={{width:42,height:42,fontSize:17}}>🔍</button>
+      </div>
+      {voices.length>0&&(
+        <div style={{marginTop:9}}>
+          {voices.slice(0,2).map((v,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:7,marginBottom:7}}>
+              <Av name={v.name} sz={25} col={v.col}/>
+              <div style={{flex:1}}><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}>{v.name} · {fd(v.duration||0)}</div><audio controls src={v.audio_url} preload="none" style={{width:"100%",height:27,accentColor:C}}/></div>
+            </div>
+          ))}
+          {voices.length>2&&<div style={{fontSize:11,color:"rgba(255,255,255,.3)",textAlign:"right"}}>+{voices.length-2} more</div>}
+        </div>
+      )}
+    </div>
+  );
+
+  const rightPanel=(
+    <div className="landscape-panel">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div><div style={{fontSize:11,letterSpacing:".1em",textTransform:"uppercase",color:"#b09070",marginBottom:3}}>Our Story · {user}</div><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700}}>{album.label}</div></div>
+        <div style={{display:"flex",gap:7}}>
+          <button onClick={onFrame} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"#8a6030",cursor:"pointer"}}>🖼 Frame</button>
+          <button onClick={onSettings} style={{background:"rgba(55,28,8,.08)",border:"1px solid rgba(180,140,80,.2)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"#8a6030",cursor:"pointer"}}>⚙️</button>
+        </div>
+      </div>
+      <Hr/>
+      {cur?(
+        <>
+          {(cur.place!=="—"||cur.year)&&<div style={{fontSize:16,fontFamily:"Playfair Display,serif",fontStyle:"italic"}}>{[cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</div>}
+          {(cur.people||[]).length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:5}}>{cur.people.map((p,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:5,background:"rgba(200,148,58,.12)",borderRadius:18,padding:"3px 9px"}}><Av name={p} sz={19}/><span style={{fontSize:12}}>{p}</span></div>)}</div>}
+          <Hr label="Voices"/>
+          {voices.length===0
+            ?<div onClick={()=>setShowRec(true)} style={{background:"rgba(200,148,58,.08)",borderRadius:15,padding:15,textAlign:"center",cursor:"pointer",border:"1.5px dashed rgba(200,148,58,.3)"}}><div style={{fontSize:22,marginBottom:7}}>🎙</div><div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.5}}>Nobody has told this story yet.<br/>Be the first.</div></div>
+            :<div>{voices.map((v,i)=><div key={i} className="vp"><div style={{display:"flex",alignItems:"center",gap:7,marginBottom:7}}><Av name={v.name} sz={26} col={v.col}/><div><div style={{fontSize:13,fontWeight:600}}>{v.name}</div><div style={{fontSize:11,color:"#b09070"}}>{fd(v.duration||0)}</div></div></div><audio controls src={v.audio_url} preload="none" style={{width:"100%",accentColor:C}}/></div>)}<button onClick={()=>setShowRec(true)} style={{width:"100%",marginTop:6,padding:"8px",background:"none",border:"1px dashed rgba(200,148,58,.3)",borderRadius:11,color:"#b09070",fontSize:12,cursor:"pointer"}}>+ Add your voice</button></div>}
+        </>
+      ):<div style={{textAlign:"center",padding:"28px 0"}}><div style={{fontSize:38,marginBottom:11}}>📖</div><div style={{fontSize:14,color:"#7a5c38",fontStyle:"italic"}}>No memories yet.</div></div>}
+      {mems.length>0&&<div style={{marginTop:"auto",paddingTop:9,borderTop:"1px solid rgba(180,140,80,.15)",fontSize:11,color:"#b09070",textAlign:"center"}}>
+        {idx+1} of {mems.length}{filtered&&<span style={{marginLeft:7,color:"#c8943a"}}>· "{flabel}" <span style={{cursor:"pointer"}} onClick={()=>{setFiltered(null);setIdx(0)}}>✕</span></span>}
+      </div>}
+    </div>
+  );
+
+  return(
+    <div className="app">
+      {/* Portrait top bar */}
+      <div className="portrait-only" style={{position:"absolute",top:0,left:0,right:0,zIndex:50,justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 14px 9px",background:"linear-gradient(rgba(8,4,1,.65),transparent)"}}>
+        <button onClick={onSettings} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"rgba(255,255,255,.7)",cursor:"pointer"}}>{album.label} ⚙️</button>
+        <div style={{display:"flex",gap:7}}>
+          {filtered&&<button onClick={()=>{setFiltered(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",border:"none",borderRadius:9,padding:"5px 9px",fontSize:11,color:"#f0d080",cursor:"pointer"}}>"{flabel}" ✕</button>}
+          <button onClick={onFrame} style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",fontSize:11,color:"rgba(255,255,255,.7)",cursor:"pointer"}}>🖼</button>
+        </div>
+      </div>
+      {/* Frame */}
+      <div className="frame" {...sw}>
+        <div className="photo-col">
+          {cur?(
+            <div key={ak} className="fill" style={{animation:aDir==="L"?"slideInR .35s ease":"slideInL .35s ease"}}>
+              {cur.photo_url?<img src={cur.photo_url} alt=""/>:<div className="empty"><div style={{fontSize:58,opacity:.22}}>📷</div></div>}
+            </div>
+          ):(
+            <div className="empty" style={{position:"absolute",inset:0}}>
+              <div style={{textAlign:"center",padding:18}}>
+                <div style={{fontSize:52,marginBottom:12,opacity:.4}}>📖</div>
+                <div style={{fontSize:17,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,.55)",marginBottom:7}}>{album.label}</div>
+                <div style={{fontSize:13,color:"rgba(255,255,255,.28)",fontStyle:"italic",marginBottom:22}}>No memories yet.</div>
+                <button onClick={()=>setShowAdd(true)} className="bA" style={{padding:"13px 26px"}}>📸 Add first memory</button>
+              </div>
+            </div>
+          )}
+          {mems.length>1&&<>
+            <button onClick={()=>go(-1)} className="portrait-only" style={{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,.14)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:15,cursor:"pointer",zIndex:20,alignItems:"center",justifyContent:"center"}}>‹</button>
+            <button onClick={()=>go(1)} className="portrait-only" style={{position:"absolute",right:9,top:"50%",transform:"translateY(-50%)",width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,.14)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",fontSize:15,cursor:"pointer",zIndex:20,alignItems:"center",justifyContent:"center"}}>›</button>
+          </>}
+          {portraitInfo}
+        </div>
+        {rightPanel}
+      </div>
+      {/* Landscape bottom nav */}
+      <div className="landscape-nav">
+        <button onClick={()=>go(-1)} style={{background:"rgba(55,28,8,.1)",border:"1px solid rgba(180,140,80,.2)",borderRadius:11,padding:"9px 16px",fontSize:13,color:"#5a3a18",cursor:"pointer"}}>← Prev</button>
+        <div style={{display:"flex",gap:9}}>
+          <button onClick={()=>setShowAdd(true)} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:11,padding:"9px 15px",fontSize:13,color:"#8a6030",cursor:"pointer"}}>📸 Upload</button>
+          <button onClick={()=>setShowSrch(true)} style={{background:"rgba(200,148,58,.15)",border:"1px solid rgba(200,148,58,.3)",borderRadius:11,padding:"9px 15px",fontSize:13,color:"#8a6030",cursor:"pointer"}}>🔍 Search</button>
+        </div>
+        <button onClick={()=>go(1)} style={{background:"rgba(55,28,8,.1)",border:"1px solid rgba(180,140,80,.2)",borderRadius:11,padding:"9px 16px",fontSize:13,color:"#5a3a18",cursor:"pointer"}}>Next →</button>
+      </div>
+      {/* Sheets */}
+      {showAdd&&<AddSheet album={album} user={user} onSaved={async()=>{setShowAdd(false);await refresh();setIdx(0)}} onClose={()=>setShowAdd(false)}/>}
+      {showRec&&cur&&<RecSheet memory={cur} speaker={user} color={C} onSaved={async()=>{setShowRec(false);await refresh()}} onClose={()=>setShowRec(false)}/>}
+      {showSrch&&<div style={{position:"absolute",inset:0,zIndex:300}}><SearchSht memories={album.memories||[]} apiKey={apiKey} onResults={(r,label)=>{setFiltered(r);setFlabel(label);setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/></div>}
+    </div>
+  )
+}
+
+/* ── Onboarding screens ── */
+function ScrName({onNext}){
+  const[name,setName]=useState("");
+  return<div className="ob"><div className="card"><div style={{fontSize:44,marginBottom:18,textAlign:"center"}}>📖</div><div style={{fontSize:28,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:5,lineHeight:1.2}}>Our Story</div><div style={{fontSize:15,color:"#7a5c38",fontStyle:"italic",marginBottom:26,lineHeight:1.6}}>A voice album for the people you love.</div><div style={{fontSize:12,fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",color:"#b09070",marginBottom:7}}>What's your name?</div><input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" onKeyDown={e=>e.key==="Enter"&&name.trim()&&onNext(name.trim())} style={{marginBottom:14}} autoFocus/><button onClick={()=>name.trim()&&onNext(name.trim())} className="bA" style={{width:"100%",fontSize:16,padding:15,textAlign:"center"}}>Continue →</button></div></div>
+}
+function ScrSetup({userName,onNext,onJoin}){
+  const[label,setLabel]=useState("");
+  return<div className="ob"><div className="card"><div style={{fontSize:14,color:"#b09070",marginBottom:18,fontStyle:"italic"}}>Welcome, {userName}</div><div style={{fontSize:24,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7,lineHeight:1.3}}>Name your album</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:20}}>Your family's private memory album. Give it a name that feels right.</div><input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="e.g. Our Family, The Tuteja House…" style={{marginBottom:16}} onKeyDown={e=>e.key==="Enter"&&label.trim()&&onNext(label.trim())} autoFocus/><button onClick={()=>label.trim()&&onNext(label.trim())} className="bA" style={{width:"100%",fontSize:16,padding:15,marginBottom:12,textAlign:"center"}}>Create album →</button><button onClick={onJoin} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer"}}>Joining someone else's album →</button></div></div>
+}
+function ScrJoin({userName,onJoined,onBack}){
+  const[code,setCode]=useState(jCode()||"");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
+  useEffect(()=>{if(jCode()&&userName){setLoading(true);joinAlbum(jCode(),userName).then(a=>{if(a)onJoined(a);else{setErr("Album not found.");setLoading(false)}})}},[]);
+  const go=async()=>{if(!code.trim())return;setLoading(true);setErr("");const a=await joinAlbum(code,userName);if(a)onJoined(a);else{setErr("Album not found.");setLoading(false)}};
+  if(loading)return<div className="ob"><div className="card" style={{textAlign:"center",padding:38}}><Spin sz={30}/><div style={{marginTop:14,color:"#7a5c38",fontStyle:"italic"}}>Joining album...</div></div></div>;
+  return<div className="ob"><div className="card"><button onClick={onBack} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginBottom:16}}>← Back</button><div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Join an album</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.6,marginBottom:18}}>Enter the code from your invite link.</div><input className="inp" value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Album code (e.g. ABCD12)" style={{marginBottom:err?7:16,letterSpacing:".1em",fontWeight:600}} onKeyDown={e=>e.key==="Enter"&&go()}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:13}}>{err}</div>}<button onClick={go} disabled={!code.trim()} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Join →</button></div></div>
+}
+function ScrFirst({album,user,onDone,onSkip}){
+  const[showAdd,setShowAdd]=useState(false);
+  return<div className="ob">{!showAdd?<div className="card" style={{animation:"fadeIn .4s ease"}}><div style={{fontSize:34,marginBottom:14,textAlign:"center"}}>✨</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:7}}>Add your first memory</div><div style={{fontSize:13,color:"#7a5c38",lineHeight:1.7,marginBottom:22}}>This is the first thing your family sees when they open the invite. Make it a photo that means something.</div><button onClick={()=>setShowAdd(true)} className="bA" style={{width:"100%",fontSize:15,padding:15,marginBottom:11,textAlign:"center"}}>📸 Add first memory</button><button onClick={onSkip} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer"}}>Skip for now →</button></div>:<div style={{position:"fixed",inset:0,zIndex:600}}><AddSheet album={album} user={user} onSaved={async()=>{const f=await load(album.code);onDone(f||album)}} onClose={()=>setShowAdd(false)}/></div>}</div>
+}
+function AddAlbumFlow({userName,onDone,onBack}){
+  const[mode,setMode]=useState(null);const[label,setLabel]=useState("");const[code,setCode]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
+  const create=async()=>{if(!label.trim())return;setLoading(true);try{const c=mkCode();await createAlbum(label.trim(),ac(label.trim()),c);const f=await load(c);onDone(f||{code:c,label:label.trim(),color:ac(label.trim()),members:[],memories:[]})}catch(e){setErr("Could not create.");setLoading(false)}};
+  const join=async()=>{if(!code.trim())return;setLoading(true);setErr("");const a=await joinAlbum(code,userName);if(a)onDone(a);else{setErr("Album not found.");setLoading(false)}};
+  if(loading)return<div className="ob"><Spin sz={26}/></div>;
+  return(
+    <div className="ob"><div className="card">
+      <button onClick={mode?()=>setMode(null):onBack} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginBottom:18}}>← Back</button>
+      {!mode&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:18}}>Add another album</div>
+        {[{id:"join",icon:"🔗",title:"Join an album",desc:"Use a code or invite link"},{id:"create",icon:"✨",title:"Create new album",desc:"Start a fresh one"}].map(m=>(
+          <div key={m.id} onClick={()=>setMode(m.id)} style={{background:"#fff",borderRadius:15,padding:"14px 16px",border:"2px solid rgba(200,148,58,.18)",cursor:"pointer",marginBottom:10}}><div style={{fontSize:26,marginBottom:7}}>{m.icon}</div><div style={{fontSize:14,fontWeight:700,color:"#2a1505"}}>{m.title}</div><div style={{fontSize:12,color:"#7a5c38",marginTop:3}}>{m.desc}</div></div>
+        ))}</>}
+      {mode==="create"&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:14}}>New album name</div><input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="Album name" style={{marginBottom:14}}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:11}}>{err}</div>}<button onClick={create} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Create →</button></>}
+      {mode==="join"&&<><div style={{fontSize:20,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:14}}>Enter album code</div><input className="inp" value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Album code" style={{marginBottom:14,letterSpacing:".1em"}}/>{err&&<div style={{color:"#c06858",fontSize:13,marginBottom:11}}>{err}</div>}<button onClick={join} disabled={!code.trim()} className="bA" style={{width:"100%",padding:15,textAlign:"center"}}>Join →</button></>}
+    </div></div>
+  )
+}
+
+/* ── App Root ── */
+function App(){
+  const[phase,setPhase]=useState("loading");
+  const[userName,setUser]=useState("");const[albums,setAlbums]=useState([]);const[aIdx,setAIdx]=useState(0);
+  const album=albums[aIdx]||null;
+
+  useEffect(()=>{
+    const saved=(()=>{try{return JSON.parse(localStorage.getItem(SK)||"null")}catch(e){return null}})();
+    if(!saved){setPhase("name");return}
+    const{userName:u,codes}=saved;
+    if(!u||!codes?.length){setPhase("name");return}
+    setUser(u);
+    Promise.all(codes.map(c=>load(c))).then(results=>{
+      const valid=results.filter(Boolean);if(!valid.length){setPhase("name");return}
+      setAlbums(valid);setAIdx(0);setPhase("app")
+    }).catch(()=>setPhase("name"))
+  },[]);
+
+  const persist=(u,als)=>localStorage.setItem(SK,JSON.stringify({userName:u,codes:als.map(a=>a.code)}));
+  const enterApp=(u,al)=>{
+    setAlbums(prev=>{const n=[...prev];const i=n.findIndex(a=>a.code===al.code);if(i>=0)n[i]=al;else n.push(al);persist(u,n);setAIdx(n.length-1);return n});
+    setUser(u);setPhase("app")
+  };
+  const upd=fresh=>setAlbums(prev=>prev.map(a=>a.code===fresh.code?fresh:a));
+  const refresh=async()=>{if(!album)return;const f=await load(album.code);if(f)upd(f)};
+
+  if(phase==="loading")return<div style={{position:"fixed",inset:0,background:"#100804",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14}}><div style={{fontSize:46}}>📖</div><Spin sz={22} col="#c8943a"/></div>;
+  if(phase==="name")return<ScrName onNext={n=>{setUser(n);setPhase(jCode()?"join":"setup")}}/>;
+  if(phase==="setup")return<ScrSetup userName={userName} onNext={async label=>{const c=mkCode();const col=ac(label);try{await createAlbum(label,col,c);const f=await load(c);const al=f||{id:"",code:c,label,color:col,members:[],memories:[]};enterApp(userName,al);setPhase("first")}catch(e){alert("Could not create album. Check connection.")}}} onJoin={()=>setPhase("join")}/>;
+  if(phase==="join")return<ScrJoin userName={userName} onJoined={al=>{enterApp(userName,al)}} onBack={()=>setPhase("setup")}/>;
+  if(phase==="first"&&album)return<ScrFirst album={album} user={userName} onDone={fresh=>{if(fresh)upd(fresh);setPhase("app")}} onSkip={()=>setPhase("app")}/>;
+  if(phase==="addAlbum")return<AddAlbumFlow userName={userName} onDone={al=>{enterApp(userName,al)}} onBack={()=>setPhase("app")}/>;
+  if(phase==="settings"&&album)return<SettingsScreen album={album} userName={userName} allAlbums={albums} onSwitch={al=>{setAIdx(albums.findIndex(a=>a.code===al.code))}} onAdd={()=>setPhase("addAlbum")} onClose={()=>setPhase("app")} onRefresh={refresh}/>;
+  if(phase==="frame"&&album)return<FrameMode memories={album.memories||[]} albumLabel={album.label} onExit={()=>setPhase("app")}/>;
+  if(phase==="app"&&album)return<AlbumMode album={album} user={userName} onUpdate={upd} onSettings={()=>setPhase("settings")} onFrame={()=>setPhase("frame")}/>;
+  return<div style={{position:"fixed",inset:0,background:"#100804",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,color:"#fff",textAlign:"center",padding:22}}><div style={{fontSize:44}}>📡</div><div style={{fontSize:16,fontFamily:"Playfair Display,serif"}}>Connection issue</div><div style={{fontSize:13,color:"rgba(255,255,255,.5)",lineHeight:1.7}}>Could not reach the server.<br/>Check your connection and try again.</div><button onClick={()=>{localStorage.removeItem(SK);setPhase("name")}} className="bA" style={{marginTop:7}}>Start fresh</button></div>;
+}
+
+ReactDOM.render(React.createElement(App),document.getElementById("root"));
 </script>
 </body>
 </html>
