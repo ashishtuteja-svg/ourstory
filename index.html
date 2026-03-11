@@ -268,7 +268,7 @@ function AddSheet({album,user,onSaved,onClose}){
   const sSave=async()=>{setSaving(true);try{const ppl=[user,...tagged.filter(t=>t!==user)];await saveMem(album.id,ppl,{year:year?parseInt(year):null,month:month||null,place:place||null,transcript:tx},photo,rec.aBlob,rec.dur,user);onSaved()}catch(e){alert("Could not save.");setSaving(false)}};
   return(
     <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-      <div onClick={e=>e.stopPropagation()} className="sheet" style={{maxHeight:"93vh",display:"flex",flexDirection:"column"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{maxHeight:"96vh",display:"flex",flexDirection:"column"}}>
         <div style={{padding:"13px 18px 0",flexShrink:0}}>
           <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
@@ -294,8 +294,9 @@ function AddSheet({album,user,onSaved,onClose}){
           {mode==="quick"&&(
             <div style={{animation:"fadeIn .25s ease"}}>
               <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
-              <div onClick={()=>fRef.current?.click()} style={{height:195,borderRadius:17,overflow:"hidden",cursor:"pointer",background:prev?"url("+prev+") center/cover":"rgba(200,148,58,.07)",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}}>
+              <div onClick={()=>fRef.current?.click()} style={{height:200,borderRadius:17,overflow:"hidden",cursor:"pointer",background:prev?"url("+prev+") center/cover no-repeat":"rgba(200,148,58,.07)",backgroundSize:"cover",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16,flexShrink:0}}>
                 {!prev&&<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:38,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
+                {prev&&<div style={{position:"relative",width:"100%",height:"100%"}}><img src={prev} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",bottom:8,right:8,background:"rgba(0,0,0,.4)",borderRadius:8,padding:"4px 10px",color:"#fff",fontSize:11}}>Tap to change</div></div>}
               </div>
               <button onClick={prev?qSave:()=>fRef.current?.click()} disabled={saving} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:prev?"✅ Drop it in":"📷 Choose photo"}</button>
             </div>
@@ -303,29 +304,39 @@ function AddSheet({album,user,onSaved,onClose}){
           {mode==="story"&&step===1&&(
             <div style={{animation:"fadeIn .25s ease"}}>
               <input ref={fRef} type="file" accept="image/*" onChange={onPick} style={{display:"none"}}/>
-              <div onClick={()=>fRef.current?.click()} style={{height:175,borderRadius:17,overflow:"hidden",cursor:"pointer",background:prev?"url("+prev+") center/cover":"rgba(200,148,58,.07)",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:15}}>
-                {!prev&&<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:34,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
+              <div onClick={()=>fRef.current?.click()} style={{height:175,borderRadius:17,overflow:"hidden",cursor:"pointer",border:"2px dashed "+(prev?"transparent":C+"55"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:15,flexShrink:0,position:"relative"}}>
+                {prev?<img src={prev} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:34,marginBottom:8}}>📷</div><div style={{fontSize:13}}>Tap to choose photo</div></div>}
               </div>
               <button onClick={()=>setStep(2)} className="bA" style={{width:"100%",fontSize:15}}>{photo?"Next: Record voice →":"Skip photo, add voice →"}</button>
             </div>
           )}
           {mode==="story"&&step===2&&(
-            <div style={{animation:"fadeIn .25s ease"}}>
-              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.6,marginBottom:14}}>Speak naturally. Say when, where, who. Your words become the memory.</div>
-              <div style={{minHeight:75,background:"rgba(200,148,58,.06)",borderRadius:15,padding:13,marginBottom:13,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap below to start</div>}
+            <div style={{animation:"fadeIn .25s ease",display:"flex",flexDirection:"column",gap:12}}>
+              {/* Show selected photo so you can see it while speaking */}
+              {prev&&<div style={{height:140,borderRadius:14,overflow:"hidden",background:"url("+prev+") center/cover",flexShrink:0}}/>}
+              <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.5}}>Speak naturally — say when, where, who was there. Your words become the memory.</div>
+              {/* Recording state display */}
+              <div style={{background:"rgba(200,148,58,.07)",borderRadius:14,padding:"14px 12px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:64}}>
+                {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Tap the button below to start</div>}
+                {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Waiting for microphone...</div>}
                 {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
-                  <div style={{display:"flex",gap:3,height:22}}>{[.6,1,.7,.9,.5].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*20,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
-                  <div style={{fontSize:12,color:"#b09070"}}>{fd(rec.dur)}</div>
-                  {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5}}>{sp.transcript.substring(0,100)}</div>}
+                  <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
+                  <div style={{fontSize:13,color:"#b09070",fontWeight:600}}>{fd(rec.dur)} · Recording...</div>
+                  {sp.transcript&&<div style={{fontSize:12,color:"#7a5c38",textAlign:"center",lineHeight:1.5,marginTop:4}}>{sp.transcript.substring(0,120)}</div>}
                 </div>}
                 {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
+                {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>Microphone access was blocked.<br/>Check Safari Settings → Microphone.</div>}
               </div>
-              {rec.state==="idle"&&<button onClick={()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)}} className="bA" style={{width:"100%",fontSize:15}}>🎙 Start Recording</button>}
-              {rec.state==="recording"&&<button onClick={()=>{rec.stop();sp.stop()}} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop</button>}
+              {/* Big clear action button — always visible */}
+              {(rec.state==="idle"||rec.state==="requesting"||rec.state==="error")&&(
+                <button onClick={()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)}} style={{width:"100%",padding:"16px",borderRadius:14,background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:17,fontWeight:700,cursor:"pointer",letterSpacing:".02em"}}>🎙 Start Recording</button>
+              )}
+              {rec.state==="recording"&&(
+                <button onClick={()=>{rec.stop();sp.stop()}} style={{width:"100%",padding:"16px",borderRadius:14,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:17,fontWeight:700,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop Recording</button>
+              )}
               {rec.state==="done"&&<div style={{display:"flex",gap:9}}>
-                <button onClick={rec.reset} className="bG">🔄 Redo</button>
-                <button onClick={()=>{const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setStep(3)}} className="bA" style={{flex:1}}>Next →</button>
+                <button onClick={rec.reset} className="bG" style={{fontSize:14}}>🔄 Redo</button>
+                <button onClick={()=>{const t=lv.current;setTx(t);const d=extr(t,album.members||[]);if(d.place)setPlace(d.place);if(d.month)setMonth(d.month);if(d.year)setYear(String(d.year));if(d.people)setTagged(d.people);setStep(3)}} className="bA" style={{flex:1,fontSize:15}}>Next →</button>
               </div>}
             </div>
           )}
