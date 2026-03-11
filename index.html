@@ -59,7 +59,7 @@ input,textarea,button{font-family:inherit}
 }
 
 /* ── frame mode ── */
-.framebox{position:fixed;inset:0;background:#000;z-index:1000}
+.framebox{position:fixed;inset:0;background:#111014;z-index:1000}
 
 /* ── onboarding ── */
 .ob{position:fixed;inset:0;background:#100804;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .4s ease}
@@ -74,35 +74,51 @@ input,textarea,button{font-family:inherit}
 /* ── album background texture ── */
 .album-bg{
   position:absolute;inset:0;
-  background-color:#0e0906;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+  /* Deep charcoal base */
+  background-color:#1a1a1f;
+  /* Soft warm vignette — darkens corners, glows center */
+  background-image:radial-gradient(ellipse 75% 70% at 50% 46%, rgba(42,36,30,.0) 0%, rgba(12,10,10,.55) 60%, rgba(4,3,4,.92) 100%);
+}
+/* subtle grain texture overlay */
+.album-bg::after{
+  content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  pointer-events:none;
 }
 /* ── photo print mount ── */
 .photo-print{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   transform-style:preserve-3d;
+  /* push photo up very slightly so it feels optically centred */
+  padding-bottom:5%;
 }
 .photo-mount{
   position:relative;
   background:#fdf8f0;
-  padding:10px 10px 28px 10px;
-  box-shadow:0 8px 32px rgba(0,0,0,.55),0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.3);
+  /* asymmetric padding — more at bottom for caption area */
+  padding:11px 11px 32px 11px;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,.25),
+    0 8px 24px rgba(0,0,0,.5),
+    0 24px 64px rgba(0,0,0,.45),
+    0 0 0 1px rgba(255,255,255,.06);
   border-radius:2px;
-  max-width:88%;max-height:88%;
+  /* bigger — fills more real estate */
+  max-width:91%;max-height:91%;
   display:flex;flex-direction:column;align-items:center;
   will-change:transform;
 }
 .photo-mount img{
-  display:block;max-width:100%;max-height:calc(100% - 20px);
+  display:block;max-width:100%;max-height:calc(100% - 32px);
   object-fit:contain;border-radius:1px;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);
 }
 /* caption strip at bottom of mount */
 .mount-caption{
-  position:absolute;bottom:5px;left:0;right:0;
+  position:absolute;bottom:7px;left:8px;right:8px;
   text-align:center;font-family:'Lora',serif;font-style:italic;
-  font-size:10px;color:#8a7060;letter-spacing:.04em;
+  font-size:12px;color:#7a6454;letter-spacing:.05em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* page turn animation classes */
 .page-out-l{animation:pageOutLeft .32s cubic-bezier(.4,0,.2,1) forwards}
@@ -111,7 +127,7 @@ input,textarea,button{font-family:inherit}
 .page-in-r{animation:pageInRight .35s cubic-bezier(.2,0,.3,1) forwards}
 
 .fill img{width:100%;height:100%;object-fit:contain}
-.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#2a1505,#180c04)}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#232228,#111014)}
 
 /* ── voice pill ── */
 .vp{border-radius:13px;padding:9px 11px;margin-bottom:7px;background:rgba(255,255,255,.1)}
@@ -135,7 +151,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 /* ── config ── */
 const SB_URL  = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY  = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
-const SK      = "ourstory_v21";
+const SK      = "ourstory_v23";
 const PAL     = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS    = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
 const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -191,11 +207,17 @@ async function aiSearch(q,mems,key){
 }
 function kSearch(q,mems){
   const words=q.toLowerCase().split(/\s+/).filter(w=>w.length>1);if(!words.length)return mems;
-  return mems.filter(m=>{const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();return words.some(w=>h.includes(w))})
+  const scored=mems.map(m=>{
+    const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();
+    const score=words.reduce((s,w)=>{if(h.includes(w))return s+2;if(w.length>=4&&h.includes(w.substring(0,4)))return s+1;return s},0);
+    return{m,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  return scored.map(x=>x.m);
 }
 
 /* ── helpers ── */
 function mkCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function playFlip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const b=ctx.createBuffer(1,ctx.sampleRate*.06,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.18;const s=ctx.createBufferSource();s.buffer=b;const g=ctx.createGain();g.gain.setValueAtTime(.5,0);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.06);s.connect(g);g.connect(ctx.destination);s.start();setTimeout(()=>ctx.close(),200)}catch(e){}}
 function ini(n){return(n||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)}
 function pc(n){let h=0;for(const c of(n||""))h+=c.charCodeAt(0);return PAL[h%PAL.length]}
 function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%COLS.length]}
@@ -260,10 +282,11 @@ function Hr({label}){return<div style={{display:"flex",alignItems:"center",gap:9
 function RecSheet({memory,speaker,color,onSaved,onClose}){
   const rec=useRec();const sp=useSpeech();const[saving,setSaving]=useState(false);const lv=useRef("");
   useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
+  // Auto-save as soon as recording stops
+  useEffect(()=>{if(rec.state==="done"&&!saving){setSaving(true);(async()=>{try{const url=await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,lv.current);onSaved({url,name:speaker,dur:rec.dur})}catch(e){alert("Could not save voice.");setSaving(false)}})()}},[rec.state]);
   const go=()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)};
   const halt=()=>{rec.stop();sp.stop()};
   const C=color||"#c8943a";
-  const save=async()=>{if(!rec.aBlob)return;setSaving(true);try{const url=await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,lv.current);onSaved({url,name:speaker,dur:rec.dur})}catch(e){alert("Could not save voice.");setSaving(false)}};
   return(
     <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(22px + env(safe-area-inset-bottom,0px))"}}>
@@ -282,11 +305,9 @@ function RecSheet({memory,speaker,color,onSaved,onClose}){
           {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13}}>Microphone blocked</div>}
         </div>
         {(rec.state==="idle"||rec.state==="error")&&<button onClick={go} className="bA" style={{width:"100%",fontSize:15}}>🎙 Start Recording</button>}
-        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop</button>}
-        {rec.state==="done"&&<div style={{display:"flex",gap:9}}>
-          <button onClick={rec.reset} className="bG">🔄 Redo</button>
-          <button onClick={save} disabled={saving} className="bA" style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{saving?<><Spin col="#fff" sz={15}/>Saving...</>:"✅ Save voice"}</button>
-        </div>}
+        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:13,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop & Save</button>}
+        {rec.state==="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"13px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>Saving your voice...</span></div>}
+        {saving&&rec.state!=="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"13px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>Saving...</span></div>}
       </div>
     </div>
   )
@@ -477,7 +498,7 @@ function AddSheet({album,user,onSaved,onClose}){
 function SearchSht({memories,apiKey,onResults,onClose}){
   const sp=useSpeech();const[q,setQ]=useState("");const[searching,setSrch]=useState(false);const lv=useRef("");
   useEffect(()=>{lv.current=sp.transcript;if(sp.transcript)setQ(sp.transcript)},[sp.transcript]);
-  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories,apiKey);setSrch(false);onResults(r,query)};
+  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories,apiKey);setSrch(false);onResults(r,query,r.length)};
   return(
     <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(30px + env(safe-area-inset-bottom,0px))"}}>
@@ -521,9 +542,9 @@ function FrameMode({memories,albumLabel,onExit}){
         <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.18)",borderRadius:9,padding:"5px 11px",color:"rgba(255,255,255,.5)",fontSize:11,cursor:"pointer"}}>Exit frame</button>
       </div>
       {/* photo */}
-      <div style={{position:"absolute",inset:0,background:"#0a0702",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 75% at 50% 46%, #232228 0%, #111014 55%, #060507 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
         {cur.photo_url
-          ?<div style={{position:"relative",padding:"10px 10px 30px",background:"#fdf8f0",boxShadow:"0 12px 48px rgba(0,0,0,.7),0 3px 12px rgba(0,0,0,.5)",borderRadius:2,maxWidth:"82vw",maxHeight:"82vh",transform:`rotate(${((idx*7+3)%7-3)*0.5}deg)`}}>
+          ?<div style={{position:"relative",padding:"10px 10px 30px",background:"#fdf8f0",boxShadow:"0 12px 48px rgba(0,0,0,.7),0 3px 12px rgba(0,0,0,.5)",borderRadius:2,maxWidth:"91vw",maxHeight:"91vh",transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
               <img src={cur.photo_url} alt="" style={{display:"block",maxWidth:"100%",maxHeight:"calc(80vh - 60px)",objectFit:"contain"}}/>
               <div style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontFamily:"Lora,serif",fontStyle:"italic",fontSize:10,color:"#8a7060",letterSpacing:".04em"}}>{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
             </div>
@@ -639,37 +660,35 @@ function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
   const[idx,setIdx]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showRec,setShowRec]=useState(false);const[showSrch,setShowSrch]=useState(false);
   const[filtered,setFiltered]=useState(null);const[flabel,setFlabel]=useState("");
   const[ak,setAk]=useState(0);const[aDir,setADir]=useState("R");
+  const[voicePlaying,setVoicePlaying]=useState(false);const[voiceIdx,setVoiceIdx]=useState(0);
+  const audioRef=useRef(null);
   const apiKey=localStorage.getItem("ourstory_claude_key")||"";
   const mems=filtered!==null?filtered:(album.memories||[]);const cur=mems[idx]||null;const C=album.color||"#c8943a";
-  const go=d=>{if(mems.length<2)return;setADir(d===1?"L":"R");setAk(k=>k+1);setIdx(i=>(i+d+mems.length)%mems.length)};
+  const voices=cur?.voices||[];
+  // reset voice player when memory changes
+  useEffect(()=>{setVoicePlaying(false);setVoiceIdx(0);if(audioRef.current){audioRef.current.pause();audioRef.current=null}},[idx,ak]);
+  const playVoices=()=>{if(!voices.length)return;setVoicePlaying(true);setVoiceIdx(0);playVoice(0,voices)};
+  const playVoice=(i,vs)=>{if(i>=vs.length){setVoicePlaying(false);setVoiceIdx(0);return;}setVoiceIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
+  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setVoicePlaying(false);setVoiceIdx(0)};
+  const go=d=>{if(mems.length<2)return;playFlip();setADir(d===1?"L":"R");setAk(k=>k+1);setIdx(i=>(i+d+mems.length)%mems.length)};
   const sw=useSwipe(()=>go(1),()=>go(-1));
   const refresh=async()=>{const f=await load(album.code);if(f)onUpdate(f)};
-  const voices=cur?.voices||[];
 
   const portraitInfo=cur&&(
     <div className="info-overlay">
-      <div style={{marginBottom:9}}>
+      <div style={{marginBottom:9}}}>
         {(cur.place&&cur.place!=="—"||cur.year)&&<div style={{fontSize:14,color:"rgba(255,255,255,.85)",fontFamily:"Playfair Display,serif",fontStyle:"italic",marginBottom:3}}>{[cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")}</div>}
         {(cur.people||[]).length>0&&<div style={{fontSize:12,color:"rgba(255,255,255,.5)"}}>{cur.people.join(" · ")}</div>}
       </div>
       <div style={{display:"flex",gap:9,alignItems:"center"}}>
         {voices.length===0
           ?<button onClick={()=>setShowRec(true)} style={{flex:1,padding:"9px",background:"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid rgba(200,148,58,.4)",borderRadius:13,color:"#f0d080",fontSize:13,cursor:"pointer",fontStyle:"italic"}}>🎙 Be first to tell this story</button>
-          :<button onClick={()=>setShowRec(true)} className="bI" style={{width:42,height:42,fontSize:17}}>🎙</button>}
+          :<button onClick={voicePlaying?stopVoices:playVoices} style={{flex:1,padding:"9px",background:voicePlaying?"rgba(192,104,88,.3)":"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid "+(voicePlaying?"rgba(192,104,88,.5)":"rgba(200,148,58,.4)"),borderRadius:13,color:voicePlaying?"#f0a898":"#f0d080",fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,animation:(!voicePlaying&&voices.length>0)?"pulse 2.5s ease infinite":"none"}}>
+            {voicePlaying?<>⏹ {voices[voiceIdx]?.name||""} speaking...</>:<>▶ Play {voices.length} voice{voices.length!==1?"s":""}</>}
+          </button>}
         <button onClick={()=>setShowAdd(true)} className="bI" style={{width:42,height:42,fontSize:17}}>📸</button>
         <button onClick={()=>setShowSrch(true)} className="bI" style={{width:42,height:42,fontSize:17}}>🔍</button>
       </div>
-      {voices.length>0&&(
-        <div style={{marginTop:9}}>
-          {voices.slice(0,2).map((v,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"center",gap:7,marginBottom:7}}>
-              <Av name={v.name} sz={25} col={v.col}/>
-              <div style={{flex:1}}><div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginBottom:3}}>{v.name} · {fd(v.duration||0)}</div><audio controls src={v.audio_url} preload="none" style={{width:"100%",height:27,accentColor:C}}/></div>
-            </div>
-          ))}
-          {voices.length>2&&<div style={{fontSize:11,color:"rgba(255,255,255,.3)",textAlign:"right"}}>+{voices.length-2} more</div>}
-        </div>
-      )}
     </div>
   );
 
@@ -690,7 +709,13 @@ function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
           <Hr label="Voices"/>
           {voices.length===0
             ?<div onClick={()=>setShowRec(true)} style={{background:"rgba(200,148,58,.08)",borderRadius:15,padding:15,textAlign:"center",cursor:"pointer",border:"1.5px dashed rgba(200,148,58,.3)"}}><div style={{fontSize:22,marginBottom:7}}>🎙</div><div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",lineHeight:1.5}}>Nobody has told this story yet.<br/>Be the first.</div></div>
-            :<div>{voices.map((v,i)=><div key={i} className="vp"><div style={{display:"flex",alignItems:"center",gap:7,marginBottom:7}}><Av name={v.name} sz={26} col={v.col}/><div><div style={{fontSize:13,fontWeight:600}}>{v.name}</div><div style={{fontSize:11,color:"#b09070"}}>{fd(v.duration||0)}</div></div></div><audio controls src={v.audio_url} preload="none" style={{width:"100%",accentColor:C}}/></div>)}<button onClick={()=>setShowRec(true)} style={{width:"100%",marginTop:6,padding:"8px",background:"none",border:"1px dashed rgba(200,148,58,.3)",borderRadius:11,color:"#b09070",fontSize:12,cursor:"pointer"}}>+ Add your voice</button></div>}
+            :<div>
+              <button onClick={voicePlaying?stopVoices:playVoices} style={{width:"100%",marginBottom:12,padding:"11px",borderRadius:13,background:voicePlaying?"rgba(192,104,88,.12)":"rgba(200,148,58,.1)",border:"1.5px solid "+(voicePlaying?"rgba(192,104,88,.4)":"rgba(200,148,58,.3)"),color:voicePlaying?"#a05040":"#8a6030",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,animation:(!voicePlaying&&voices.length>0)?"pulse 2.5s ease infinite":"none"}}>
+                {voicePlaying?<>⏹ {voices[voiceIdx]?.name||""} speaking...</>:<>▶ Play {voices.length} voice{voices.length!==1?"s":""}</>}
+              </button>
+              {voices.map((v,i)=><div key={i} className="vp" style={{opacity:voicePlaying&&voiceIdx===i?1:.65,transition:"opacity .3s"}}><div style={{display:"flex",alignItems:"center",gap:7}}><Av name={v.name} sz={22} col={v.col}/><div style={{fontSize:12,fontWeight:600}}>{v.name}</div><div style={{fontSize:11,color:"#b09070",marginLeft:"auto"}}>{fd(v.duration||0)}</div>{voicePlaying&&voiceIdx===i&&<div style={{width:7,height:7,borderRadius:"50%",background:"#c8943a",animation:"pulse .8s ease infinite"}}/>}</div></div>)}
+              <button onClick={()=>setShowRec(true)} style={{width:"100%",marginTop:8,padding:"8px",background:"none",border:"1px dashed rgba(200,148,58,.3)",borderRadius:11,color:"#b09070",fontSize:12,cursor:"pointer"}}>+ Add your voice</button>
+            </div>}
         </>
       ):<div style={{textAlign:"center",padding:"28px 0"}}><div style={{fontSize:38,marginBottom:11}}>📖</div><div style={{fontSize:14,color:"#7a5c38",fontStyle:"italic"}}>No memories yet.</div></div>}
       {mems.length>0&&<div style={{marginTop:"auto",paddingTop:9,borderTop:"1px solid rgba(180,140,80,.15)",fontSize:11,color:"#b09070",textAlign:"center"}}>
@@ -716,7 +741,7 @@ function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
           <div className="album-bg"/>
           {cur?(
             <div key={ak} className="photo-print" style={{animation:aDir==="L"?"page-in-l .35s cubic-bezier(.2,0,.3,1) forwards":"page-in-r .35s cubic-bezier(.2,0,.3,1) forwards"}}>
-              <div className="photo-mount" style={{transform:`rotate(${((idx*7+3)%7-3)*0.6}deg)`}}>
+              <div className="photo-mount" style={{transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
                 {cur.photo_url
                   ?<img src={cur.photo_url} alt="" style={{maxHeight:"calc(70vh - 60px)",width:"auto",maxWidth:"100%"}}/>
                   :<div style={{width:220,height:180,background:"linear-gradient(145deg,#e8ddd0,#d5c8b8)",display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:48,opacity:.3}}>📷</div></div>
@@ -756,7 +781,7 @@ function AlbumMode({album,user,onUpdate,onSettings,onFrame}){
       {/* Sheets */}
       {showAdd&&<AddSheet album={album} user={user} onSaved={async()=>{setShowAdd(false);await refresh();setIdx(0)}} onClose={()=>setShowAdd(false)}/>}
       {showRec&&cur&&<RecSheet memory={cur} speaker={user} color={C} onSaved={async()=>{setShowRec(false);await refresh()}} onClose={()=>setShowRec(false)}/>}
-      {showSrch&&<div style={{position:"absolute",inset:0,zIndex:300}}><SearchSht memories={album.memories||[]} apiKey={apiKey} onResults={(r,label)=>{setFiltered(r);setFlabel(label);setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/></div>}
+      {showSrch&&<div style={{position:"absolute",inset:0,zIndex:300}}><SearchSht memories={album.memories||[]} apiKey={apiKey} onResults={(r,label,count)=>{if(count===0){alert(`No memories found for "${label}". Try different words.`);return;}setFiltered(r);setFlabel(label+" ("+count+")");setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/></div>}
     </div>
   )
 }
