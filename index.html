@@ -102,7 +102,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v30";
+const SK       = "ourstory_v31";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -674,6 +674,9 @@ function ScrName({album,user,onReload}){
 /* ── Onboarding ── */
 function ScrFirst({onDone}){
   const[name,setName]=useState("");const[label,setLabel]=useState("");const[members,setMembers]=useState([]);const[nm,setNm]=useState("");const[creating,setCreating]=useState(false);const[step,setStep]=useState(1);
+  const[loadingCircles,setLoadingCircles]=useState(false);const[circles,setCircles]=useState([]);
+  const findGroups=async()=>{if(!name.trim())return;setLoadingCircles(true);setStep(4);try{const{data}=await sb.from("circles").select("*").order("created_at",{ascending:false});setCircles(data||[]);}catch(e){setCircles([]);}finally{setLoadingCircles(false);}};
+  const rejoin=async(ci)=>{setCreating(true);try{const full=await load(ci.code);localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code:ci.code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code:ci.code}));onDone(full,name.trim());}catch(e){alert("Could not join: "+e.message);setCreating(false);}};
   const next1=()=>{if(!name.trim())return;setStep(2)};
   const addMember=()=>{const n=nm.trim();if(!n||members.includes(n))return;setMembers(m=>[...m,n]);setNm("")};
   const create=async()=>{
