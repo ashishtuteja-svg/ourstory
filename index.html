@@ -102,7 +102,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v32";
+const SK       = "ourstory_v33";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -300,18 +300,26 @@ function AddSheet({album,user,onSaved,onClose}){
   const fRef=useRef(null);const C=album.color||"#c8943a";
 
   const onPick=e=>{
-    const files=Array.from(e.target.files||[]);if(!files.length)return;
-    setPhotos(files.map(f=>({file:f,prev:URL.createObjectURL(f)})));
+    const files=Array.from(e.target.files||[]);
+    if(!files.length)return;
+    const picked=files.map(f=>({file:f,prev:URL.createObjectURL(f)}));
+    setPhotos(picked);
+    // reset input so same file can be re-selected
+    e.target.value="";
   };
-  useEffect(()=>{setTimeout(()=>fRef.current?.click(),300);},[]);
 
   const saveAll=async()=>{
     setSaving(true);setDone(0);const now=new Date();const mems=[];
     for(let i=0;i<photos.length;i++){
       try{
         const m=await saveMem(album.id,[user],{year:now.getFullYear(),month:now.toLocaleString("default",{month:"long"}),place:null},photos[i].file,user);
-        mems.push({...m,voices:[]});setDone(i+1);
-      }catch(e){console.error("Save error:",e);alert("Could not save photo "+(i+1)+". Please check your connection.");setSaving(false);return;}
+        if(!m){alert("Photo "+(i+1)+" failed — try again.");setSaving(false);return;}
+        mems.push({...m,photo_url:m.photo_url||photos[i].prev,voices:[]});setDone(i+1);
+      }catch(e){
+        console.error("Save error:",e);
+        alert("Could not save photo "+(i+1)+".\n\nError: "+(e?.message||"Unknown error")+"\n\nCheck your internet connection and try again.");
+        setSaving(false);return;
+      }
     }
     setSaved(mems);setSaving(false);
     if(mems.length===1&&mems[0]){setVoiceFor(mems[0])}
