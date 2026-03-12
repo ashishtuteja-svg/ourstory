@@ -101,8 +101,8 @@ const {useState,useEffect,useRef,useCallback} = React;
 /* ── config ── */
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
-const CL_KEY   = "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"; /* ← paste your key here */
-const SK       = "ourstory_v25";
+const CL_KEY   = "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"; /* ← paste your key here */
+const SK       = "ourstory_v26";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -700,7 +700,9 @@ function ScrFirst({onDone}){
           <div style={{display:"flex",flexDirection:"column",gap:11}}>
             <div style={{fontSize:13,color:"#7a5c38",marginBottom:2}}>Your name</div>
             <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Ashish" onKeyDown={e=>e.key==="Enter"&&next1()} autoFocus/>
-            <button onClick={next1} disabled={!name.trim()} className="bA" style={{marginTop:4}}>Continue →</button>
+            <button onClick={next1} disabled={!name.trim()} className="bA" style={{marginTop:4}}>Create a new group →</button>
+            <div style={{textAlign:"center",color:"#b09070",fontSize:12}}>— or —</div>
+            <button onClick={findGroups} disabled={!name.trim()||loadingCircles} className="bG" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{loadingCircles?<><Spin col="#c8943a" sz={14}/>Loading...</>:"🔍 Find my existing group"}</button>
           </div>
         )}
         {step===2&&(
@@ -715,6 +717,22 @@ function ScrFirst({onDone}){
             </div>
             {members.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:7,marginTop:2}}>{members.map((m,i)=><div key={i} style={{background:"rgba(200,148,58,.12)",borderRadius:18,padding:"4px 12px",fontSize:13,color:"#6a4820",display:"flex",alignItems:"center",gap:7}}>{m}<span onClick={()=>setMembers(ms=>ms.filter((_,j)=>j!==i))} style={{cursor:"pointer",opacity:.5,fontSize:11}}>✕</span></div>)}</div>}
             <button onClick={create} disabled={!label.trim()||creating} className="bA" style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{creating?<><Spin col="#fff" sz={15}/>Creating...</>:"✨ Create group"}</button>
+            <button onClick={()=>setStep(1)} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",textAlign:"center",padding:"4px"}}>← Back</button>
+          </div>
+        )}
+        {step===4&&(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:4}}>Your existing groups:</div>
+            {loadingCircles&&<div style={{textAlign:"center",padding:"20px 0"}}><Spin col="#c8943a" sz={20}/></div>}
+            {circles.map((ci,i)=>(
+              <div key={i} onClick={()=>rejoin(ci)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,padding:"13px 15px",cursor:"pointer",border:"1.5px solid rgba(200,148,58,.2)"}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:ci.color||"#c8943a",flexShrink:0}}/>
+                <div style={{flex:1,fontSize:15,color:"#2a1505",fontWeight:500}}>{ci.label}</div>
+                <div style={{fontSize:13,color:"#c8943a"}}>→</div>
+              </div>
+            ))}
+            {!loadingCircles&&circles.length===0&&<div style={{color:"#b09070",fontSize:13,textAlign:"center",padding:"12px 0"}}>No groups found.</div>}
+            {creating&&<div style={{textAlign:"center",padding:"8px"}}><Spin col="#c8943a" sz={16}/></div>}
             <button onClick={()=>setStep(1)} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",textAlign:"center",padding:"4px"}}>← Back</button>
           </div>
         )}
