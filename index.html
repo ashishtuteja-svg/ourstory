@@ -102,7 +102,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v31";
+const SK       = "ourstory_v32";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -303,6 +303,7 @@ function AddSheet({album,user,onSaved,onClose}){
     const files=Array.from(e.target.files||[]);if(!files.length)return;
     setPhotos(files.map(f=>({file:f,prev:URL.createObjectURL(f)})));
   };
+  useEffect(()=>{setTimeout(()=>fRef.current?.click(),300);},[]);
 
   const saveAll=async()=>{
     setSaving(true);setDone(0);const now=new Date();const mems=[];
