@@ -101,8 +101,8 @@ const {useState,useEffect,useRef,useCallback} = React;
 /* ── config ── */
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
-const CL_KEY = atob("c2stYW50LWFwaTAzLVdtMjJ5RWJHS2xjUTlhV1hLclk4ZWo3aUpGeHMzdHlOQ1c1V0ZGOTZmS1FNOFNnNWE5NFpIdm8zMmlNYlRSSjl6azNCMDhjTld2X2dVd3EzcjZCRmN3LVlPcUpKUUFB"); /* ← paste your key here */
-const SK       = "ourstory_v27";
+const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
+const SK       = "ourstory_v30";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -148,11 +148,11 @@ async function joinAlbum(code,user){
 
 /* ── Claude summary ── */
 async function genSummary(transcript,members,place,year){
-  if(!transcript||!CL_KEY||CL_KEY.startsWith("YOUR_"))return null;
+  if(!transcript||!AI_URL)return null;
   try{
     const names=(members||[]).map(m=>m.name).join(", ");
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":CL_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    const r=await fetch(AI_URL,{method:"POST",
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,
         system:`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to this list: ${names||"unknown"}. No quotes, no hashtags, no emojis.`,
         messages:[{role:"user",content:`Transcript: "${transcript}"\nPlace: ${place||""}\nYear: ${year||""}`}]})});
@@ -163,11 +163,11 @@ async function genSummary(transcript,members,place,year){
 /* ── AI search ── */
 async function aiSearch(q,mems){
   const local=kSearch(q,mems);
-  if(!CL_KEY||CL_KEY.startsWith("YOUR_"))return local;
+  if(!AI_URL)return local;
   try{
     const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.summary||m.caption||"").substring(0,300)}));
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":CL_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    const r=await fetch(AI_URL,{method:"POST",
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
         system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. Understand Hindi, Punjabi, Indian names.",
         messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
@@ -403,7 +403,7 @@ function SearchSht({memories,onResults,onClose}){
         <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
         <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Search memories</div>
         <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:12,lineHeight:1.6}}>Try "Goa holiday", "Sunny as a baby", "2019"</div>
-        {!CL_KEY.startsWith("YOUR_")&&<div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"8px 12px",marginBottom:12,fontSize:12,color:"#7a5c38"}}>✨ Claude AI search is active — speak in any language</div>}
+        {!!AI_URL&&<div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"8px 12px",marginBottom:12,fontSize:12,color:"#7a5c38"}}>✨ Claude AI search is active — speak in any language</div>}
         <div style={{display:"flex",gap:9,marginBottom:13}}>
           <input className="inp" style={{flex:1}} value={q} onChange={e=>setQ(e.target.value)} placeholder="Speak or type..." onKeyDown={e=>e.key==="Enter"&&go(q)}/>
           <button onClick={()=>sp.active?sp.stop():sp.start("en-IN")} style={{width:46,height:46,borderRadius:13,background:sp.active?"linear-gradient(135deg,#c06858,#8b3a28)":"rgba(200,148,58,.15)",border:"none",fontSize:19,cursor:"pointer",flexShrink:0}}>🎙</button>
