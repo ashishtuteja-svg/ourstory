@@ -102,7 +102,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v33";
+const SK       = "ourstory_v34";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -299,13 +299,21 @@ function AddSheet({album,user,onSaved,onClose}){
   const[voiceFor,setVoiceFor]=useState(null);// memory to add voice to
   const fRef=useRef(null);const C=album.color||"#c8943a";
 
+  const justPicked=useRef(false);
+
   const onPick=e=>{
+    justPicked.current=true;
+    setTimeout(()=>{justPicked.current=false;},800);
     const files=Array.from(e.target.files||[]);
     if(!files.length)return;
     const picked=files.map(f=>({file:f,prev:URL.createObjectURL(f)}));
     setPhotos(picked);
-    // reset input so same file can be re-selected
     e.target.value="";
+  };
+
+  const handleBackdropClick=()=>{
+    if(justPicked.current)return;
+    onClose();
   };
 
   const saveAll=async()=>{
@@ -333,7 +341,7 @@ function AddSheet({album,user,onSaved,onClose}){
   }
 
   return(
-    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+    <div onClick={handleBackdropClick} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{display:"flex",flexDirection:"column",maxHeight:"94vh"}}>
         <div style={{padding:"13px 18px 0",flexShrink:0}}>
           <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
