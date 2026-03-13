@@ -10,7 +10,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Our Story v45</title>
+<title>Our Story v46</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v45";
+const SK       = "ourstory_v46";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -204,7 +204,20 @@ function kSearch(q,mems){
 
 /* ── helpers ── */
 function mkCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
-function playFlip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const b=ctx.createBuffer(1,ctx.sampleRate*.06,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.18;const s=ctx.createBufferSource();s.buffer=b;const g=ctx.createGain();g.gain.setValueAtTime(.5,0);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.06);s.connect(g);g.connect(ctx.destination);s.start();setTimeout(()=>ctx.close(),200)}catch(e){}}
+function playFlip(){try{
+  const ctx=new(window.AudioContext||window.webkitAudioContext)();
+  const play=()=>{
+    const b=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate);
+    const d=b.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.22;
+    const s=ctx.createBufferSource();s.buffer=b;
+    const g=ctx.createGain();g.gain.setValueAtTime(.7,0);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.07);
+    s.connect(g);g.connect(ctx.destination);s.start();
+    setTimeout(()=>ctx.close(),300);
+  };
+  if(ctx.state==="suspended"){ctx.resume().then(play)}else{play()}
+}catch(e){}}catch(e){}}
 function ini(n){return(n||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)}
 function pc(n){let h=0;for(const c of(n||""))h+=c.charCodeAt(0);return PAL[h%PAL.length]}
 function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%COLS.length]}
@@ -441,7 +454,7 @@ function SearchSht({memories,onResults,onClose}){
 }
 
 /* ── Frame Mode ── */
-function FrameMode({memories,albumLabel,onExit}){
+function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
   const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");const[liveMems,setLiveMems]=useState(memories);
   const wake=useWakeLock();const audioRef=useRef(null);
   const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
@@ -454,7 +467,7 @@ function FrameMode({memories,albumLabel,onExit}){
       for(let i=0;i<next.length;i++){
         const m=next[i];
         if(m.transcript&&!m.summary){
-          const s=await genSummary(m.transcript,[],m.place,m.year);
+          const s=await genSummary(m.transcript,members||[],m.place,m.year);
           if(s){await updateSummary(m.id,s);next[i]={...m,summary:s};updated=true;}
         }
       }
@@ -487,12 +500,12 @@ function FrameMode({memories,albumLabel,onExit}){
       </div>
       {/* top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
-        {filter
-          ?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.3)",backdropFilter:"blur(8px)",borderRadius:18,padding:"4px 12px",fontSize:12,color:"#f0d080",cursor:"pointer"}}>{filter.label} ✕</div>
-          :<div style={{color:"rgba(255,255,255,.25)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".08em"}}>{albumLabel}</div>}
+        <div style={{flex:1,textAlign:"center",pointerEvents:"none"}}>{filter
+          ?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{display:"inline-block",background:"rgba(200,148,58,.45)",backdropFilter:"blur(8px)",borderRadius:18,padding:"4px 14px",fontSize:12,color:"#fff",cursor:"pointer",pointerEvents:"all"}}>{filter.label} ✕</div>
+          :<div style={{color:"rgba(255,255,255,.6)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".1em",background:"rgba(0,0,0,.4)",backdropFilter:"blur(6px)",display:"inline-block",padding:"3px 12px",borderRadius:10}}>{albumLabel}</div>}</div>
         <div style={{display:"flex",gap:8}}>
-          <button onClick={e=>{e.stopPropagation();setSrch(true)}} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:8,padding:"4px 10px",color:"rgba(255,255,255,.45)",fontSize:12,cursor:"pointer"}}>🔍</button>
-          <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:8,padding:"4px 10px",color:"rgba(255,255,255,.45)",fontSize:12,cursor:"pointer"}}>Exit</button>
+          <button onClick={e=>{e.stopPropagation();setSrch(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"5px 12px",color:"rgba(255,255,255,.9)",fontSize:13,cursor:"pointer"}}>🔍</button>
+          <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"5px 12px",color:"rgba(255,255,255,.9)",fontSize:13,cursor:"pointer",fontWeight:600}}>← Exit</button>
         </div>
       </div>
 
@@ -510,7 +523,7 @@ function FrameMode({memories,albumLabel,onExit}){
           overflow:"hidden"
         }}>
           {/* LEFT — photo 63% fixed height */}
-          <div style={{flex:"0 0 63%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(32px + env(safe-area-inset-top,0px))",paddingBottom:"env(safe-area-inset-bottom,0px)"}}>
+          <div style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
             <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 85% at 50% 50%,transparent 40%,rgba(0,0,0,.35) 100%)",pointerEvents:"none",zIndex:2}}/>
             {cur.photo_url
               ?<div style={{position:"absolute",inset:8,background:"#edd8b0",boxShadow:"0 2px 6px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.5)",borderRadius:2,overflow:"hidden",zIndex:1}}>
@@ -528,7 +541,7 @@ function FrameMode({memories,albumLabel,onExit}){
           </div>
 
           {/* RIGHT — info panel 37% */}
-          <div style={{flex:"0 0 37%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+          <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
             {/* caption */}
             <div style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
@@ -568,6 +581,11 @@ function FrameMode({memories,albumLabel,onExit}){
                   <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"rgba(240,200,100,.5)"}}>No voices yet</div>
                 </div>
               )}
+            </div>
+            {/* ADD MEMORY box */}
+            <div onClick={e=>{e.stopPropagation();onAddMemory&&onAddMemory()}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
+              <span style={{fontSize:16}}>＋</span>
+              <span style={{fontFamily:"Playfair Display,serif",fontSize:11,color:"rgba(255,240,200,.7)",letterSpacing:".06em",fontStyle:"italic"}}>Add a memory</span>
             </div>
           </div>
         </div>
@@ -722,7 +740,7 @@ function ScrName({album,user,onReload,onSwitch}){
   const handleDeleteMem=(mid)=>{setMems(ms=>{const updated=ms.filter(m=>m.id!==mid);setIdx(i=>Math.min(i,updated.length-1));return updated});setFilter(null)};
   const handleEditSummary=(mid,sum)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,summary:sum}:m))};
   const tint=album.color||"#c8943a";
-  if(frameMode)return<FrameMode memories={mems} albumLabel={album.label} onExit={()=>setFrameMode(false)}/>;
+  if(frameMode)return<FrameMode memories={mems} albumLabel={album.label} members={album.members||[]} onExit={()=>setFrameMode(false)} onAddMemory={()=>{setFrameMode(false);setShowAdd(true)}}/>;
   if(showSet)return<Settings album={{...album,memories:mems}} user={user} onClose={()=>setShowSet(false)} onReload={reload} onSwitch={onSwitch}/>;
   return(
     <div className="app" style={{"--tint":tint}}>
@@ -906,13 +924,13 @@ function App(){
   if(scr==="loading")return<div style={{width:"100vw",height:"100dvh",background:"#111014",display:"flex",alignItems:"center",justifyContent:"center"}}><Spin sz={28}/></div>;
   if(scr==="join")return<ScrJoin code={jCode()} onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
   if(scr==="first")return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
-  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{localStorage.removeItem(SK_SESSION);localStorage.removeItem(SK);setAlbum(null);setScr("first")}}/>;
+  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{localStorage.removeItem(SK);setAlbum(null);setScr("first")}}/>;
   return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
 }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v45';
+  const VER='v46';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
