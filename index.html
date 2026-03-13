@@ -10,7 +10,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Our Story v38</title>
+<title>Our Story v39</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v38";
+const SK       = "ourstory_v39";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -473,14 +473,14 @@ function FrameMode({memories,albumLabel,onExit}){
 }
 
 /* ── Settings ── */
-function Settings({album,user,onClose,onReload}){
+function Settings({album,user,onClose,onReload,onSwitch}){
   const[members,setMembers]=useState(album.members||[]);const[newName,setNewName]=useState("");const[copied,setCopied]=useState(false);
   const addMember=async()=>{const n=newName.trim();if(!n)return;await sb.from("members").insert({circle_id:album.id,name:n,phone:"",joined:false,code:mkCode()});setMembers(m=>[...m,{name:n}]);setNewName("");onReload()};
   const copyLink=()=>{navigator.clipboard.writeText(iUrl(album.code)).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)})};
   return(
     <div className="settings">
       <div style={{background:"#f5ede0",borderBottom:"1px solid rgba(180,140,80,.2)",padding:"calc(16px + env(safe-area-inset-top,0px)) 18px 14px",display:"flex",alignItems:"center",gap:12}}>
-        <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:16,cursor:"pointer",color:"#9c7a52"}}>←</button>
+        <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:16,cursor:"pointer",color:"#9c7a52"}}>←</button><button onClick={onSwitch} style={{background:"rgba(200,148,58,.12)",border:"1px solid rgba(200,148,58,.3)",borderRadius:10,padding:"6px 12px",fontSize:12,cursor:"pointer",color:"#9c7a52"}}>⇄ Switch group</button>
         <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505"}}>{album.label}</div>
       </div>
       <div style={{padding:"18px",display:"flex",flexDirection:"column",gap:18}}>
@@ -603,7 +603,7 @@ function PortraitOverlay({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteM
 }
 
 /* ── Main Album Screen ── */
-function ScrName({album,user,onReload}){
+function ScrName({album,user,onReload,onSwitch}){
   const[idx,setIdx]=useState(0);const[aDir,setADir]=useState("L");const[pk,setPk]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);const[frameMode,setFrameMode]=useState(false);const[mems,setMems]=useState(album.memories||[]);const[filter,setFilter]=useState(null);
   const shown=filter?filter.mems:mems;const cur=shown[idx]||null;
   const go=(dir)=>{const n=mems.length;if(!n)return;playFlip();setADir(dir);setIdx(i=>{const ni=dir==="L"?(i+1)%shown.length:(i-1+shown.length)%shown.length;return ni});setPk(k=>k+1)};
@@ -616,14 +616,14 @@ function ScrName({album,user,onReload}){
   const handleEditSummary=(mid,sum)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,summary:sum}:m))};
   const tint=album.color||"#c8943a";
   if(frameMode)return<FrameMode memories={mems} albumLabel={album.label} onExit={()=>setFrameMode(false)}/>;
-  if(showSet)return<Settings album={{...album,memories:mems}} user={user} onClose={()=>setShowSet(false)} onReload={reload}/>;
+  if(showSet)return<Settings album={{...album,memories:mems}} user={user} onClose={()=>setShowSet(false)} onReload={reload} onSwitch={onSwitch}/>;
   return(
     <div className="app" style={{"--tint":tint}}>
       {/* top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"calc(12px + env(safe-area-inset-top,0px)) 14px 8px",background:"linear-gradient(rgba(0,0,0,.55),transparent)"}}>
         <div style={{display:"flex",alignItems:"center",gap:9}}>
           <div style={{width:9,height:9,borderRadius:"50%",background:tint}}/>
-          <div style={{fontFamily:"Playfair Display,serif",fontSize:14,color:"rgba(255,255,255,.75)",letterSpacing:".04em"}}>{album.label}</div>
+          <div onClick={onSwitch} style={{fontFamily:"Playfair Display,serif",fontSize:14,color:"rgba(255,255,255,.75)",letterSpacing:".04em",cursor:"pointer"}}>{album.label} <span style={{fontSize:11,opacity:.5}}>⇄</span></div>
           {filter&&<div onClick={()=>{setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.35)",borderRadius:14,padding:"3px 10px",fontSize:11,color:"#f0d080",cursor:"pointer"}}>{filter.label} ✕</div>}
         </div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
@@ -799,13 +799,13 @@ function App(){
   if(scr==="loading")return<div style={{width:"100vw",height:"100dvh",background:"#111014",display:"flex",alignItems:"center",justifyContent:"center"}}><Spin sz={28}/></div>;
   if(scr==="join")return<ScrJoin code={jCode()} onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
   if(scr==="first")return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
-  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}}/>;
+  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{localStorage.removeItem(SK_SESSION);localStorage.removeItem(SK);setAlbum(null);setScr("first")}}/>;
   return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
 }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v38';
+  const VER='v39';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
