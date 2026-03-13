@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v51";
+const SK       = "ourstory_v52";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -735,7 +735,9 @@ function ScrName({album,user,onReload,onSwitch}){
   const shown=filter?filter.mems:mems;const cur=shown[idx]||null;
   const go=(dir)=>{const n=mems.length;if(!n)return;playFlip();setADir(dir);setIdx(i=>{const ni=dir==="L"?(i+1)%shown.length:(i-1+shown.length)%shown.length;return ni});setPk(k=>k+1)};
   const sw=useSwipe(()=>go("L"),()=>go("R"));
-  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);}};
+  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);}}
+  // Auto-reload after 4s to pick up any Claude summaries generated in background
+  useEffect(()=>{const t=setTimeout(()=>reload(),4000);return()=>clearTimeout(t)},[]);;
   const afterAdd=()=>{setShowAdd(false);reload()};
   const afterVoice=()=>reload();
   const handleDeleteVoice=(mid,vid)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,voices:(m.voices||[]).filter(v=>v.id!==vid)}:m))};
@@ -767,7 +769,7 @@ function ScrName({album,user,onReload,onSwitch}){
               <div className="album-bg"/>
               <div key={pk} className="photo-print" style={{animation:aDir==="L"?"pageInLeft .35s cubic-bezier(.2,0,.3,1) forwards":"pageInRight .35s cubic-bezier(.2,0,.3,1) forwards"}}>
                 {cur?.photo_url
-                  ?<div className="photo-mount" style={{transform:`rotate(${((idx*7+3)%7-3)*1.8}deg)`}}>
+                  ?<div className="photo-mount">
                       <img src={cur.photo_url} alt=""/>
                       <div className="mount-caption">{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
                     </div>
@@ -931,7 +933,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v51';
+  const VER='v52';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
