@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v47";
+const SK       = "ourstory_v48";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -170,7 +170,7 @@ async function genSummary(transcript,members,place,year){
     ?`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to: ${names||"unknown"}. No quotes, no hashtags, no emojis.`
     :`Write a warm 1-2 sentence memory caption for a family photo. Use the people and place provided. Natural, poetic, human tone. No quotes, no hashtags, no emojis.`;
   try{
-    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SB_KEY},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,system,messages:[{role:"user",content:prompt}]})});
     const j=await r.json();
     return j.content?.[0]?.text?.trim()||null;
@@ -184,7 +184,7 @@ async function aiSearch(q,mems){
   try{
     const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.summary||m.caption||"").substring(0,300)}));
     const r=await fetch(AI_URL,{method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+SB_KEY},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
         system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. Understand Hindi, Punjabi, Indian names.",
         messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
@@ -443,7 +443,7 @@ function SearchSht({memories,onResults,onClose}){
 
 /* ── Frame Mode ── */
 function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
-  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");const[liveMems,setLiveMems]=useState(memories);
+  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");const[liveMems,setLiveMems]=useState(memories);const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
   const wake=useWakeLock();const audioRef=useRef(null);
   const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
 
@@ -464,7 +464,7 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
   },[]);
 
   useEffect(()=>{wake.acquire();return()=>wake.release()},[]);
-  useEffect(()=>{setPlaying(false);setVIdx(0);if(audioRef.current){audioRef.current.pause();audioRef.current=null}setAnim("in")},[idx]);
+  useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null}setAnim("in")},[idx]);
   useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
   const sw=useSwipe(
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
@@ -530,14 +530,28 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
 
           {/* RIGHT — info panel 37% */}
           <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
-            {/* caption */}
-            <div style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden"}}>
+            {/* caption — tap to edit */}
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
               <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
-              <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:600,color:"#2a1800",lineHeight:1.6,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:6,WebkitBoxOrient:"vertical"}}>
-                {displayText}
-              </div>
-              {cur.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif"}}>{cur.people.join(", ")}</div>}
-              <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
+              {editSum
+                ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
+                    <textarea value={editTxt} onChange={e=>setEditTxt(e.target.value)} autoFocus
+                      style={{width:"100%",background:"rgba(255,255,255,.8)",border:"1px solid rgba(130,85,5,.5)",borderRadius:6,padding:"7px 9px",fontSize:12,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"#2a1505",lineHeight:1.6,resize:"none",minHeight:80,outline:"none"}}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async e=>{e.stopPropagation();const ok=await updateSummary(cur.id,editTxt);if(ok)setLiveMems(ms=>ms.map(m=>m.id===cur.id?{...m,summary:editTxt}:m));setEditSum(false);}}
+                        style={{flex:1,background:"#7a5500",color:"#fff",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer",fontWeight:600}}>✓ Save</button>
+                      <button onClick={e=>{e.stopPropagation();setEditSum(false);}}
+                        style={{flex:1,background:"rgba(130,85,5,.12)",color:"#5a3c10",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                :<>
+                  <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:600,color:"#2a1800",lineHeight:1.6,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:6,WebkitBoxOrient:"vertical"}}>
+                    {displayText}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                  </div>
+                  {cur.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif"}}>{cur.people.join(", ")}</div>}
+                  <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
+                </>
+              }
             </div>
 
             {/* play panel */}
@@ -917,7 +931,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v47';
+  const VER='v48';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
