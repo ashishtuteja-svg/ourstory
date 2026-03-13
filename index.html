@@ -204,7 +204,7 @@ function kSearch(q,mems){
 
 /* ── helpers ── */
 function mkCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
-function playFlip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const play=()=>{const b=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.22;const s=ctx.createBufferSource();s.buffer=b;const g=ctx.createGain();g.gain.setValueAtTime(.7,0);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.07);s.connect(g);g.connect(ctx.destination);s.start();setTimeout(()=>ctx.close(),300)};if(ctx.state==="suspended"){ctx.resume().then(play)}else{play()}}catch(e){}}catch(e){}}
+function playFlip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const play=()=>{const b=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.22;const s=ctx.createBufferSource();s.buffer=b;const g=ctx.createGain();g.gain.setValueAtTime(.7,0);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.07);s.connect(g);g.connect(ctx.destination);s.start();setTimeout(()=>ctx.close(),300)};if(ctx.state==="suspended"){ctx.resume().then(play)}else{play()}}catch(e){}}
 function ini(n){return(n||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)}
 function pc(n){let h=0;for(const c of(n||""))h+=c.charCodeAt(0);return PAL[h%PAL.length]}
 function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%COLS.length]}
