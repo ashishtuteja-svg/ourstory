@@ -7,7 +7,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Our Story"/>
 <meta name="theme-color" content="#111014"/>
-<title>Our Story</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>Our Story v36</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -102,14 +105,14 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v34";
+const SK       = "ourstory_v36";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
 const sb = supabase.createClient(SB_URL, SB_KEY);
 
 /* ── db ── */
-async function up(bucket,path,blob){const{error}=await sb.storage.from(bucket).upload(path,blob,{upsert:true});if(error)throw error;return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}
+async function up(bucket,path,blob){const ct=blob.type&&blob.type!=='application/octet-stream'?blob.type:(bucket==='photos'?'image/jpeg':'audio/webm');const{error}=await sb.storage.from(bucket).upload(path,blob,{upsert:true,contentType:ct});if(error)throw new Error('Upload failed: '+error.message+' (bucket='+bucket+' type='+ct+')');return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}
 async function load(code){
   const{data:c}=await sb.from("circles").select("*").eq("code",code.toUpperCase()).single();if(!c)return null;
   const{data:members}=await sb.from("members").select("*").eq("circle_id",c.id);
@@ -299,21 +302,12 @@ function AddSheet({album,user,onSaved,onClose}){
   const[voiceFor,setVoiceFor]=useState(null);// memory to add voice to
   const fRef=useRef(null);const C=album.color||"#c8943a";
 
-  const justPicked=useRef(false);
-
   const onPick=e=>{
-    justPicked.current=true;
-    setTimeout(()=>{justPicked.current=false;},800);
     const files=Array.from(e.target.files||[]);
     if(!files.length)return;
     const picked=files.map(f=>({file:f,prev:URL.createObjectURL(f)}));
     setPhotos(picked);
     e.target.value="";
-  };
-
-  const handleBackdropClick=()=>{
-    if(justPicked.current)return;
-    onClose();
   };
 
   const saveAll=async()=>{
@@ -341,7 +335,7 @@ function AddSheet({album,user,onSaved,onClose}){
   }
 
   return(
-    <div onClick={handleBackdropClick} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+    <div style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
       <div onClick={e=>e.stopPropagation()} className="sheet" style={{display:"flex",flexDirection:"column",maxHeight:"94vh"}}>
         <div style={{padding:"13px 18px 0",flexShrink:0}}>
           <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
@@ -800,4 +794,17 @@ function App(){
   return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
 }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+// Auto-reload when a newer version is deployed — kills stale PWA cache
+(function(){
+  const VER='v36';
+  const stored=localStorage.getItem('ourstory_app_ver');
+  if(stored&&stored!==VER){
+    localStorage.setItem('ourstory_app_ver',VER);
+    // Clear all caches then hard reload
+    if('caches' in window){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true))}
+    else{location.reload(true)}
+  } else {
+    localStorage.setItem('ourstory_app_ver',VER);
+  }
+})();
 </script></body></html>
