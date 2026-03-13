@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v46";
+const SK       = "ourstory_v47";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -121,7 +121,7 @@ async function load(code){
   // Background: generate summaries for any memory that has transcript but no summary yet
   setTimeout(async()=>{
     for(const m of memories){
-      if(m.transcript&&!m.summary){
+      if(!m.summary){
         const s=await genSummary(m.transcript,members||[],m.place,m.year);
         if(s)await updateSummary(m.id,s);
       }
@@ -160,19 +160,20 @@ async function joinAlbum(code,user){
 
 /* ── Claude summary ── */
 async function genSummary(transcript,members,place,year){
-  if(!transcript||!AI_URL){console.warn("genSummary skipped: no transcript or AI_URL");return null;}
+  if(!AI_URL)return null;
+  const names=(members||[]).map(m=>m.name).join(", ");
+  const hasTranscript=transcript&&transcript.trim().length>5;
+  const prompt=hasTranscript
+    ?`Transcript: "${transcript}"\nPlace: ${place||""}\nYear: ${year||""}`
+    :`People: ${names||"family"}\nPlace: ${place||"somewhere special"}\nYear: ${year||""}\nNote: no voice transcript — write a warm 1-2 sentence caption imagining this moment.`;
+  const system=hasTranscript
+    ?`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to: ${names||"unknown"}. No quotes, no hashtags, no emojis.`
+    :`Write a warm 1-2 sentence memory caption for a family photo. Use the people and place provided. Natural, poetic, human tone. No quotes, no hashtags, no emojis.`;
   try{
-    const names=(members||[]).map(m=>m.name).join(", ");
-    console.log("genSummary: calling Claude API for transcript:",transcript.substring(0,80));
-    const r=await fetch(AI_URL,{method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,
-        system:`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to this list: ${names||"unknown"}. No quotes, no hashtags, no emojis.`,
-        messages:[{role:"user",content:`Transcript: "${transcript}"\nPlace: ${place||""}\nYear: ${year||""}`}]})});
+    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,system,messages:[{role:"user",content:prompt}]})});
     const j=await r.json();
-    const result=j.content?.[0]?.text?.trim()||null;
-    console.log("genSummary result:",result||"null — response was:",JSON.stringify(j).substring(0,200));
-    return result
+    return j.content?.[0]?.text?.trim()||null;
   }catch(e){console.error("genSummary error:",e.message);return null}
 }
 
@@ -453,7 +454,7 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
       const next=[...liveMems];
       for(let i=0;i<next.length;i++){
         const m=next[i];
-        if(m.transcript&&!m.summary){
+        if(!m.summary){
           const s=await genSummary(m.transcript,members||[],m.place,m.year);
           if(s){await updateSummary(m.id,s);next[i]={...m,summary:s};updated=true;}
         }
@@ -916,7 +917,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v46';
+  const VER='v47';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
