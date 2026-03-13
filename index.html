@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v48";
+const SK       = "ourstory_v51";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -170,7 +170,7 @@ async function genSummary(transcript,members,place,year){
     ?`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to: ${names||"unknown"}. No quotes, no hashtags, no emojis.`
     :`Write a warm 1-2 sentence memory caption for a family photo. Use the people and place provided. Natural, poetic, human tone. No quotes, no hashtags, no emojis.`;
   try{
-    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+SB_KEY},
+    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,system,messages:[{role:"user",content:prompt}]})});
     const j=await r.json();
     return j.content?.[0]?.text?.trim()||null;
@@ -184,7 +184,7 @@ async function aiSearch(q,mems){
   try{
     const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.summary||m.caption||"").substring(0,300)}));
     const r=await fetch(AI_URL,{method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+SB_KEY},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
         system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. Understand Hindi, Punjabi, Indian names.",
         messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
@@ -931,7 +931,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v48';
+  const VER='v51';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
