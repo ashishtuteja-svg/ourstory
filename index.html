@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v52";
+const SK       = "ourstory_v53";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -729,87 +729,192 @@ function PortraitOverlay({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteM
   )
 }
 
-/* ── Main Album Screen ── */
+/* ── Main Album Screen (unified slideshow) ── */
 function ScrName({album,user,onReload,onSwitch}){
-  const[idx,setIdx]=useState(0);const[aDir,setADir]=useState("L");const[pk,setPk]=useState(0);const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);const[frameMode,setFrameMode]=useState(false);const[mems,setMems]=useState(album.memories||[]);const[filter,setFilter]=useState(null);
-  const shown=filter?filter.mems:mems;const cur=shown[idx]||null;
-  const go=(dir)=>{const n=mems.length;if(!n)return;playFlip();setADir(dir);setIdx(i=>{const ni=dir==="L"?(i+1)%shown.length:(i-1+shown.length)%shown.length;return ni});setPk(k=>k+1)};
-  const sw=useSwipe(()=>go("L"),()=>go("R"));
-  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);}}
-  // Auto-reload after 4s to pick up any Claude summaries generated in background
-  useEffect(()=>{const t=setTimeout(()=>reload(),4000);return()=>clearTimeout(t)},[]);;
-  const afterAdd=()=>{setShowAdd(false);reload()};
-  const afterVoice=()=>reload();
-  const handleDeleteVoice=(mid,vid)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,voices:(m.voices||[]).filter(v=>v.id!==vid)}:m))};
-  const handleDeleteMem=(mid)=>{setMems(ms=>{const updated=ms.filter(m=>m.id!==mid);setIdx(i=>Math.min(i,updated.length-1));return updated});setFilter(null)};
-  const handleEditSummary=(mid,sum)=>{setMems(ms=>ms.map(m=>m.id===mid?{...m,summary:sum}:m))};
+  const[idx,setIdx]=useState(0);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");
+  const[mems,setMems]=useState(album.memories||[]);const[liveMems,setLiveMems]=useState(album.memories||[]);
+  const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);
+  const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);
+  const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
+  const wake=useWakeLock();const audioRef=useRef(null);
+  const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
   const tint=album.color||"#c8943a";
-  if(frameMode)return<FrameMode memories={mems} albumLabel={album.label} members={album.members||[]} onExit={()=>setFrameMode(false)} onAddMemory={()=>{setFrameMode(false);setShowAdd(true)}}/>;
-  if(showSet)return<Settings album={{...album,memories:mems}} user={user} onClose={()=>setShowSet(false)} onReload={reload} onSwitch={onSwitch}/>;
+
+  // Load fresh data & generate missing summaries on mount
+  useEffect(()=>{
+    wake.acquire();
+    (async()=>{
+      const fresh=await load(album.code);
+      if(fresh){
+        const next=fresh.memories||[];
+        setMems(next);
+        // generate summaries for any without one
+        const withSummaries=[...next];
+        let updated=false;
+        for(let i=0;i<withSummaries.length;i++){
+          if(!withSummaries[i].summary){
+            const s=await genSummary(withSummaries[i].transcript,fresh.members||[],withSummaries[i].place,withSummaries[i].year);
+            if(s){await updateSummary(withSummaries[i].id,s);withSummaries[i]={...withSummaries[i],summary:s};updated=true;}
+          }
+        }
+        setLiveMems(withSummaries);
+      }
+    })();
+    return()=>wake.release();
+  },[]);
+
+  useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setAnim("in")},[idx]);
+  // Auto-advance every 30s when not playing
+  useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
+
+  const sw=useSwipe(
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
+  );
+
+  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);setLiveMems(fresh.memories||[]);}};
+  const afterAdd=()=>{setShowAdd(false);reload()};
+
+  const playVoice=(i,vs)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
+  const playVoices=()=>{if(!cur?.voices?.length)return;setPlaying(true);playVoice(0,cur.voices)};
+  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setPlaying(false);setVIdx(0)};
+
+  if(showSet)return<Settings album={{...album,memories:liveMems}} user={user} onClose={()=>setShowSet(false)} onReload={reload} onSwitch={onSwitch}/>;
+
+  // Empty state
+  if(liveMems.length===0)return(
+    <div style={{position:"fixed",inset:0,background:"#0e0c0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+      <div style={{fontSize:52}}>📷</div>
+      <div style={{fontFamily:"Playfair Display,serif",fontSize:20,color:"rgba(255,255,255,.6)",fontStyle:"italic"}}>Your story begins here</div>
+      <button onClick={()=>setShowAdd(true)} style={{background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",borderRadius:14,padding:"12px 28px",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"Playfair Display,serif"}}>+ Add first memory</button>
+      <button onClick={()=>setShowSet(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,.3)",fontSize:12,cursor:"pointer"}}>⚙️ Settings</button>
+      {showAdd&&<AddSheet album={album} user={user} onSaved={afterAdd} onClose={()=>setShowAdd(false)}/>}
+    </div>
+  );
+
+  const hasVoices=cur?.voices?.length>0;
+  const captionFallback=[cur?.place&&cur.place!=="—"?cur.place:null,[cur?.month,cur?.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story";
+  const displayText=cur?.summary||captionFallback;
+
   return(
-    <div className="app" style={{"--tint":tint}}>
+    <div style={{position:"fixed",inset:0,background:"#0e0c0a",overflow:"hidden"}} {...sw}>
+      {/* progress bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.06)",zIndex:30}}>
+        <div key={pk} style={{height:"100%",background:tint,animation:"bar 30s linear forwards"}}/>
+      </div>
+
       {/* top bar */}
-      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"calc(12px + env(safe-area-inset-top,0px)) 14px 8px",background:"linear-gradient(rgba(0,0,0,.55),transparent)"}}>
-        <div style={{display:"flex",alignItems:"center",gap:9}}>
-          <div style={{width:9,height:9,borderRadius:"50%",background:tint}}/>
-          <div onClick={onSwitch} style={{fontFamily:"Playfair Display,serif",fontSize:14,color:"rgba(255,255,255,.75)",letterSpacing:".04em",cursor:"pointer"}}>{album.label} <span style={{fontSize:11,opacity:.5}}>⇄</span></div>
-          {filter&&<div onClick={()=>{setFilter(null);setIdx(0)}} style={{background:"rgba(200,148,58,.35)",borderRadius:14,padding:"3px 10px",fontSize:11,color:"#f0d080",cursor:"pointer"}}>{filter.label} ✕</div>}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
+        <div style={{flex:1,textAlign:"center",pointerEvents:"none"}}>
+          {filter
+            ?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{display:"inline-block",background:"rgba(200,148,58,.45)",backdropFilter:"blur(8px)",borderRadius:18,padding:"4px 14px",fontSize:12,color:"#fff",cursor:"pointer",pointerEvents:"all"}}>{filter.label} ✕</div>
+            :<div style={{color:"rgba(255,255,255,.6)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".1em",background:"rgba(0,0,0,.4)",backdropFilter:"blur(6px)",display:"inline-block",padding:"3px 12px",borderRadius:10}}>{album.label}</div>}
         </div>
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
-          <button onClick={()=>setShowSrch(true)} className="bI" style={{width:34,height:34,fontSize:15}}>🔍</button>
-          <button onClick={()=>setShowSet(true)} className="bI" style={{width:34,height:34,fontSize:15}}>⚙️</button>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={e=>{e.stopPropagation();setShowSrch(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:8,padding:"5px 11px",color:"rgba(255,255,255,.85)",fontSize:13,cursor:"pointer"}}>🔍</button>
+          <button onClick={e=>{e.stopPropagation();setShowSet(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:8,padding:"5px 11px",color:"rgba(255,255,255,.85)",fontSize:13,cursor:"pointer"}}>⚙️</button>
         </div>
       </div>
-      {/* photo area */}
-      <div className="frame">
-        <div className="photo-col" {...sw}>
-          {mems.length===0
-            ?<div className="empty"><div style={{fontSize:52}}>📷</div><div style={{color:"rgba(255,255,255,.5)",fontSize:16,fontFamily:"Playfair Display,serif",fontStyle:"italic"}}>Your story begins here</div><button onClick={()=>setShowAdd(true)} style={{marginTop:12,background:"rgba(200,148,58,.3)",border:"1px solid rgba(200,148,58,.5)",borderRadius:14,padding:"10px 22px",color:"#f0d080",fontSize:14,cursor:"pointer"}}>+ Add first memory</button></div>
-            :<>
-              <div className="album-bg"/>
-              <div key={pk} className="photo-print" style={{animation:aDir==="L"?"pageInLeft .35s cubic-bezier(.2,0,.3,1) forwards":"pageInRight .35s cubic-bezier(.2,0,.3,1) forwards"}}>
-                {cur?.photo_url
-                  ?<div className="photo-mount">
-                      <img src={cur.photo_url} alt=""/>
-                      <div className="mount-caption">{[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story"}</div>
+
+      {/* MAIN CARD */}
+      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"stretch"}}>
+        <div key={pk} style={{
+          display:"flex",flexDirection:"row",alignItems:"stretch",
+          width:"100%",height:"100%",
+          background:"linear-gradient(145deg,#e8d4ae,#ddc898)",
+          opacity:anim==="out"?0:1,
+          transform:anim==="out"?"scale(.97) translateY(8px)":"scale(1) translateY(0)",
+          transition:"opacity .32s ease, transform .32s ease",
+          overflow:"hidden"
+        }}>
+          {/* LEFT — photo */}
+          <div style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+            <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 85% at 50% 50%,transparent 40%,rgba(0,0,0,.35) 100%)",pointerEvents:"none",zIndex:2}}/>
+            {cur?.photo_url
+              ?<div style={{position:"absolute",inset:8,background:"#edd8b0",boxShadow:"0 2px 6px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.5)",borderRadius:2,overflow:"hidden",zIndex:1}}>
+                  {[{top:3,left:3},{top:3,right:3},{bottom:3,left:3},{bottom:3,right:3}].map((pos,i)=>(
+                    <div key={i} style={{position:"absolute",width:14,height:14,zIndex:3,...pos}}>
+                      <svg viewBox="0 0 16 16" style={{width:"100%",height:"100%"}}>
+                        <path d={i===0?"M1 8 L1 1 L8 1":i===1?"M8 1 L15 1 L15 8":i===2?"M1 8 L1 15 L8 15":"M8 15 L15 15 L15 8"} fill="none" stroke="#7a5500" strokeWidth="2.5" strokeLinecap="round"/>
+                      </svg>
                     </div>
-                  :<div style={{color:"rgba(255,255,255,.2)",fontSize:52}}>📷</div>}
-              </div>
-              {/* swipe arrows */}
-              {shown.length>1&&<>
-                <button onClick={()=>go("R")} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",backdropFilter:"blur(8px)",border:"none",borderRadius:"50%",width:36,height:36,color:"rgba(255,255,255,.5)",fontSize:16,cursor:"pointer",zIndex:50}}>‹</button>
-                <button onClick={()=>go("L")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",backdropFilter:"blur(8px)",border:"none",borderRadius:"50%",width:36,height:36,color:"rgba(255,255,255,.5)",fontSize:16,cursor:"pointer",zIndex:50}}>›</button>
-              </>}
-              {/* counter */}
-              <div style={{position:"absolute",bottom:60,left:0,right:0,textAlign:"center",pointerEvents:"none",zIndex:60}}><div style={{color:"rgba(255,255,255,.2)",fontSize:10}}>{idx+1} / {shown.length}</div></div>
-            </>}
-          {cur&&<PortraitOverlay memory={cur} album={album} user={user} onVoiceAdded={afterVoice} onDeleteVoice={handleDeleteVoice} onDeleteMemory={handleDeleteMem}/>}
-        </div>
-        {/* landscape right panel */}
-        <LandscapePanel memory={cur} album={album} user={user} onVoiceAdded={afterVoice} onDeleteVoice={handleDeleteVoice} onDeleteMemory={handleDeleteMem} onEditSummary={handleEditSummary}/>
-        {/* landscape bottom nav */}
-        <div className="landscape-nav">
-          <div style={{fontSize:12,color:"#9c7a52",fontStyle:"italic"}}>{mems.length} memor{mems.length!==1?"ies":"y"}</div>
-          <div style={{display:"flex",gap:10}}>
-            <button onClick={()=>setShowSrch(true)} className="bG" style={{padding:"8px 14px",fontSize:13}}>🔍 Search</button>
-            <button onClick={()=>setFrameMode(true)} className="bG" style={{padding:"8px 14px",fontSize:13}}>▶ Slideshow</button>
-            <button onClick={()=>setShowAdd(true)} className="bA" style={{padding:"8px 16px",fontSize:13}}>+ Add</button>
+                  ))}
+                  <img src={cur.photo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                </div>
+              :<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,.15)",fontSize:48}}>📷</div>}
+          </div>
+
+          {/* RIGHT — info panel */}
+          <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+            {/* caption — tap to edit */}
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+              <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
+              {editSum
+                ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
+                    <textarea value={editTxt} onChange={e=>setEditTxt(e.target.value)} autoFocus
+                      style={{width:"100%",background:"rgba(255,255,255,.8)",border:"1px solid rgba(130,85,5,.5)",borderRadius:6,padding:"7px 9px",fontSize:12,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"#2a1505",lineHeight:1.6,resize:"none",minHeight:80,outline:"none"}}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async e=>{e.stopPropagation();const ok=await updateSummary(cur.id,editTxt);if(ok)setLiveMems(ms=>ms.map(m=>m.id===cur.id?{...m,summary:editTxt}:m));setEditSum(false);}}
+                        style={{flex:1,background:"#7a5500",color:"#fff",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer",fontWeight:600}}>✓ Save</button>
+                      <button onClick={e=>{e.stopPropagation();setEditSum(false);}}
+                        style={{flex:1,background:"rgba(130,85,5,.12)",color:"#5a3c10",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                :<>
+                  <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:600,color:"#2a1800",lineHeight:1.6,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:6,WebkitBoxOrient:"vertical"}}>
+                    {displayText}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                  </div>
+                  {cur?.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif"}}>{cur.people.join(", ")}</div>}
+                  <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
+                </>
+              }
+            </div>
+
+            {/* play panel */}
+            <div style={{flexShrink:0,padding:"14px 15px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"linear-gradient(180deg,#c49020 0%,#a87010 100%)",borderTop:"1px solid rgba(100,60,0,.4)",position:"relative"}}>
+              <div style={{position:"absolute",inset:5,border:"1px solid rgba(255,200,80,.2)",borderRadius:3,pointerEvents:"none"}}/>
+              {hasVoices?(
+                <>
+                  <button onClick={playing?stopVoices:playVoices} style={{
+                    width:48,height:48,borderRadius:"50%",
+                    background:playing?"radial-gradient(circle,#c06858,#8b3a2a)":"radial-gradient(circle,#d4a020,#a07010)",
+                    border:"3px solid "+(playing?"rgba(192,104,88,.6)":"rgba(200,160,30,.7)"),
+                    boxShadow:"0 2px 8px rgba(0,0,0,.3),0 0 0 2px rgba(255,220,80,.2)",
+                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                    animation:!playing?"pulse 2.5s ease infinite":"none",flexShrink:0
+                  }}>{playing?"⏹":"▶"}</button>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:11,color:"#f5e0a0",fontWeight:600,letterSpacing:".04em"}}>
+                      {playing?`${cur.voices[vIdx]?.name} speaking...`:"LISTEN to the echoes"}
+                    </div>
+                    <div style={{fontSize:10,color:"rgba(245,220,150,.7)",marginTop:2,fontFamily:"Lora,serif"}}>
+                      {playing?`${vIdx+1} of ${cur.voices.length} voice${cur.voices.length!==1?"s":""}`:`${cur.voices.length} voice${cur.voices.length!==1?"s":""} recorded`}
+                    </div>
+                  </div>
+                </>
+              ):(
+                <div style={{textAlign:"center",padding:"6px 0"}}>
+                  <div style={{fontSize:20,marginBottom:4,opacity:.35}}>🎙</div>
+                  <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"rgba(240,200,100,.5)"}}>No voices yet</div>
+                </div>
+              )}
+            </div>
+
+            {/* add memory */}
+            <div onClick={e=>{e.stopPropagation();setShowAdd(true)}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
+              <span style={{fontSize:16}}>＋</span>
+              <span style={{fontFamily:"Playfair Display,serif",fontSize:11,color:"rgba(255,240,200,.7)",letterSpacing:".06em",fontStyle:"italic"}}>Add a memory</span>
+            </div>
           </div>
         </div>
       </div>
-      {/* portrait bottom bar */}
-      <div className="portrait-only" style={{background:"rgba(8,4,1,.96)",borderTop:"1px solid rgba(200,148,58,.15)",padding:"9px 16px calc(12px + env(safe-area-inset-bottom,0px))",flexDirection:"row",gap:10,alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
-        <div style={{flex:1,display:"flex",gap:8}}>
-          <button onClick={()=>setFrameMode(true)} style={{flex:1,padding:"10px 8px",borderRadius:12,background:"rgba(200,148,58,.12)",border:"1px solid rgba(200,148,58,.25)",color:"#c8943a",fontSize:12,fontWeight:600,cursor:"pointer"}}>▶ Slideshow</button>
-          <button onClick={()=>setShowSrch(true)} style={{flex:1,padding:"10px 8px",borderRadius:12,background:"rgba(200,148,58,.12)",border:"1px solid rgba(200,148,58,.25)",color:"#c8943a",fontSize:12,fontWeight:600,cursor:"pointer"}}>🔍 Search</button>
-        </div>
-        <button onClick={()=>setShowAdd(true)} style={{width:48,height:48,borderRadius:"50%",background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:24,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>+</button>
-      </div>
+
       {showAdd&&<AddSheet album={album} user={user} onSaved={afterAdd} onClose={()=>setShowAdd(false)}/>}
-      {showSrch&&<SearchSht memories={mems} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/>}
+      {showSrch&&<SearchSht memories={liveMems} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/>}
     </div>
   )
 }
+
 
 /* ── Onboarding ── */
 function ScrFirst({onDone}){
@@ -933,7 +1038,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v52';
+  const VER='v53';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
