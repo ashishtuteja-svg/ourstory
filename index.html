@@ -10,7 +10,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Our Story v46</title>
+<title>Our Story v54</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -93,8 +93,8 @@ input,textarea,button{font-family:inherit}
 textarea.inp{resize:none;line-height:1.6}
 
 /* summary editable */
-.summary-text{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:#2a1505;line-height:1.65;cursor:pointer}
-.summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer}
+.summary-text{font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:#2a1505;line-height:1.75;cursor:pointer;text-align:center}
+.summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer;text-align:center}
 </style>
 </head>
 <body><div id="root"></div>
@@ -105,7 +105,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v53";
+const SK       = "ourstory_v54";
 const SK_SESSION = "ourstory_session";
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
@@ -530,8 +530,17 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
 
           {/* RIGHT — info panel 37% */}
           <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+            {/* date / place header */}
+            {(cur.place&&cur.place!=="—"||cur.month||cur.year)&&(
+              <div style={{padding:"10px 14px 6px",textAlign:"center",borderBottom:"1px solid rgba(110,70,5,.2)",flexShrink:0}}>
+                <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:700,color:"#3d1e00",letterSpacing:".03em",lineHeight:1.4}}>
+                  {[cur.month,cur.year].filter(Boolean).join(" ")}
+                </div>
+                {cur.place&&cur.place!=="—"&&<div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#7a5020",marginTop:2}}>{cur.place}</div>}
+              </div>
+            )}
             {/* caption — tap to edit */}
-            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur.summary||"");}}} style={{flex:1,padding:"14px 13px 10px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
               <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
               {editSum
                 ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
@@ -545,10 +554,15 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
                     </div>
                   </div>
                 :<>
-                  <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:600,color:"#2a1800",lineHeight:1.6,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:6,WebkitBoxOrient:"vertical"}}>
-                    {displayText}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
-                  </div>
-                  {cur.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif"}}>{cur.people.join(", ")}</div>}
+                  {cur.summary
+                    ?<div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:17,fontWeight:400,color:"#2a1800",lineHeight:1.75,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:7,WebkitBoxOrient:"vertical",textAlign:"center"}}>
+                        {cur.summary}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                      </div>
+                    :<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                        <Spin sz={14} col="#9a7030"/>
+                        <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>Writing your memory…</div>
+                      </div>}
+                  {cur.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif",textAlign:"center"}}>{cur.people.join(", ")}</div>}
                   <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
                 </>
               }
@@ -748,16 +762,19 @@ function ScrName({album,user,onReload,onSwitch}){
       if(fresh){
         const next=fresh.memories||[];
         setMems(next);
-        // generate summaries for any without one
-        const withSummaries=[...next];
-        let updated=false;
-        for(let i=0;i<withSummaries.length;i++){
-          if(!withSummaries[i].summary){
-            const s=await genSummary(withSummaries[i].transcript,fresh.members||[],withSummaries[i].place,withSummaries[i].year);
-            if(s){await updateSummary(withSummaries[i].id,s);withSummaries[i]={...withSummaries[i],summary:s};updated=true;}
+        // Set live mems immediately so slideshow starts
+        setLiveMems(next);
+        // Then generate summaries one-by-one, updating UI as each arrives
+        for(let i=0;i<next.length;i++){
+          if(!next[i].summary){
+            const s=await genSummary(next[i].transcript,fresh.members||[],next[i].place,next[i].year);
+            if(s){
+              await updateSummary(next[i].id,s);
+              // Update just this one memory in state so caption refreshes live
+              setLiveMems(prev=>prev.map((m,j)=>j===i?{...m,summary:s}:m));
+            }
           }
         }
-        setLiveMems(withSummaries);
       }
     })();
     return()=>wake.release();
@@ -846,8 +863,17 @@ function ScrName({album,user,onReload,onSwitch}){
 
           {/* RIGHT — info panel */}
           <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+            {/* date / place header */}
+            {(cur?.place&&cur.place!=="—"||cur?.month||cur?.year)&&(
+              <div style={{padding:"10px 14px 6px",textAlign:"center",borderBottom:"1px solid rgba(110,70,5,.2)",flexShrink:0}}>
+                <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:700,color:"#3d1e00",letterSpacing:".03em",lineHeight:1.4}}>
+                  {[cur?.month,cur?.year].filter(Boolean).join(" ")}
+                </div>
+                {cur?.place&&cur.place!=="—"&&<div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#7a5020",marginTop:2}}>{cur.place}</div>}
+              </div>
+            )}
             {/* caption — tap to edit */}
-            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"14px 13px 10px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
               <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
               {editSum
                 ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
@@ -861,10 +887,15 @@ function ScrName({album,user,onReload,onSwitch}){
                     </div>
                   </div>
                 :<>
-                  <div style={{fontFamily:"Playfair Display,serif",fontSize:13,fontWeight:600,color:"#2a1800",lineHeight:1.6,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:6,WebkitBoxOrient:"vertical"}}>
-                    {displayText}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
-                  </div>
-                  {cur?.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif"}}>{cur.people.join(", ")}</div>}
+                  {cur?.summary
+                    ?<div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:17,fontWeight:400,color:"#2a1800",lineHeight:1.75,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:7,WebkitBoxOrient:"vertical",textAlign:"center"}}>
+                        {cur.summary}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                      </div>
+                    :<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                        <Spin sz={14} col="#9a7030"/>
+                        <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>Writing your memory…</div>
+                      </div>}
+                  {cur?.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif",textAlign:"center"}}>{cur.people.join(", ")}</div>}
                   <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
                 </>
               }
@@ -1038,7 +1069,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v53';
+  const VER='v54';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
