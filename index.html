@@ -10,7 +10,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Our Story v54</title>
+<title>Our Story v56</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -95,6 +95,19 @@ textarea.inp{resize:none;line-height:1.6}
 /* summary editable */
 .summary-text{font-family:'Playfair Display',serif;font-style:italic;font-size:16px;color:#2a1505;line-height:1.75;cursor:pointer;text-align:center}
 .summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer;text-align:center}
+
+/* iPhone responsive — narrow screens stack vertically */
+@media(max-width:500px){
+  .scrn-card{flex-direction:column!important}
+  .scrn-photo{flex:0 0 52vh!important;width:100%!important}
+  .scrn-info{flex:1!important;width:100%!important;overflow-y:auto!important;flex-direction:row!important;flex-wrap:wrap}
+  .scrn-caption{flex:1!important;min-width:60%!important;border-bottom:none!important;border-right:1px solid rgba(110,70,5,.2)!important}
+  .scrn-play{flex:0 0 auto!important;min-width:40%!important;border-top:none!important}
+  .scrn-add{width:100%!important}
+}
+
+/* nav arrows */
+.nav-arrow{position:absolute;top:50%;transform:translateY(-50%);zIndex:50;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .3s ease}
 </style>
 </head>
 <body><div id="root"></div>
@@ -105,8 +118,12 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v54";
+const SK       = "ourstory_v56";
 const SK_SESSION = "ourstory_session";
+const SK_NAME    = "ourstory_name";
+const SK_GROUPS  = "ourstory_groups";
+function saveGroup(code,label,user){try{const gs=JSON.parse(localStorage.getItem(SK_GROUPS)||"[]");const i=gs.findIndex(g=>g.code===code);const e={code,label,user,ts:Date.now()};if(i>=0)gs[i]=e;else gs.unshift(e);localStorage.setItem(SK_GROUPS,JSON.stringify(gs.slice(0,10)));}catch(e){}}
+function getGroups(){try{return JSON.parse(localStorage.getItem(SK_GROUPS)||"[]");}catch(e){return[];}}
 const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
 const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
 const sb = supabase.createClient(SB_URL, SB_KEY);
@@ -444,7 +461,8 @@ function SearchSht({memories,onResults,onClose}){
 /* ── Frame Mode ── */
 function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
   const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");const[liveMems,setLiveMems]=useState(memories);const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
-  const wake=useWakeLock();const audioRef=useRef(null);
+  const[paused,setPaused]=useState(false);const[showArrows,setShowArrows]=useState(false);
+  const wake=useWakeLock();const audioRef=useRef(null);const arrowTimer=useRef(null);
   const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
 
   // Generate summaries for any memory that has transcript but no summary
@@ -465,11 +483,15 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
 
   useEffect(()=>{wake.acquire();return()=>wake.release()},[]);
   useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null}setAnim("in")},[idx]);
-  useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
+  useEffect(()=>{if(!shown.length||playing||paused)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing,paused]);
   const sw=useSwipe(
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
   );
+  const handlePointerDown=()=>{setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
+  const handlePointerUp=()=>{setPaused(false);if(arrowTimer.current)clearTimeout(arrowTimer.current);arrowTimer.current=setTimeout(()=>setShowArrows(false),1800)};
+  const goNext=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)};
+  const goPrev=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)};
   const playVoice=(i,vs)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
   const playVoices=()=>{if(!cur?.voices?.length)return;setPlaying(true);playVoice(0,cur.voices)};
   const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setPlaying(false);setVIdx(0)};
@@ -481,11 +503,16 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
   const displayText=cur.summary||captionFallback;
 
   return(
-    <div className="framebox" {...sw} style={{background:"#0e0c0a"}}>
+    <div className="framebox" {...sw} style={{background:"#0e0c0a"}} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onPointerCancel={handlePointerUp}>
       {/* progress bar */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.06)",zIndex:30}}>
-        <div key={pk} style={{height:"100%",background:"#c8943a",animation:"bar 30s linear forwards"}}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"rgba(255,255,255,.18)",zIndex:30}}>
+        <div key={pk} style={{height:"100%",background:"#c8943a",animation:"bar 30s linear forwards",animationPlayState:paused||playing?"paused":"running"}}/>
       </div>
+      {/* nav arrows — appear on touch */}
+      {showArrows&&shown.length>1&&(<>
+        <button onClick={goPrev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",zIndex:50,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+        <button onClick={goNext} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",zIndex:50,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+      </>)}
       {/* top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
         <div style={{flex:1,textAlign:"center",pointerEvents:"none"}}>{filter
@@ -750,6 +777,8 @@ function ScrName({album,user,onReload,onSwitch}){
   const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);
   const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);
   const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
+  const[paused,setPaused]=useState(false);const[showArrows,setShowArrows]=useState(false);
+  const arrowTimer=useRef(null);
   const wake=useWakeLock();const audioRef=useRef(null);
   const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
   const tint=album.color||"#c8943a";
@@ -781,13 +810,18 @@ function ScrName({album,user,onReload,onSwitch}){
   },[]);
 
   useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setAnim("in")},[idx]);
-  // Auto-advance every 30s when not playing
-  useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
+  // Auto-advance every 30s when not playing and not touch-paused
+  useEffect(()=>{if(!shown.length||playing||paused)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing,paused]);
 
   const sw=useSwipe(
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
   );
+
+  const handlePointerDown=()=>{setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
+  const handlePointerUp=()=>{setPaused(false);if(arrowTimer.current)clearTimeout(arrowTimer.current);arrowTimer.current=setTimeout(()=>setShowArrows(false),1800)};
+  const goNext=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)};
+  const goPrev=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)};
 
   const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);setLiveMems(fresh.memories||[]);}};
   const afterAdd=()=>{setShowAdd(false);reload()};
@@ -814,11 +848,17 @@ function ScrName({album,user,onReload,onSwitch}){
   const displayText=cur?.summary||captionFallback;
 
   return(
-    <div style={{position:"fixed",inset:0,background:"#0e0c0a",overflow:"hidden"}} {...sw}>
+    <div style={{position:"fixed",inset:0,background:"#0e0c0a",overflow:"hidden"}} {...sw} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onPointerCancel={handlePointerUp}>
       {/* progress bar */}
-      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.06)",zIndex:30}}>
-        <div key={pk} style={{height:"100%",background:tint,animation:"bar 30s linear forwards"}}/>
+      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"rgba(255,255,255,.18)",zIndex:30}}>
+        <div key={pk} style={{height:"100%",background:tint,animation:"bar 30s linear forwards",animationPlayState:paused||playing?"paused":"running"}}/>
       </div>
+
+      {/* nav arrows — appear on touch */}
+      {showArrows&&shown.length>1&&(<>
+        <button onClick={goPrev} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",zIndex:50,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"opacity .3s"}}>‹</button>
+        <button onClick={goNext} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",zIndex:50,width:38,height:38,borderRadius:"50%",background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transition:"opacity .3s"}}>›</button>
+      </>)}
 
       {/* top bar */}
       <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
@@ -835,7 +875,7 @@ function ScrName({album,user,onReload,onSwitch}){
 
       {/* MAIN CARD */}
       <div style={{position:"absolute",inset:0,display:"flex",alignItems:"stretch"}}>
-        <div key={pk} style={{
+        <div key={pk} className="scrn-card" style={{
           display:"flex",flexDirection:"row",alignItems:"stretch",
           width:"100%",height:"100%",
           background:"linear-gradient(145deg,#e8d4ae,#ddc898)",
@@ -845,7 +885,7 @@ function ScrName({album,user,onReload,onSwitch}){
           overflow:"hidden"
         }}>
           {/* LEFT — photo */}
-          <div style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+          <div className="scrn-photo" style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
             <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 85% at 50% 50%,transparent 40%,rgba(0,0,0,.35) 100%)",pointerEvents:"none",zIndex:2}}/>
             {cur?.photo_url
               ?<div style={{position:"absolute",inset:8,background:"#edd8b0",boxShadow:"0 2px 6px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.5)",borderRadius:2,overflow:"hidden",zIndex:1}}>
@@ -862,7 +902,7 @@ function ScrName({album,user,onReload,onSwitch}){
           </div>
 
           {/* RIGHT — info panel */}
-          <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+          <div className="scrn-info" style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
             {/* date / place header */}
             {(cur?.place&&cur.place!=="—"||cur?.month||cur?.year)&&(
               <div style={{padding:"10px 14px 6px",textAlign:"center",borderBottom:"1px solid rgba(110,70,5,.2)",flexShrink:0}}>
@@ -873,7 +913,7 @@ function ScrName({album,user,onReload,onSwitch}){
               </div>
             )}
             {/* caption — tap to edit */}
-            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"14px 13px 10px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+            <div className="scrn-caption" onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"14px 13px 10px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
               <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
               {editSum
                 ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
@@ -902,7 +942,7 @@ function ScrName({album,user,onReload,onSwitch}){
             </div>
 
             {/* play panel */}
-            <div style={{flexShrink:0,padding:"14px 15px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"linear-gradient(180deg,#c49020 0%,#a87010 100%)",borderTop:"1px solid rgba(100,60,0,.4)",position:"relative"}}>
+            <div className="scrn-play" style={{flexShrink:0,padding:"14px 15px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"linear-gradient(180deg,#c49020 0%,#a87010 100%)",borderTop:"1px solid rgba(100,60,0,.4)",position:"relative"}}>
               <div style={{position:"absolute",inset:5,border:"1px solid rgba(255,200,80,.2)",borderRadius:3,pointerEvents:"none"}}/>
               {hasVoices?(
                 <>
@@ -932,7 +972,7 @@ function ScrName({album,user,onReload,onSwitch}){
             </div>
 
             {/* add memory */}
-            <div onClick={e=>{e.stopPropagation();setShowAdd(true)}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
+            <div className="scrn-add" onClick={e=>{e.stopPropagation();setShowAdd(true)}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
               <span style={{fontSize:16}}>＋</span>
               <span style={{fontFamily:"Playfair Display,serif",fontSize:11,color:"rgba(255,240,200,.7)",letterSpacing:".06em",fontStyle:"italic"}}>Add a memory</span>
             </div>
@@ -949,13 +989,13 @@ function ScrName({album,user,onReload,onSwitch}){
 
 /* ── Onboarding ── */
 function ScrFirst({onDone}){
-  const[name,setName]=useState("");const[label,setLabel]=useState("");const[members,setMembers]=useState([]);const[nm,setNm]=useState("");const[creating,setCreating]=useState(false);const[step,setStep]=useState(1);
+  const[name,setName]=useState(localStorage.getItem(SK_NAME)||"");const[label,setLabel]=useState("");const[members,setMembers]=useState([]);const[nm,setNm]=useState("");const[creating,setCreating]=useState(false);const[step,setStep]=useState(1);
   const[loadingCircles,setLoadingCircles]=useState(false);const[circles,setCircles]=useState([]);
   const findGroups=async()=>{if(!name.trim())return;setLoadingCircles(true);setStep(4);try{const{data}=await sb.from("circles").select("*").order("created_at",{ascending:false});
     // Deduplicate by label — keep only the most recent circle per name
     const seen=new Set();const unique=(data||[]).filter(c=>{const k=c.label.trim().toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
     setCircles(unique);}catch(e){setCircles([]);}finally{setLoadingCircles(false);}};
-  const rejoin=async(ci)=>{setCreating(true);try{const full=await load(ci.code);localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code:ci.code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code:ci.code}));onDone(full,name.trim());}catch(e){alert("Could not join: "+e.message);setCreating(false);}};
+  const rejoin=async(ci)=>{setCreating(true);try{const full=await load(ci.code);localStorage.setItem(SK_NAME,name.trim());saveGroup(ci.code,ci.label,name.trim());localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code:ci.code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code:ci.code}));onDone(full,name.trim());}catch(e){alert("Could not join: "+e.message);setCreating(false);}};
   const next1=()=>{if(!name.trim())return;setStep(2)};
   const addMember=()=>{const n=nm.trim();if(!n||members.includes(n))return;setMembers(m=>[...m,n]);setNm("")};
   const create=async()=>{
@@ -972,7 +1012,7 @@ function ScrFirst({onDone}){
       if(members.length){for(const mn of[name.trim(),...members])await sb.from("members").insert({circle_id:al.id,name:mn,phone:"",joined:true,code:mkCode()})}
       else await sb.from("members").insert({circle_id:al.id,name:name.trim(),phone:"",joined:true,code:mkCode()});
       const full=await load(code);
-      localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
+      localStorage.setItem(SK_NAME,name.trim());saveGroup(code,label.trim(),name.trim());localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
       onDone(full,name.trim())
     }catch(e){alert("Could not create: "+e.message);setCreating(false)}
   };
@@ -1030,9 +1070,9 @@ function ScrFirst({onDone}){
 }
 
 function ScrJoin({code,onDone}){
-  const[name,setName]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
+  const[name,setName]=useState(localStorage.getItem(SK_NAME)||"");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
   const join=async()=>{if(!name.trim())return;setLoading(true);setErr("");
-    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
+    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK_NAME,name.trim());saveGroup(code,al.label||"Group",name.trim());localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
     catch(e){setErr("Could not join: "+e.message);setLoading(false)}};
   return(
     <div className="ob">
@@ -1049,6 +1089,32 @@ function ScrJoin({code,onDone}){
 }
 
 /* ── App root ── */
+function ScrGroups({user,onSelect,onNew}){
+  const[groups,setGroups]=useState(getGroups());const[loading,setLoading]=useState(null);
+  const pick=async(g)=>{setLoading(g.code);try{const al=await load(g.code);if(al){saveGroup(g.code,al.label||g.label,user);onSelect(al,user);}else{alert("Could not load group.");}}catch(e){alert("Error: "+e.message);}setLoading(null);};
+  return(
+    <div className="ob">
+      <div className="card">
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:32,marginBottom:6}}>📖</div>
+          <div style={{fontFamily:"Playfair Display,serif",fontSize:20,fontWeight:700,color:"#2a1505"}}>Welcome back, {user}</div>
+          <div style={{fontSize:13,color:"#9c7a52",marginTop:3,fontStyle:"italic"}}>Your family albums</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:14}}>
+          {groups.map((g,i)=>(
+            <div key={i} onClick={()=>pick(g)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,padding:"13px 15px",cursor:"pointer",border:"1.5px solid rgba(200,148,58,.2)",opacity:loading===g.code?.5:1}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:"#c8943a",flexShrink:0}}/>
+              <div style={{flex:1,fontSize:15,color:"#2a1505",fontWeight:500}}>{g.label}</div>
+              {loading===g.code?<Spin col="#c8943a" sz={14}/>:<div style={{fontSize:13,color:"#c8943a"}}>→</div>}
+            </div>
+          ))}
+        </div>
+        <button onClick={onNew} className="bG" style={{width:"100%",textAlign:"center"}}>＋ Join or create a new group</button>
+      </div>
+    </div>
+  );
+}
+
 function App(){
   const[scr,setScr]=useState("loading");const[album,setAlbum]=useState(null);const[user,setUser]=useState("");
   useEffect(()=>{
@@ -1064,12 +1130,13 @@ function App(){
   if(scr==="loading")return<div style={{width:"100vw",height:"100dvh",background:"#111014",display:"flex",alignItems:"center",justifyContent:"center"}}><Spin sz={28}/></div>;
   if(scr==="join")return<ScrJoin code={jCode()} onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
   if(scr==="first")return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
-  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{localStorage.removeItem(SK);setAlbum(null);setScr("first")}}/>;
+  if(scr==="groups")return<ScrGroups user={user} onSelect={(al,u)=>{setAlbum(al);setUser(u);localStorage.setItem(SK_SESSION,JSON.stringify({user:u,code:al.code}));localStorage.setItem(SK,JSON.stringify({user:u,code:al.code}));setScr("album");}} onNew={()=>setScr("first")}/>;
+  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{const gs=getGroups();const u=localStorage.getItem(SK_NAME)||user;if(gs.length>1){setUser(u);localStorage.removeItem(SK);setAlbum(null);setScr("groups");}else{localStorage.removeItem(SK);setAlbum(null);setScr("first");}}}/>;
 }
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v54';
+  const VER='v56';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
