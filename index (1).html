@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Our Story"/>
+<meta name="theme-color" content="#111014"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>Our Story v55</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body,#root{width:100%;height:100%;height:100dvh;overflow:hidden;background:#111014;font-family:'Lora',Georgia,serif}
+::-webkit-scrollbar{display:none}
+input,textarea,button{font-family:inherit}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes pageOutLeft{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(-18deg) translateX(-60px) scale(.93);opacity:0}}
+@keyframes pageOutRight{0%{transform:perspective(1200px) rotateY(0) scale(1);opacity:1}100%{transform:perspective(1200px) rotateY(18deg) translateX(60px) scale(.93);opacity:0}}
+@keyframes pageInLeft{0%{transform:perspective(1200px) rotateY(14deg) translateX(55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0) translateX(0) scale(1);opacity:1}}
+@keyframes pageInRight{0%{transform:perspective(1200px) rotateY(-14deg) translateX(-55px) scale(.93);opacity:0}100%{transform:perspective(1200px) rotateY(0) translateX(0) scale(1);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes bar{from{width:0}to{width:100%}}
+
+/* layout */
+.app{width:100vw;height:100dvh;overflow:hidden;background:#111014;display:flex;flex-direction:column;position:relative}
+.frame{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.photo-col{flex:1;position:relative;overflow:hidden}
+
+/* album background */
+.album-bg{position:absolute;inset:0;background-color:#1a1a1f;background-image:radial-gradient(ellipse 75% 70% at 50% 46%,rgba(42,36,30,0) 0%,rgba(12,10,10,.55) 60%,rgba(4,3,4,.92) 100%)}
+.album-bg::after{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");pointer-events:none}
+
+/* photo print mount */
+.photo-print{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d;padding-bottom:5%}
+.photo-mount{position:relative;background:#fdf8f0;padding:11px 11px 32px 11px;box-shadow:0 2px 4px rgba(0,0,0,.25),0 8px 24px rgba(0,0,0,.5),0 24px 64px rgba(0,0,0,.45);border-radius:2px;max-width:91%;max-height:91%;display:flex;flex-direction:column;align-items:center;will-change:transform}
+.photo-mount img{display:block;max-width:100%;max-height:calc(100% - 32px);object-fit:contain;border-radius:1px}
+.mount-caption{position:absolute;bottom:7px;left:8px;right:8px;text-align:center;font-family:'Lora',serif;font-style:italic;font-size:12px;color:#7a6454;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* portrait overlay */
+.info-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(4,2,1,.85) 28%,rgba(4,2,1,.97) 100%);padding:14px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.landscape-panel{display:none}
+.landscape-nav{display:none}
+.portrait-only{display:flex}
+
+/* iPad landscape */
+@media(orientation:landscape)and(min-width:768px){
+  .frame{flex-direction:row!important}
+  .photo-col{flex:0 0 62%;height:100%}
+  .info-overlay{display:none!important}
+  .portrait-only{display:none!important}
+  .landscape-panel{display:flex!important;flex-direction:column;flex:1;background:#f5ede0;padding:16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;gap:10px;color:#2a1505}
+  .landscape-nav{display:flex!important;background:#ede5d8;border-top:1px solid rgba(180,140,80,.2);padding:9px 16px calc(9px + env(safe-area-inset-bottom,0px));align-items:center;justify-content:space-between;flex-shrink:0}
+}
+
+/* frame mode */
+.framebox{position:fixed;inset:0;background:#111014;z-index:1000}
+
+/* onboarding */
+.ob{position:fixed;inset:0;background:#111014;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .4s ease}
+.card{width:100%;max-width:420px;background:linear-gradient(160deg,#fdf6ec,#f5ede0);border-radius:28px;padding:28px 24px;box-shadow:0 28px 72px rgba(0,0,0,.55)}
+
+/* settings */
+.settings{position:fixed;inset:0;background:#f5ede0;z-index:500;display:flex;flex-direction:column;overflow-y:auto;animation:fadeIn .3s ease}
+
+/* sheets */
+.sheet{background:#fdf6ec;border-radius:24px 24px 0 0;max-height:96vh;overflow-y:auto;animation:slideUp .3s ease;padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* empty state */
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(145deg,#232228,#111014)}
+
+/* voice pill */
+.vp{border-radius:12px;padding:8px 10px;margin-bottom:6px;background:rgba(55,28,8,.06);border:1px solid rgba(180,140,80,.18)}
+
+/* buttons */
+.bA{background:linear-gradient(135deg,#c8943a,#a06820);color:#fff;border:none;border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;cursor:pointer;text-align:center}
+.bG{background:transparent;border:1.5px solid rgba(200,148,58,.5);color:#c8943a;border-radius:13px;padding:11px 16px;font-size:13px;cursor:pointer;text-align:center}
+.bI{background:rgba(255,255,255,.14);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+@media(orientation:landscape)and(min-width:768px){.bI{background:rgba(55,28,8,.1);border-color:rgba(180,140,80,.3);color:#3d2410}}
+
+/* inputs */
+.inp{width:100%;padding:12px 15px;border-radius:13px;border:1.5px solid rgba(200,148,58,.3);background:rgba(255,255,255,.7);font-size:15px;color:#2a1505;outline:none;transition:border .2s}
+.inp:focus{border-color:#c8943a;background:#fff}
+textarea.inp{resize:none;line-height:1.6}
+
+/* summary editable */
+.summary-text{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:#2a1505;line-height:1.65;cursor:pointer}
+.summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer}
+</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback} = React;
+
+/* ── config ── */
+const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
+const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
+const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
+const SK       = "ourstory_v55";
+const SK_SESSION = "ourstory_session";
+const PAL      = ["#b07a36","#a06030","#7a5a34","#906845","#c07858","#5a8060","#4a6fa5","#8a5090"];
+const COLS     = ["#c8943a","#3a8fa4","#7a5a90","#5a8060","#c06858","#4a6fa5","#8b5e28","#3a7a5a"];
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+/* ── db ── */
+async function up(bucket,path,blob){const ct=blob.type&&blob.type!=='application/octet-stream'?blob.type:(bucket==='photos'?'image/jpeg':'audio/webm');const{error}=await sb.storage.from(bucket).upload(path,blob,{upsert:true,contentType:ct});if(error)throw new Error('Upload failed: '+error.message+' (bucket='+bucket+' type='+ct+')');return sb.storage.from(bucket).getPublicUrl(path).data.publicUrl}
+async function load(code){
+  const{data:c}=await sb.from("circles").select("*").eq("code",code.toUpperCase()).single();if(!c)return null;
+  const{data:members}=await sb.from("members").select("*").eq("circle_id",c.id);
+  const{data:mems}=await sb.from("memories").select("*").eq("circle_id",c.id).order("created_at",{ascending:false});
+  const memories=await Promise.all((mems||[]).map(async m=>{const{data:voices}=await sb.from("voices").select("*").eq("memory_id",m.id);return{...m,voices:voices||[]}}));
+  return{...c,members:members||[],memories}
+}
+async function createAlbum(label,color,code){const{data:c,error}=await sb.from("circles").insert({label,emoji:"📖",color,code}).select().single();if(error)throw error;return c}
+async function saveMem(cid,people,meta,photoFile,user){
+  let pUrl=null;const ts=Date.now();
+  if(photoFile)pUrl=await up("photos",cid+"/"+ts+".jpg",photoFile);
+  const now=new Date();
+  const row={circle_id:cid,year:meta.year||now.getFullYear(),month:meta.month||now.toLocaleString("default",{month:"long"}),place:meta.place||"—",people,caption:"A memory.",emoji:"📸",grad:"linear-gradient(145deg,#f5e0b8,#e8c070)",photo_url:pUrl};
+  const{data:mem,error}=await sb.from("memories").insert(row).select().single();if(error)throw error;
+  return mem
+}
+async function saveVoice(mid,name,blob,dur,tx){
+  const ext=blob.type.includes("mp4")?"mp4":blob.type.includes("ogg")?"ogg":"webm";
+  const url=await up("audio",mid+"/"+name+"-"+Date.now()+"."+ext,blob);
+  await sb.from("voices").insert({memory_id:mid,name,col:pc(name),audio_url:url,duration:dur});
+  if(tx){try{const{error:te}=await sb.from("memories").update({transcript:tx}).eq("id",mid);if(te)console.warn("transcript col missing:",te.message)}catch(e){}}
+  return url
+}
+async function updateSummary(mid,summary){try{const{error}=await sb.from("memories").update({summary}).eq("id",mid);if(error)throw error;return true}catch(e){console.error("updateSummary failed:",e.message);return false}}
+async function deleteMem(mid){
+  await sb.from("voices").delete().eq("memory_id",mid);
+  await sb.from("memories").delete().eq("id",mid);
+}
+async function deleteVoice(vid){await sb.from("voices").delete().eq("id",vid)}
+async function joinAlbum(code,user){
+  const al=await load(code);if(!al)return null;
+  const exists=(al.members||[]).find(m=>m.name.toLowerCase()===user.toLowerCase());
+  if(!exists)await sb.from("members").insert({circle_id:al.id,name:user,phone:"",joined:true,code:mkCode()});
+  return load(code)
+}
+
+/* ── Claude summary ── */
+async function genSummary(transcript,members,place,year){
+  if(!AI_URL)return null;
+  const names=(members||[]).map(m=>m.name).join(", ");
+  const hasTranscript=transcript&&transcript.trim().length>5;
+  const prompt=hasTranscript
+    ?`Transcript: "${transcript}"\nPlace: ${place||""}\nYear: ${year||""}`
+    :`People: ${names||"family"}\nPlace: ${place||"somewhere special"}\nYear: ${year||""}\nNote: no voice transcript — write a warm 1-2 sentence caption imagining this moment.`;
+  const system=hasTranscript
+    ?`Write a warm 2-3 sentence memory caption from this voice story transcript. Natural, personal, human tone. If names are mentioned, match them to: ${names||"unknown"}. No quotes, no hashtags, no emojis.`
+    :`Write a warm 1-2 sentence memory caption for a family photo. Use the people and place provided. Natural, poetic, human tone. No quotes, no hashtags, no emojis.`;
+  try{
+    const r=await fetch(AI_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:120,system,messages:[{role:"user",content:prompt}]})});
+    const j=await r.json();
+    return j.content?.[0]?.text?.trim()||null;
+  }catch(e){console.error("genSummary error:",e.message);return null}
+}
+
+/* ── AI search ── */
+async function aiSearch(q,mems){
+  const local=kSearch(q,mems);
+  if(!AI_URL)return local;
+  try{
+    const data=mems.map(m=>({id:m.id,year:m.year,month:m.month||"",place:m.place||"",people:m.people||[],text:(m.transcript||m.summary||m.caption||"").substring(0,300)}));
+    const r=await fetch(AI_URL,{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:400,
+        system:"Family photo search. Return ONLY valid JSON array of matching memory IDs. Understand Hindi, Punjabi, Indian names.",
+        messages:[{role:"user",content:`Query: "${q}"\nMemories: ${JSON.stringify(data)}`}]})});
+    const j=await r.json();const raw=j.content?.[0]?.text||"[]";
+    const ids=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    const res=mems.filter(m=>ids.includes(m.id));return res.length?res:local
+  }catch(e){return local}
+}
+function kSearch(q,mems){
+  const words=q.toLowerCase().split(/\s+/).filter(w=>w.length>1);if(!words.length)return mems;
+  const scored=mems.map(m=>{
+    const h=[m.year,m.month,m.place,...(m.people||[]),m.transcript||"",m.summary||"",m.caption||"",...(m.auto_tags||[])].join(" ").toLowerCase();
+    const score=words.reduce((s,w)=>{if(h.includes(w))return s+2;if(w.length>=4&&h.includes(w.substring(0,4)))return s+1;return s},0);
+    return{m,score}
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  return scored.map(x=>x.m)
+}
+
+/* ── helpers ── */
+function mkCode(){return Math.random().toString(36).substring(2,8).toUpperCase()}
+function playFlip(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const play=()=>{const b=ctx.createBuffer(1,ctx.sampleRate*.07,ctx.sampleRate);const d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2)*.22;const s=ctx.createBufferSource();s.buffer=b;const g=ctx.createGain();g.gain.setValueAtTime(.7,0);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.07);s.connect(g);g.connect(ctx.destination);s.start();setTimeout(()=>ctx.close(),300)};if(ctx.state==="suspended"){ctx.resume().then(play)}else{play()}}catch(e){}}
+function ini(n){return(n||"?").trim().split(" ").map(w=>w[0]).join("").toUpperCase().substring(0,2)}
+function pc(n){let h=0;for(const c of(n||""))h+=c.charCodeAt(0);return PAL[h%PAL.length]}
+function ac(l){let h=0;for(const c of(l||""))h+=c.charCodeAt(0);return COLS[h%COLS.length]}
+function fd(s){return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")}
+function jCode(){try{return new URL(window.location.href).searchParams.get("join")}catch(e){return null}}
+function iUrl(code){return window.location.origin+window.location.pathname+"?join="+code}
+
+/* ── hooks ── */
+function useWakeLock(){
+  const ref=useRef(null);
+  const acquire=useCallback(async()=>{try{if("wakeLock"in navigator)ref.current=await navigator.wakeLock.request("screen")}catch(e){}},[]);
+  const release=useCallback(()=>{if(ref.current){try{ref.current.release()}catch(e){}}ref.current=null},[]);
+  return{acquire,release}
+}
+function useSwipe(L,R){
+  const sx=useRef(null);
+  return{onTouchStart:e=>{sx.current=e.touches[0].clientX},onTouchEnd:e=>{if(sx.current===null)return;const dx=sx.current-e.changedTouches[0].clientX;if(Math.abs(dx)>44)dx>0?L():R();sx.current=null}}
+}
+function useSpeech(){
+  const[tx,setTx]=useState("");const[active,setActive]=useState(false);const ref=useRef(null);
+  const start=useCallback(lang=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;
+    try{const r=new SR();r.lang=lang||"en-IN";r.continuous=true;r.interimResults=true;
+      r.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript+" ";setTx(t.trim())};
+      r.onerror=()=>{};r.onend=()=>setActive(false);r.start();ref.current=r;setActive(true)}catch(e){}},[]);
+  const stop=useCallback(()=>{if(ref.current){try{ref.current.stop()}catch(e){}}ref.current=null;setActive(false)},[]);
+  const reset=useCallback(()=>setTx(""),[]);
+  return{transcript:tx,active,start,stop,reset}
+}
+function useRec(){
+  const[state,setState]=useState("idle");const[dur,setDur]=useState(0);
+  const[aUrl,setUrl]=useState(null);const[aBlob,setBlob]=useState(null);
+  const mRef=useRef(null);const ch=useRef([]);const tmr=useRef(null);
+  function mime(){const t=["audio/mp4","audio/webm;codecs=opus","audio/webm","audio/ogg"];for(const x of t)if(typeof MediaRecorder!="undefined"&&MediaRecorder.isTypeSupported(x))return x;return""}
+  const start=useCallback(async()=>{
+    try{setState("requesting");const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const m=mime();const rec=new MediaRecorder(stream,m?{mimeType:m}:{});ch.current=[];
+      rec.ondataavailable=e=>{if(e.data?.size>0)ch.current.push(e.data)};
+      rec.onstop=()=>{const b=new Blob(ch.current,{type:rec.mimeType||m||"audio/mp4"});setBlob(b);setUrl(URL.createObjectURL(b));setState("done");stream.getTracks().forEach(t=>t.stop())};
+      rec.start(250);mRef.current=rec;setState("recording");setDur(0);tmr.current=setInterval(()=>setDur(d=>d+1),1000)
+    }catch(e){setState("error")}
+  },[]);
+  const stop=useCallback(()=>{clearInterval(tmr.current);if(mRef.current?.state==="recording"){try{mRef.current.stop()}catch(e){}}},[]);
+  const reset=useCallback(()=>{setBlob(null);setUrl(null);setState("idle");setDur(0)},[]);
+  return{state,dur,aUrl,aBlob,start,stop,reset}
+}
+
+/* ── small UI ── */
+function Spin({sz=20,col="#c8943a"}){return<div style={{width:sz,height:sz,border:"2px solid "+col+"30",borderTop:"2px solid "+col,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>}
+function Av({name,sz=32,col}){return<div style={{width:sz,height:sz,borderRadius:"50%",background:col||pc(name),display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz*.36,fontWeight:700,color:"#fff",flexShrink:0}}>{ini(name)}</div>}
+function Hr({label}){return<div style={{display:"flex",alignItems:"center",gap:9,margin:"2px 0"}}><div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/>{label&&<span style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",opacity:.5}}>{label}</span>}<div style={{flex:1,height:1,background:"rgba(180,140,80,.22)"}}/></div>}
+
+/* ── Recorder Sheet ── */
+function RecSheet({memory,speaker,color,members,onSaved,onClose}){
+  const rec=useRec();const sp=useSpeech();const[saving,setSaving]=useState(false);const lv=useRef("");
+  useEffect(()=>{lv.current=sp.transcript},[sp.transcript]);
+  useEffect(()=>{
+    if(rec.state==="done"&&!saving){
+      setSaving(true);
+      (async()=>{
+        try{
+          const tx=lv.current;
+          await saveVoice(memory.id,speaker,rec.aBlob,rec.dur,tx);
+          // Generate Claude summary if we have transcript
+          if(tx&&!memory.summary){
+            const s=await genSummary(tx,members,memory.place,memory.year);
+            if(s){
+              const ok=await updateSummary(memory.id,s);
+              if(ok)onSaved(s);else onSaved();
+            } else { onSaved(); }
+          } else { onSaved(); }
+        }catch(e){alert("Could not save voice.");setSaving(false)}
+      })()
+    }
+  },[rec.state]);
+  const go=()=>{sp.reset();lv.current="";sp.start("en-IN");setTimeout(()=>rec.start(),200)};
+  const halt=()=>{rec.stop();sp.stop()};
+  const C=color||"#c8943a";
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(22px + env(safe-area-inset-bottom,0px))"}}>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
+        <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Add your voice</div>
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:14}}>{memory.place&&memory.place!=="—"?memory.place:"This memory"}{memory.year?" · "+memory.year:""}</div>
+        {/* preview photo */}
+        {memory.photo_url&&<div style={{height:110,borderRadius:12,overflow:"hidden",background:"#0a0502",marginBottom:13,display:"flex",alignItems:"center",justifyContent:"center"}}><img src={memory.photo_url} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain"}}/></div>}
+        <div style={{background:"rgba(200,148,58,.06)",borderRadius:14,padding:"12px",marginBottom:12,minHeight:56,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          {rec.state==="idle"&&<div style={{color:"#b09070",fontSize:13}}>Speak naturally — say when, where, who was there</div>}
+          {rec.state==="requesting"&&<div style={{color:"#b09070",fontSize:13}}>Waiting for microphone...</div>}
+          {rec.state==="recording"&&<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,width:"100%"}}>
+            <div style={{display:"flex",gap:3,alignItems:"center",height:24}}>{[.6,1,.7,.9,.5,.8,.6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:C,height:h*22,animation:"pulse "+(0.5+i*.1)+"s ease-in-out infinite alternate"}}/>)}</div>
+            <div style={{fontSize:13,color:"#b09070",fontWeight:600}}>{fd(rec.dur)} · Recording...</div>
+            {sp.transcript&&<div style={{fontSize:11,color:"#7a5c38",textAlign:"center",lineHeight:1.5,marginTop:3}}>{sp.transcript.substring(0,120)}</div>}
+          </div>}
+          {rec.state==="done"&&<div style={{width:"100%"}}><audio controls src={rec.aUrl} preload="auto" style={{width:"100%",accentColor:C}}/></div>}
+          {rec.state==="error"&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>Microphone blocked.<br/>Check Safari Settings → Microphone.</div>}
+        </div>
+        {(rec.state==="idle"||rec.state==="error")&&<button onClick={go} style={{width:"100%",padding:15,borderRadius:13,background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer"}}>🎙 Start Recording</button>}
+        {rec.state==="recording"&&<button onClick={halt} style={{width:"100%",padding:15,borderRadius:13,background:"linear-gradient(135deg,#c06858,#8b3a28)",border:"none",color:"#fff",fontSize:16,fontWeight:700,cursor:"pointer",animation:"pulse 1.5s ease infinite"}}>⏹ Stop & Save</button>}
+        {rec.state==="done"&&<div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,padding:"12px 0"}}><Spin col="#c8943a" sz={18}/><span style={{color:"#7a5c38",fontSize:14,fontStyle:"italic"}}>{saving?"Saving & generating summary...":"Processing..."}</span></div>}
+      </div>
+    </div>
+  )
+}
+
+/* ── Add Sheet (photo-first, no mode screen) ── */
+function AddSheet({album,user,onSaved,onClose}){
+  const[photos,setPhotos]=useState([]);// [{file,prev}]
+  const[saving,setSaving]=useState(false);const[done,setDone]=useState(0);
+  const[saved,setSaved]=useState([]);// saved memory objects
+  const[voiceFor,setVoiceFor]=useState(null);// memory to add voice to
+  const fRef=useRef(null);const C=album.color||"#c8943a";
+
+  const onPick=e=>{
+    const files=Array.from(e.target.files||[]);
+    if(!files.length)return;
+    const picked=files.map(f=>({file:f,prev:URL.createObjectURL(f)}));
+    setPhotos(picked);
+    e.target.value="";
+  };
+
+  const saveAll=async()=>{
+    setSaving(true);setDone(0);const now=new Date();const mems=[];
+    for(let i=0;i<photos.length;i++){
+      try{
+        const m=await saveMem(album.id,[user],{year:now.getFullYear(),month:now.toLocaleString("default",{month:"long"}),place:null},photos[i].file,user);
+        if(!m){alert("Photo "+(i+1)+" failed — try again.");setSaving(false);return;}
+        // Generate immediate AI caption from metadata (no transcript yet)
+        const s=await genSummary(null,album.members||[],null,now.getFullYear());
+        if(s)await updateSummary(m.id,s);
+        mems.push({...m,photo_url:m.photo_url||photos[i].prev,voices:[],summary:s||null});setDone(i+1);
+      }catch(e){
+        console.error("Save error:",e);
+        alert("Could not save photo "+(i+1)+".\n\nError: "+(e?.message||"Unknown error")+"\n\nCheck your internet connection and try again.");
+        setSaving(false);return;
+      }
+    }
+    setSaved(mems);setSaving(false);
+    if(mems.length===1&&mems[0]){setVoiceFor(mems[0])}
+  };
+
+  // After voice recorded for a saved memory
+  const afterVoice=()=>{setVoiceFor(null);onSaved()};
+
+  if(voiceFor){
+    return<RecSheet memory={voiceFor} speaker={user} color={C} members={album.members||[]} onSaved={afterVoice} onClose={afterVoice}/>
+  }
+
+  return(
+    <div style={{position:"absolute",inset:0,background:"rgba(8,4,1,.9)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{display:"flex",flexDirection:"column",maxHeight:"94vh"}}>
+        <div style={{padding:"13px 18px 0",flexShrink:0}}>
+          <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 14px"}}/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+            <div style={{fontSize:17,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505"}}>
+              {saved.length>0?"✅ Saved!":photos.length>0?photos.length+" photo"+(photos.length!==1?"s":"")+" selected":"Add photos"}
+            </div>
+            <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:28,height:28,fontSize:13,cursor:"pointer",color:"#9c7a52"}}>✕</button>
+          </div>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"0 18px 22px"}}>
+          {/* no photos yet */}
+          {photos.length===0&&(
+            <div onClick={()=>fRef.current?.click()} style={{border:"2px dashed "+C+"55",borderRadius:17,padding:"32px 20px",textAlign:"center",cursor:"pointer",background:"rgba(200,148,58,.04)"}}>
+              <div style={{fontSize:44,marginBottom:10}}>📷</div>
+              <div style={{fontSize:16,fontWeight:600,color:"#3d2410",marginBottom:6}}>Tap to choose photos</div>
+              <div style={{fontSize:13,color:"#b09070",lineHeight:1.6}}>One photo or many — your choice.<br/>Each becomes its own memory card.</div>
+            </div>
+          )}
+          {/* photos selected, not yet saved */}
+          {photos.length>0&&saved.length===0&&!saving&&(
+            <>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginBottom:14}}>
+                {photos.map((p,i)=>(
+                  <div key={i} style={{aspectRatio:"1",borderRadius:10,overflow:"hidden",background:"#0a0502"}}>
+                    <img src={p.prev} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+                  </div>
+                ))}
+                <div onClick={()=>fRef.current?.click()} style={{aspectRatio:"1",borderRadius:10,border:"2px dashed rgba(200,148,58,.4)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",background:"rgba(200,148,58,.05)"}}>
+                  <div style={{textAlign:"center",color:"#b09070"}}><div style={{fontSize:22}}>+</div><div style={{fontSize:10}}>More</div></div>
+                </div>
+              </div>
+              <button onClick={saveAll} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                ✅ Save {photos.length} photo{photos.length!==1?"s":""}
+              </button>
+            </>
+          )}
+          {/* saving progress */}
+          {saving&&(
+            <div style={{textAlign:"center",padding:"28px 0"}}>
+              <Spin sz={26} col={C}/>
+              <div style={{fontSize:14,color:"#7a5c38",marginTop:12}}>Saving {done} of {photos.length}...</div>
+            </div>
+          )}
+          {/* saved — offer voice if multiple photos */}
+          {saved.length>1&&(
+            <div style={{animation:"fadeIn .3s ease"}}>
+              <div style={{fontSize:14,color:"#7a5c38",fontStyle:"italic",lineHeight:1.7,marginBottom:16,textAlign:"center"}}>
+                {saved.length} memories saved 🎉<br/>Want to record your voice for any of them?
+              </div>
+              {saved.map((m,i)=>(
+                <div key={i} onClick={()=>setVoiceFor(m)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,padding:"11px 14px",marginBottom:9,cursor:"pointer",border:"1.5px solid rgba(200,148,58,.2)"}}>
+                  {m.photo_url&&<div style={{width:44,height:44,borderRadius:8,overflow:"hidden",background:"#0a0502",flexShrink:0}}><img src={m.photo_url} style={{width:"100%",height:"100%",objectFit:"contain"}}/></div>}
+                  <div style={{flex:1}}><div style={{fontSize:13,color:"#2a1505"}}>Memory {i+1}</div><div style={{fontSize:11,color:"#b09070"}}>Tap to add your voice</div></div>
+                  <div style={{fontSize:18}}>🎙</div>
+                </div>
+              ))}
+              <button onClick={onClose} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginTop:4}}>Done, skip voices for now</button>
+            </div>
+          )}
+        </div>
+      </div>
+      <input ref={fRef} type="file" accept="image/*" multiple onChange={onPick} style={{display:"none"}}/>
+    </div>
+  )
+}
+
+/* ── Search Sheet ── */
+function SearchSht({memories,onResults,onClose}){
+  const sp=useSpeech();const[q,setQ]=useState("");const[searching,setSrch]=useState(false);
+  useEffect(()=>{if(sp.transcript)setQ(sp.transcript)},[sp.transcript]);
+  const go=async query=>{if(!query.trim())return;setSrch(true);sp.stop();const r=await aiSearch(query,memories);setSrch(false);if(!r.length){alert(`No memories found for "${query}". Try different words.`);return;}onResults(r,query+" ("+r.length+")")};
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(30px + env(safe-area-inset-bottom,0px))"}}>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:3}}>Search memories</div>
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:12,lineHeight:1.6}}>Try "Goa holiday", "Sunny as a baby", "2019"</div>
+        {!!AI_URL&&<div style={{background:"rgba(200,148,58,.08)",borderRadius:11,padding:"8px 12px",marginBottom:12,fontSize:12,color:"#7a5c38"}}>✨ Claude AI search is active — speak in any language</div>}
+        <div style={{display:"flex",gap:9,marginBottom:13}}>
+          <input className="inp" style={{flex:1}} value={q} onChange={e=>setQ(e.target.value)} placeholder="Speak or type..." onKeyDown={e=>e.key==="Enter"&&go(q)}/>
+          <button onClick={()=>sp.active?sp.stop():sp.start("en-IN")} style={{width:46,height:46,borderRadius:13,background:sp.active?"linear-gradient(135deg,#c06858,#8b3a28)":"rgba(200,148,58,.15)",border:"none",fontSize:19,cursor:"pointer",flexShrink:0}}>🎙</button>
+        </div>
+        <button onClick={()=>go(q)} disabled={searching||!q.trim()} className="bA" style={{width:"100%",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{searching?<><Spin col="#fff" sz={15}/>Searching...</>:"🔍 Search"}</button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Frame Mode ── */
+function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
+  const[idx,setIdx]=useState(0);const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showSrch,setSrch]=useState(false);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");const[liveMems,setLiveMems]=useState(memories);const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
+  const wake=useWakeLock();const audioRef=useRef(null);
+  const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
+
+  // Generate summaries for any memory that has transcript but no summary
+  useEffect(()=>{
+    (async()=>{
+      let updated=false;
+      const next=[...liveMems];
+      for(let i=0;i<next.length;i++){
+        const m=next[i];
+        if(!m.summary){
+          const s=await genSummary(m.transcript,members||[],m.place,m.year);
+          if(s){await updateSummary(m.id,s);next[i]={...m,summary:s};updated=true;}
+        }
+      }
+      if(updated)setLiveMems(next);
+    })();
+  },[]);
+
+  useEffect(()=>{wake.acquire();return()=>wake.release()},[]);
+  useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null}setAnim("in")},[idx]);
+  useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
+  const sw=useSwipe(
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
+  );
+  const playVoice=(i,vs)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
+  const playVoices=()=>{if(!cur?.voices?.length)return;setPlaying(true);playVoice(0,cur.voices)};
+  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setPlaying(false);setVIdx(0)};
+
+  if(!cur)return<div className="framebox" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}}><div style={{color:"rgba(255,255,255,.4)",fontSize:16}}>No memories</div><button onClick={onExit} style={{background:"rgba(255,255,255,.1)",border:"none",color:"rgba(255,255,255,.6)",padding:"10px 20px",borderRadius:12,cursor:"pointer"}}>← Exit</button></div>;
+
+  const hasVoices=cur.voices?.length>0;
+  const captionFallback=[cur.place&&cur.place!=="—"?cur.place:null,[cur.month,cur.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story";
+  const displayText=cur.summary||captionFallback;
+
+  return(
+    <div className="framebox" {...sw} style={{background:"#0e0c0a"}}>
+      {/* progress bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.06)",zIndex:30}}>
+        <div key={pk} style={{height:"100%",background:"#c8943a",animation:"bar 30s linear forwards"}}/>
+      </div>
+      {/* top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
+        <div style={{flex:1,textAlign:"center",pointerEvents:"none"}}>{filter
+          ?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{display:"inline-block",background:"rgba(200,148,58,.45)",backdropFilter:"blur(8px)",borderRadius:18,padding:"4px 14px",fontSize:12,color:"#fff",cursor:"pointer",pointerEvents:"all"}}>{filter.label} ✕</div>
+          :<div style={{color:"rgba(255,255,255,.6)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".1em",background:"rgba(0,0,0,.4)",backdropFilter:"blur(6px)",display:"inline-block",padding:"3px 12px",borderRadius:10}}>{albumLabel}</div>}</div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={e=>{e.stopPropagation();setSrch(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"5px 12px",color:"rgba(255,255,255,.9)",fontSize:13,cursor:"pointer"}}>🔍</button>
+          <button onClick={e=>{e.stopPropagation();onExit()}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.3)",borderRadius:8,padding:"5px 12px",color:"rgba(255,255,255,.9)",fontSize:13,cursor:"pointer",fontWeight:600}}>← Exit</button>
+        </div>
+      </div>
+
+      {/* MAIN CARD */}
+      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+        <div key={pk} style={{
+          display:"flex",flexDirection:"row",alignItems:"stretch",
+          width:"100%",height:"100%",
+          background:"linear-gradient(145deg,#e8d4ae,#ddc898)",
+          borderRadius:0,
+          boxShadow:"none",
+          opacity:anim==="out"?0:1,
+          transform:anim==="out"?"scale(.97) translateY(8px)":"scale(1) translateY(0)",
+          transition:"opacity .32s ease, transform .32s ease",
+          overflow:"hidden"
+        }}>
+          {/* LEFT — photo 63% fixed height */}
+          <div style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+            <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 85% at 50% 50%,transparent 40%,rgba(0,0,0,.35) 100%)",pointerEvents:"none",zIndex:2}}/>
+            {cur.photo_url
+              ?<div style={{position:"absolute",inset:8,background:"#edd8b0",boxShadow:"0 2px 6px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.5)",borderRadius:2,overflow:"hidden",zIndex:1}}>
+                  {/* gold corner brackets */}
+                  {[{top:3,left:3},{top:3,right:3},{bottom:3,left:3},{bottom:3,right:3}].map((pos,i)=>(
+                    <div key={i} style={{position:"absolute",width:14,height:14,zIndex:3,...pos}}>
+                      <svg viewBox="0 0 16 16" style={{width:"100%",height:"100%"}}>
+                        <path d={i===0?"M1 8 L1 1 L8 1":i===1?"M8 1 L15 1 L15 8":i===2?"M1 8 L1 15 L8 15":"M8 15 L15 15 L15 8"} fill="none" stroke="#7a5500" strokeWidth="2.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                  ))}
+                  <img src={cur.photo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                </div>
+              :<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,.15)",fontSize:48}}>📷</div>}
+          </div>
+
+          {/* RIGHT — info panel 37% */}
+          <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+            {/* caption — tap to edit */}
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+              <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
+              {editSum
+                ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
+                    <textarea value={editTxt} onChange={e=>setEditTxt(e.target.value)} autoFocus
+                      style={{width:"100%",background:"rgba(255,255,255,.8)",border:"1px solid rgba(130,85,5,.5)",borderRadius:6,padding:"7px 9px",fontSize:12,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"#2a1505",lineHeight:1.6,resize:"none",minHeight:80,outline:"none"}}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async e=>{e.stopPropagation();const ok=await updateSummary(cur.id,editTxt);if(ok)setLiveMems(ms=>ms.map(m=>m.id===cur.id?{...m,summary:editTxt}:m));setEditSum(false);}}
+                        style={{flex:1,background:"#7a5500",color:"#fff",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer",fontWeight:600}}>✓ Save</button>
+                      <button onClick={e=>{e.stopPropagation();setEditSum(false);}}
+                        style={{flex:1,background:"rgba(130,85,5,.12)",color:"#5a3c10",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                :<>
+                  {cur.summary
+                    ?<div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:17,fontWeight:400,color:"#2a1800",lineHeight:1.75,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:7,WebkitBoxOrient:"vertical",textAlign:"center"}}>
+                        {cur.summary}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                      </div>
+                    :cur.voices?.length>0&&!cur.transcript
+                      ?<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"4px 0"}}>
+                          <div style={{fontSize:16,opacity:.5}}>🎙</div>
+                          <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>Re-record your voice for a personal memory</div>
+                        </div>
+                      :<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                          <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>🎙 Add your voice for a personal memory</div>
+                        </div>}
+                  {cur.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif",textAlign:"center"}}>{cur.people.join(", ")}</div>}
+                  <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
+                </>
+              }
+            </div>
+
+            {/* play panel */}
+            <div style={{flexShrink:0,padding:"14px 15px calc(18px + env(safe-area-inset-bottom,0px))",display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"linear-gradient(180deg,#c49020 0%,#a87010 100%)",borderTop:"1px solid rgba(100,60,0,.4)",position:"relative"}}>
+              <div style={{position:"absolute",inset:5,border:"1px solid rgba(255,200,80,.2)",borderRadius:3,pointerEvents:"none"}}/>
+              {hasVoices?(
+                <>
+                  <button onClick={playing?stopVoices:playVoices} style={{
+                    width:48,height:48,borderRadius:"50%",
+                    background:playing?"radial-gradient(circle,#c06858,#8b3a2a)":"radial-gradient(circle,#d4a020,#a07010)",
+                    border:"3px solid "+(playing?"rgba(192,104,88,.6)":"rgba(200,160,30,.7)"),
+                    boxShadow:"0 2px 8px rgba(0,0,0,.3),0 0 0 2px rgba(255,220,80,.2)",
+                    color:"#fff",fontSize:18,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    animation:!playing?"pulse 2.5s ease infinite":"none",flexShrink:0
+                  }}>{playing?"⏹":"▶"}</button>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:11,color:"#f5e0a0",fontWeight:600,letterSpacing:".04em"}}>
+                      {playing?`${cur.voices[vIdx]?.name} speaking...`:"LISTEN to the echoes"}
+                    </div>
+                    <div style={{fontSize:10,color:"rgba(245,220,150,.7)",marginTop:2,fontFamily:"Lora,serif"}}>
+                      {playing?`${vIdx+1} of ${cur.voices.length} voice${cur.voices.length!==1?"s":""}`:`${cur.voices.length} voice${cur.voices.length!==1?"s":""} recorded`}
+                    </div>
+                  </div>
+                </>
+              ):(
+                <div style={{textAlign:"center",padding:"6px 0"}}>
+                  <div style={{fontSize:20,marginBottom:4,opacity:.35}}>🎙</div>
+                  <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"rgba(240,200,100,.5)"}}>No voices yet</div>
+                </div>
+              )}
+            </div>
+            {/* ADD MEMORY box */}
+            <div onClick={e=>{e.stopPropagation();onAddMemory&&onAddMemory()}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
+              <span style={{fontSize:16}}>＋</span>
+              <span style={{fontFamily:"Playfair Display,serif",fontSize:11,color:"rgba(255,240,200,.7)",letterSpacing:".06em",fontStyle:"italic"}}>Add a memory</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showSrch&&<div onClick={e=>e.stopPropagation()} style={{position:"absolute",inset:0,zIndex:50}}><SearchSht memories={liveMems} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setSrch(false)}} onClose={()=>setSrch(false)}/></div>}
+    </div>
+  )
+}
+
+
+/* ── Settings ── */
+function Settings({album,user,onClose,onReload,onSwitch}){
+  const[members,setMembers]=useState(album.members||[]);const[copied,setCopied]=useState(false);
+  const copyLink=()=>{navigator.clipboard.writeText(iUrl(album.code)).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)})};
+  const removeMember=async(m)=>{if(!window.confirm("Remove "+m.name+" from this group?"))return;try{await sb.from("members").delete().eq("id",m.id);setMembers(ms=>ms.filter(x=>x.id!==m.id));onReload()}catch(e){alert("Could not remove member.")}};
+  return(
+    <div className="settings">
+      <div style={{background:"#f5ede0",borderBottom:"1px solid rgba(180,140,80,.2)",padding:"calc(16px + env(safe-area-inset-top,0px)) 18px 14px",display:"flex",alignItems:"center",gap:12}}>
+        <button onClick={onClose} style={{background:"rgba(200,148,58,.15)",border:"none",borderRadius:"50%",width:34,height:34,fontSize:16,cursor:"pointer",color:"#9c7a52"}}>←</button>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",flex:1}}>{album.label}</div>
+      </div>
+      <div style={{padding:"18px",display:"flex",flexDirection:"column",gap:18}}>
+        {/* invite */}
+        <div style={{background:"#fff",borderRadius:16,padding:"16px"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:10}}>Invite to this group</div>
+          <div style={{background:"rgba(200,148,58,.06)",borderRadius:11,padding:"10px 14px",fontFamily:"monospace",fontSize:14,color:"#2a1505",marginBottom:11,letterSpacing:".1em",textAlign:"center"}}>{album.code}</div>
+          <button onClick={copyLink} className="bA" style={{width:"100%",fontSize:14}}>{copied?"✅ Copied!":"📋 Copy invite link"}</button>
+          <div style={{fontSize:11,color:"#b09070",textAlign:"center",marginTop:8,lineHeight:1.6}}>Share via WhatsApp or iMessage.<br/>Anyone who opens it joins automatically.</div>
+        </div>
+        {/* members */}
+        <div style={{background:"#fff",borderRadius:16,padding:"16px"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:12}}>Members ({members.length})</div>
+          {members.length===0&&<div style={{fontSize:13,color:"#b09070",fontStyle:"italic",textAlign:"center",padding:"8px 0"}}>No members yet — share the invite link!</div>}
+          {members.map((m,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<members.length-1?"1px solid rgba(180,140,80,.12)":"none"}}>
+              <Av name={m.name} sz={32}/>
+              <div style={{flex:1,fontSize:14,color:"#2a1505"}}>{m.name}{m.name===user?" (you)":""}</div>
+              {m.name!==user&&<button onClick={()=>removeMember(m)} style={{background:"none",border:"none",color:"#c06858",fontSize:12,cursor:"pointer",opacity:.5,padding:"4px 6px",borderRadius:6}}>Remove</button>}
+            </div>
+          ))}
+        </div>
+        {/* album info + switch */}
+        <div style={{textAlign:"center",padding:"8px 0",display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontSize:11,color:"#b09070",letterSpacing:".04em"}}>OurStory · {album.label} · {album.memories?.length||0} memories</div>
+          <button onClick={onSwitch} style={{background:"none",border:"1px solid rgba(200,148,58,.3)",borderRadius:10,padding:"8px 16px",fontSize:13,cursor:"pointer",color:"#9c7a52"}}>⇄ Switch group</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Landscape Panel (right side on iPad) ── */
+function LandscapePanel({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteMemory,onEditSummary}){
+  if(!memory)return<div className="landscape-panel" style={{alignItems:"center",justifyContent:"center"}}><div style={{color:"#b09070",fontStyle:"italic",fontSize:14,textAlign:"center"}}>Swipe a photo to begin</div></div>;
+  const vs=memory.voices||[];const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const[showRec,setShowRec]=useState(false);const[editSum,setEditSum]=useState(false);const[sumTxt,setSumTxt]=useState(memory.summary||"");const aRef=useRef(null);
+  useEffect(()=>{setPlaying(false);setVIdx(0);if(aRef.current){aRef.current.pause();aRef.current=null}setSumTxt(memory.summary||"")},[memory.id]);
+  const playAll=()=>{if(!vs.length)return;setPlaying(true);play(0)};
+  const play=(i)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);aRef.current=a;a.play().catch(()=>{});a.onended=()=>play(i+1)};
+  const stopAll=()=>{if(aRef.current){aRef.current.pause();aRef.current=null}setPlaying(false);setVIdx(0)};
+  const saveSummary=async()=>{await updateSummary(memory.id,sumTxt);setEditSum(false);onEditSummary(memory.id,sumTxt)};
+  const C=album.color||"#c8943a";
+  return(
+    <div className="landscape-panel">
+      {/* date/place header */}
+      <div>
+        <div style={{fontSize:12,color:"#9c7a52",letterSpacing:".06em",textTransform:"uppercase",marginBottom:2}}>{album.label}</div>
+        <div style={{fontFamily:"Playfair Display,serif",fontSize:17,fontWeight:700,color:"#2a1505",lineHeight:1.3}}>{[memory.place&&memory.place!=="—"?memory.place:null,memory.year].filter(Boolean).join(", ")||"A memory"}</div>
+        {memory.people?.length>0&&<div style={{fontSize:12,color:"#9c7a52",marginTop:3}}>{memory.people.join(", ")}</div>}
+      </div>
+      <Hr/>
+      {/* AI summary — editable */}
+      <div style={{flex:1}}>
+        {editSum
+          ?<div>
+              <textarea className="inp" rows={4} value={sumTxt} onChange={e=>setSumTxt(e.target.value)} style={{marginBottom:8,fontSize:13,lineHeight:1.6}} placeholder="Write a short description of this memory..."/>
+              <div style={{display:"flex",gap:8}}><button onClick={saveSummary} className="bA" style={{flex:1,padding:"9px",fontSize:13}}>✓ Save</button><button onClick={()=>setEditSum(false)} className="bG" style={{flex:1,padding:"9px",fontSize:13}}>Cancel</button></div>
+            </div>
+          :<div onClick={()=>setEditSum(true)} style={{cursor:"pointer",minHeight:44}}>
+              {memory.summary
+                ?<div className="summary-text">{memory.summary}<span style={{display:"inline-block",marginLeft:6,fontSize:10,color:"#c8943a",opacity:.7,verticalAlign:"middle"}}>✎</span></div>
+                :vs.length===0
+                  ?<div className="summary-placeholder">Be the first to tell this story — tap 🎙 to record your voice.</div>
+                  :<div className="summary-placeholder" style={{display:"flex",alignItems:"center",gap:7}}><Spin sz={13} col="#c8943a"/><span>Generating summary...</span></div>}
+            </div>}
+      </div>
+      <Hr/>
+      {/* play + add voice buttons */}
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={playing?stopAll:playAll} disabled={!vs.length} style={{flex:1,padding:"12px 8px",borderRadius:13,background:vs.length?(playing?"linear-gradient(135deg,#c06858,#8b3a28)":"linear-gradient(135deg,"+C+",#a06820)"):"rgba(180,140,80,.15)",border:"none",color:vs.length?"#fff":"#b09070",fontSize:14,fontWeight:600,cursor:vs.length?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:7,transition:"all .2s",animation:vs.length&&!playing?"pulse 2.8s ease infinite":"none"}}>
+          {playing?<>⏹ {vs[vIdx]?.name}</>:vs.length>0?<>▶ Play {vs.length} voice{vs.length!==1?"s":""}</>:<>No voices yet</>}
+        </button>
+        <button onClick={()=>setShowRec(true)} style={{width:48,height:48,borderRadius:13,background:"rgba(200,148,58,.15)",border:"1.5px solid rgba(200,148,58,.35)",color:C,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}} title="Add your voice">🎙</button>
+      </div>
+      {/* voices list */}
+      {vs.length>0&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
+        {vs.map((v,i)=>(
+          <div key={v.id||i} className="vp">
+            <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:5}}>
+              <Av name={v.name} sz={26} col={v.col||pc(v.name)}/>
+              <div style={{flex:1}}><div style={{fontSize:13,color:"#2a1505",fontWeight:500}}>{v.name}</div>{v.duration&&<div style={{fontSize:10,color:"#9c7a52"}}>{fd(v.duration)}</div>}</div>
+              <button onClick={async()=>{if(window.confirm("Delete this voice?"))try{await deleteVoice(v.id||"");onDeleteVoice(memory.id,v.id)}catch(e){alert("Could not delete.")}}} style={{background:"none",border:"none",color:"#c06858",fontSize:13,cursor:"pointer",opacity:.6,padding:"2px 4px"}}>✕</button>
+            </div>
+            <audio controls src={v.audio_url} preload="none" style={{width:"100%",accentColor:C,height:28}}/>
+          </div>
+        ))}
+      </div>}
+      {/* delete memory */}
+      <div style={{textAlign:"center",marginTop:4}}>
+        <button onClick={async()=>{if(window.confirm("Delete this entire memory? This cannot be undone."))try{await deleteMem(memory.id);onDeleteMemory(memory.id)}catch(e){alert("Could not delete.")}}} style={{background:"none",border:"none",color:"#c06858",fontSize:12,cursor:"pointer",opacity:.5,textDecoration:"underline"}}>Delete this memory</button>
+      </div>
+      {showRec&&<div style={{position:"fixed",inset:0,zIndex:600}}><RecSheet memory={memory} speaker={user} color={C} members={album.members||[]} onSaved={()=>{setShowRec(false);onVoiceAdded()}} onClose={()=>setShowRec(false)}/></div>}
+    </div>
+  )
+}
+
+/* ── Portrait overlay (phone) ── */
+function PortraitOverlay({memory,album,user,onVoiceAdded,onDeleteVoice,onDeleteMemory}){
+  const[showRec,setShowRec]=useState(false);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);const aRef=useRef(null);
+  useEffect(()=>{setPlaying(false);setVIdx(0);if(aRef.current){aRef.current.pause();aRef.current=null}},[memory?.id]);
+  if(!memory)return null;
+  const vs=memory.voices||[];const C=album.color||"#c8943a";
+  const playAll=()=>{if(!vs.length)return;setPlaying(true);play(0)};
+  const play=(i)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);aRef.current=a;a.play().catch(()=>{});a.onended=()=>play(i+1)};
+  const stopAll=()=>{if(aRef.current){aRef.current.pause();aRef.current=null}setPlaying(false);setVIdx(0)};
+  return(
+    <>
+      <div className="info-overlay portrait-only">
+        <div style={{fontSize:12,color:"rgba(255,255,255,.45)",letterSpacing:".05em",marginBottom:2}}>{[memory.place&&memory.place!=="—"?memory.place:null,memory.year].filter(Boolean).join(" · ")||album.label}</div>
+        {memory.summary&&<div style={{fontSize:13,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"rgba(255,255,255,.85)",lineHeight:1.55,marginBottom:8}}>{memory.summary}</div>}
+        <div style={{display:"flex",gap:9,marginTop:4}}>
+          <button onClick={playing?stopAll:playAll} disabled={!vs.length} style={{flex:1,padding:"11px 8px",borderRadius:12,background:vs.length?(playing?"rgba(192,104,88,.5)":"rgba(200,148,58,.3)"):"rgba(255,255,255,.08)",backdropFilter:"blur(10px)",border:"1px solid "+(vs.length?(playing?"rgba(192,104,88,.6)":"rgba(200,148,58,.5)"):"rgba(255,255,255,.15)"),color:vs.length?"#fff":"rgba(255,255,255,.3)",fontSize:13,fontWeight:600,cursor:vs.length?"pointer":"default",display:"flex",alignItems:"center",justifyContent:"center",gap:7,animation:vs.length&&!playing?"pulse 2.8s ease infinite":"none"}}>
+            {playing?<>⏹ {vs[vIdx]?.name||"Playing..."}</>:vs.length>0?<>▶ {vs.length} voice{vs.length!==1?"s":""}</>:<>No voices yet</>}
+          </button>
+          <button onClick={()=>setShowRec(true)} style={{width:46,height:46,borderRadius:12,background:"rgba(200,148,58,.25)",backdropFilter:"blur(10px)",border:"1px solid rgba(200,148,58,.45)",color:"#fff",fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>🎙</button>
+        </div>
+      </div>
+      {showRec&&<RecSheet memory={memory} speaker={user} color={C} members={album.members||[]} onSaved={()=>{setShowRec(false);onVoiceAdded()}} onClose={()=>setShowRec(false)}/>}
+    </>
+  )
+}
+
+/* ── Group Switcher Sheet ── */
+function GroupSwitcher({currentCode,onSwitch,onClose}){
+  const[circles,setCircles]=useState([]);const[loading,setLoading]=useState(true);
+  useEffect(()=>{
+    (async()=>{
+      try{const{data}=await sb.from("circles").select("*").order("created_at",{ascending:false});
+        const seen=new Set();const unique=(data||[]).filter(c=>{const k=c.label.trim().toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+        setCircles(unique);}catch(e){setCircles([]);}finally{setLoading(false);}
+    })();
+  },[]);
+  return(
+    <div onClick={onClose} style={{position:"absolute",inset:0,background:"rgba(8,4,1,.88)",zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} className="sheet" style={{padding:"18px 20px calc(30px + env(safe-area-inset-bottom,0px))"}}>
+        <div style={{width:34,height:3,borderRadius:2,background:"#d4b896",margin:"0 auto 16px"}}/>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",fontWeight:700,color:"#2a1505",marginBottom:4}}>Switch group</div>
+        <div style={{fontSize:13,color:"#7a5c38",fontStyle:"italic",marginBottom:14}}>Tap a group to switch to it</div>
+        {loading&&<div style={{textAlign:"center",padding:"20px 0"}}><Spin col="#c8943a" sz={20}/></div>}
+        {circles.map((ci,i)=>(
+          <div key={i} onClick={()=>{localStorage.setItem('ourstory_v55',JSON.stringify({user:JSON.parse(localStorage.getItem('ourstory_v55')||'{}').user||'',code:ci.code}));onSwitch();}} style={{display:"flex",alignItems:"center",gap:12,background:ci.code===currentCode?"rgba(200,148,58,.12)":"#fff",borderRadius:14,padding:"13px 15px",cursor:"pointer",border:"1.5px solid "+(ci.code===currentCode?"rgba(200,148,58,.5)":"rgba(200,148,58,.15)"),marginBottom:9}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:ci.color||"#c8943a",flexShrink:0}}/>
+            <div style={{flex:1,fontSize:15,color:"#2a1505",fontWeight:500}}>{ci.label}</div>
+            {ci.code===currentCode&&<div style={{fontSize:11,color:"#c8943a",fontStyle:"italic"}}>current</div>}
+            {ci.code!==currentCode&&<div style={{fontSize:13,color:"#c8943a"}}>→</div>}
+          </div>
+        ))}
+        {!loading&&circles.length===0&&<div style={{color:"#b09070",fontSize:13,textAlign:"center",padding:"12px 0"}}>No other groups found.</div>}
+        <button onClick={onClose} style={{width:"100%",padding:11,background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",marginTop:4}}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Main Album Screen (unified slideshow) ── */
+function ScrName({album,user,onReload,onSwitch}){
+  const[idx,setIdx]=useState(0);const[pk,setPk]=useState(0);const[anim,setAnim]=useState("in");
+  const[mems,setMems]=useState(album.memories||[]);const[liveMems,setLiveMems]=useState(album.memories||[]);
+  const[filter,setFilter]=useState(null);const[playing,setPlaying]=useState(false);const[vIdx,setVIdx]=useState(0);
+  const[showAdd,setShowAdd]=useState(false);const[showSrch,setShowSrch]=useState(false);const[showSet,setShowSet]=useState(false);
+  const[editSum,setEditSum]=useState(false);const[editTxt,setEditTxt]=useState("");
+  const wake=useWakeLock();const audioRef=useRef(null);
+  const shown=filter?filter.mems:liveMems;const cur=shown[idx]||null;
+  const tint=album.color||"#c8943a";
+
+  // Load fresh data & generate missing summaries on mount
+  useEffect(()=>{
+    wake.acquire();
+    (async()=>{
+      const fresh=await load(album.code);
+      if(fresh){
+        const next=fresh.memories||[];
+        setMems(next);
+        setLiveMems(next);
+        // Generate summaries one-by-one, updating UI live as each arrives
+        for(let i=0;i<next.length;i++){
+          const m=next[i];
+          if(!m.summary){
+            // Has transcript → personal caption; no transcript → metadata caption
+            // Has voices but no transcript → skip AI, show re-record nudge instead
+            const hasVoicesNoTranscript=m.voices?.length>0&&!m.transcript;
+            if(!hasVoicesNoTranscript){
+              const s=await genSummary(m.transcript,fresh.members||[],m.place,m.year);
+              if(s){
+                await updateSummary(m.id,s);
+                setLiveMems(prev=>prev.map((x,j)=>j===i?{...x,summary:s}:x));
+              }
+            }
+          }
+        }
+      }
+    })();
+    return()=>wake.release();
+  },[]);
+
+  useEffect(()=>{setPlaying(false);setVIdx(0);setEditSum(false);setEditTxt("");if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setAnim("in")},[idx]);
+  // Auto-advance every 30s when not playing
+  useEffect(()=>{if(!shown.length||playing)return;const t=setTimeout(()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},30000);return()=>clearTimeout(t)},[idx,shown.length,pk,playing]);
+
+  const sw=useSwipe(
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
+    ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
+  );
+
+  const reload=async()=>{const fresh=await load(album.code);if(fresh){setMems(fresh.memories||[]);setLiveMems(fresh.memories||[]);}};
+  const afterAdd=()=>{setShowAdd(false);reload()};
+
+  const playVoice=(i,vs)=>{if(i>=vs.length){setPlaying(false);setVIdx(0);return;}setVIdx(i);const a=new Audio(vs[i].audio_url);audioRef.current=a;a.play().catch(()=>{});a.onended=()=>playVoice(i+1,vs)};
+  const playVoices=()=>{if(!cur?.voices?.length)return;setPlaying(true);playVoice(0,cur.voices)};
+  const stopVoices=()=>{if(audioRef.current){audioRef.current.pause();audioRef.current=null;}setPlaying(false);setVIdx(0)};
+
+  if(showSet)return<Settings album={{...album,memories:liveMems}} user={user} onClose={()=>setShowSet(false)} onReload={reload} onSwitch={onSwitch}/>;
+
+  // Empty state
+  if(liveMems.length===0)return(
+    <div style={{position:"fixed",inset:0,background:"#0e0c0a",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20}}>
+      <div style={{fontSize:52}}>📷</div>
+      <div style={{fontFamily:"Playfair Display,serif",fontSize:20,color:"rgba(255,255,255,.6)",fontStyle:"italic"}}>Your story begins here</div>
+      <button onClick={()=>setShowAdd(true)} style={{background:"linear-gradient(135deg,#c8943a,#a06820)",border:"none",borderRadius:14,padding:"12px 28px",color:"#fff",fontSize:15,cursor:"pointer",fontFamily:"Playfair Display,serif"}}>+ Add first memory</button>
+      <button onClick={()=>setShowSet(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,.3)",fontSize:12,cursor:"pointer"}}>⚙️ Settings</button>
+      {showAdd&&<AddSheet album={album} user={user} onSaved={afterAdd} onClose={()=>setShowAdd(false)}/>}
+    </div>
+  );
+
+  const hasVoices=cur?.voices?.length>0;
+  const captionFallback=[cur?.place&&cur.place!=="—"?cur.place:null,[cur?.month,cur?.year].filter(Boolean).join(" ")].filter(Boolean).join(" · ")||"Our Story";
+  const displayText=cur?.summary||captionFallback;
+
+  const[showSwitch,setShowSwitch]=useState(false);
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"#0e0c0a",overflow:"hidden"}} {...sw}>
+      {/* progress bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"rgba(255,255,255,.06)",zIndex:30}}>
+        <div key={pk} style={{height:"100%",background:tint,animation:"bar 30s linear forwards"}}/>
+      </div>
+
+      {/* top bar */}
+      <div style={{position:"absolute",top:0,left:0,right:0,zIndex:30,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"calc(10px + env(safe-area-inset-top,0px)) 16px 8px"}}>
+        <div style={{flex:1,textAlign:"center",pointerEvents:"none"}}>
+          {filter
+            ?<div onClick={e=>{e.stopPropagation();setFilter(null);setIdx(0)}} style={{display:"inline-block",background:"rgba(200,148,58,.45)",backdropFilter:"blur(8px)",borderRadius:18,padding:"4px 14px",fontSize:12,color:"#fff",cursor:"pointer",pointerEvents:"all"}}>{filter.label} ✕</div>
+            :<div onClick={e=>{e.stopPropagation();setShowSwitch(true)}} style={{color:"rgba(255,255,255,.9)",fontSize:11,fontFamily:"Playfair Display,serif",letterSpacing:".1em",background:"rgba(0,0,0,.4)",backdropFilter:"blur(6px)",display:"inline-flex",alignItems:"center",gap:5,padding:"3px 12px",borderRadius:10,cursor:"pointer",pointerEvents:"all",border:"1px solid rgba(255,255,255,.15)"}}>{album.label}<span style={{fontSize:8,opacity:.6}}>▼</span></div>}
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={e=>{e.stopPropagation();setShowSrch(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:8,padding:"5px 11px",color:"rgba(255,255,255,.85)",fontSize:13,cursor:"pointer"}}>🔍</button>
+          <button onClick={e=>{e.stopPropagation();setShowSet(true)}} style={{background:"rgba(0,0,0,.55)",backdropFilter:"blur(8px)",border:"1px solid rgba(255,255,255,.25)",borderRadius:8,padding:"5px 11px",color:"rgba(255,255,255,.85)",fontSize:13,cursor:"pointer"}}>⚙️</button>
+        </div>
+      </div>
+
+      {/* MAIN CARD */}
+      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"stretch"}}>
+        <div key={pk} style={{
+          display:"flex",flexDirection:"row",alignItems:"stretch",
+          width:"100%",height:"100%",
+          background:"linear-gradient(145deg,#e8d4ae,#ddc898)",
+          opacity:anim==="out"?0:1,
+          transform:anim==="out"?"scale(.97) translateY(8px)":"scale(1) translateY(0)",
+          transition:"opacity .32s ease, transform .32s ease",
+          overflow:"hidden"
+        }}>
+          {/* LEFT — photo */}
+          <div style={{flex:"0 0 72%",position:"relative",background:"#1a1208",overflow:"hidden",paddingTop:"calc(36px + env(safe-area-inset-top,0px))",paddingBottom:"calc(8px + env(safe-area-inset-bottom,0px))"}}>
+            <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 90% 85% at 50% 50%,transparent 40%,rgba(0,0,0,.35) 100%)",pointerEvents:"none",zIndex:2}}/>
+            {cur?.photo_url
+              ?<div style={{position:"absolute",inset:8,background:"#edd8b0",boxShadow:"0 2px 6px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.5)",borderRadius:2,overflow:"hidden",zIndex:1}}>
+                  {[{top:3,left:3},{top:3,right:3},{bottom:3,left:3},{bottom:3,right:3}].map((pos,i)=>(
+                    <div key={i} style={{position:"absolute",width:14,height:14,zIndex:3,...pos}}>
+                      <svg viewBox="0 0 16 16" style={{width:"100%",height:"100%"}}>
+                        <path d={i===0?"M1 8 L1 1 L8 1":i===1?"M8 1 L15 1 L15 8":i===2?"M1 8 L1 15 L8 15":"M8 15 L15 15 L15 8"} fill="none" stroke="#7a5500" strokeWidth="2.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                  ))}
+                  <img src={cur.photo_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                </div>
+              :<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",color:"rgba(255,255,255,.15)",fontSize:48}}>📷</div>}
+          </div>
+
+          {/* RIGHT — info panel */}
+          <div style={{flex:"0 0 28%",display:"flex",flexDirection:"column",background:"linear-gradient(180deg,#e2cc9a 0%,#d8bf88 100%)",borderLeft:"1px solid rgba(120,80,10,.3)",paddingTop:"calc(32px + env(safe-area-inset-top,0px))"}}>
+            {/* caption — tap to edit */}
+            <div onClick={()=>{if(!editSum){setEditSum(true);setEditTxt(cur?.summary||"");}}} style={{flex:1,padding:"16px 15px 12px",display:"flex",flexDirection:"column",justifyContent:"center",borderBottom:"1px solid rgba(110,70,5,.3)",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+              <div style={{position:"absolute",inset:7,border:"1px solid rgba(130,85,5,.3)",borderRadius:3,pointerEvents:"none"}}/>
+              {editSum
+                ?<div style={{position:"relative",zIndex:2,display:"flex",flexDirection:"column",gap:6}} onClick={e=>e.stopPropagation()}>
+                    <textarea value={editTxt} onChange={e=>setEditTxt(e.target.value)} autoFocus
+                      style={{width:"100%",background:"rgba(255,255,255,.8)",border:"1px solid rgba(130,85,5,.5)",borderRadius:6,padding:"7px 9px",fontSize:12,fontFamily:"Playfair Display,serif",fontStyle:"italic",color:"#2a1505",lineHeight:1.6,resize:"none",minHeight:80,outline:"none"}}/>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={async e=>{e.stopPropagation();const ok=await updateSummary(cur.id,editTxt);if(ok)setLiveMems(ms=>ms.map(m=>m.id===cur.id?{...m,summary:editTxt}:m));setEditSum(false);}}
+                        style={{flex:1,background:"#7a5500",color:"#fff",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer",fontWeight:600}}>✓ Save</button>
+                      <button onClick={e=>{e.stopPropagation();setEditSum(false);}}
+                        style={{flex:1,background:"rgba(130,85,5,.12)",color:"#5a3c10",border:"none",borderRadius:6,padding:"6px 0",fontSize:11,fontFamily:"Lora,serif",cursor:"pointer"}}>Cancel</button>
+                    </div>
+                  </div>
+                :<>
+                  {cur?.summary
+                    ?<div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:17,fontWeight:400,color:"#2a1800",lineHeight:1.75,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:7,WebkitBoxOrient:"vertical",textAlign:"center"}}>
+                        {cur.summary}<span style={{marginLeft:4,fontSize:9,opacity:.35,fontStyle:"normal"}}>✏️</span>
+                      </div>
+                    :cur?.voices?.length>0&&!cur?.transcript
+                      ?<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"4px 0"}}>
+                          <div style={{fontSize:16,opacity:.5}}>🎙</div>
+                          <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>Re-record your voice for a personal memory</div>
+                        </div>
+                      :<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:7,padding:"4px 0"}}>
+                          <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"#9a7030",textAlign:"center",lineHeight:1.6}}>🎙 Add your voice for a personal memory</div>
+                        </div>}
+                  {cur?.people?.length>0&&<div style={{marginTop:8,fontSize:11,color:"#5a3c10",fontStyle:"italic",fontFamily:"Lora,serif",textAlign:"center"}}>{cur.people.join(", ")}</div>}
+                  <div style={{position:"absolute",bottom:10,right:12,fontSize:9,color:"rgba(100,70,20,.35)",fontFamily:"Lora,serif",fontStyle:"italic"}}>{idx+1} / {shown.length}</div>
+                </>
+              }
+            </div>
+
+            {/* play panel */}
+            <div style={{flexShrink:0,padding:"14px 15px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,background:"linear-gradient(180deg,#c49020 0%,#a87010 100%)",borderTop:"1px solid rgba(100,60,0,.4)",position:"relative"}}>
+              <div style={{position:"absolute",inset:5,border:"1px solid rgba(255,200,80,.2)",borderRadius:3,pointerEvents:"none"}}/>
+              {hasVoices?(
+                <>
+                  <button onClick={playing?stopVoices:playVoices} style={{
+                    width:48,height:48,borderRadius:"50%",
+                    background:playing?"radial-gradient(circle,#c06858,#8b3a2a)":"radial-gradient(circle,#d4a020,#a07010)",
+                    border:"3px solid "+(playing?"rgba(192,104,88,.6)":"rgba(200,160,30,.7)"),
+                    boxShadow:"0 2px 8px rgba(0,0,0,.3),0 0 0 2px rgba(255,220,80,.2)",
+                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+                    animation:!playing?"pulse 2.5s ease infinite":"none",flexShrink:0
+                  }}>{playing?"⏹":"▶"}</button>
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontFamily:"Playfair Display,serif",fontStyle:"italic",fontSize:11,color:"#f5e0a0",fontWeight:600,letterSpacing:".04em"}}>
+                      {playing?`${cur.voices[vIdx]?.name} speaking...`:"LISTEN to the echoes"}
+                    </div>
+                    <div style={{fontSize:10,color:"rgba(245,220,150,.7)",marginTop:2,fontFamily:"Lora,serif"}}>
+                      {playing?`${vIdx+1} of ${cur.voices.length} voice${cur.voices.length!==1?"s":""}`:`${cur.voices.length} voice${cur.voices.length!==1?"s":""} recorded`}
+                    </div>
+                  </div>
+                </>
+              ):(
+                <div style={{textAlign:"center",padding:"6px 0"}}>
+                  <div style={{fontSize:20,marginBottom:4,opacity:.35}}>🎙</div>
+                  <div style={{fontFamily:"Lora,serif",fontStyle:"italic",fontSize:11,color:"rgba(240,200,100,.5)"}}>No voices yet</div>
+                </div>
+              )}
+            </div>
+
+            {/* add memory */}
+            <div onClick={e=>{e.stopPropagation();setShowAdd(true)}} style={{flexShrink:0,padding:"11px 15px calc(12px + env(safe-area-inset-bottom,0px))",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"rgba(30,20,5,.6)",backdropFilter:"blur(4px)",borderTop:"1px solid rgba(255,255,255,.08)",cursor:"pointer"}}>
+              <span style={{fontSize:16}}>＋</span>
+              <span style={{fontFamily:"Playfair Display,serif",fontSize:11,color:"rgba(255,240,200,.7)",letterSpacing:".06em",fontStyle:"italic"}}>Add a memory</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showAdd&&<AddSheet album={album} user={user} onSaved={afterAdd} onClose={()=>setShowAdd(false)}/>}
+      {showSrch&&<SearchSht memories={liveMems} onResults={(r,label)=>{setFilter({label,mems:r});setIdx(0);setShowSrch(false)}} onClose={()=>setShowSrch(false)}/>}
+      {showSwitch&&<GroupSwitcher currentCode={album.code} onSwitch={onSwitch} onClose={()=>setShowSwitch(false)}/>}
+    </div>
+  )
+}
+
+
+/* ── Onboarding ── */
+function ScrFirst({onDone}){
+  const[name,setName]=useState("");const[label,setLabel]=useState("");const[creating,setCreating]=useState(false);const[step,setStep]=useState(1);
+  const[loadingCircles,setLoadingCircles]=useState(false);const[circles,setCircles]=useState([]);
+  const findGroups=async()=>{if(!name.trim())return;setLoadingCircles(true);setStep(4);try{const{data}=await sb.from("circles").select("*").order("created_at",{ascending:false});
+    const seen=new Set();const unique=(data||[]).filter(c=>{const k=c.label.trim().toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+    setCircles(unique);}catch(e){setCircles([]);}finally{setLoadingCircles(false);}};
+  const rejoin=async(ci)=>{setCreating(true);try{const full=await load(ci.code);localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code:ci.code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code:ci.code}));onDone(full,name.trim());}catch(e){alert("Could not join: "+e.message);setCreating(false);}};
+  const next1=()=>{if(!name.trim())return;setStep(2)};
+  const create=async()=>{
+    if(!label.trim())return;setCreating(true);
+    try{
+      const{data:existing}=await sb.from("circles").select("id,label").ilike("label",label.trim());
+      if(existing&&existing.length>0){
+        const proceed=window.confirm("A group called \""+label.trim()+"\" already exists.\n\nCreate anyway? (Choose Cancel to pick a different name)");
+        if(!proceed){setCreating(false);return;}
+      }
+      const code=mkCode();const color=ac(label);
+      const al=await createAlbum(label.trim(),color,code);
+      await sb.from("members").insert({circle_id:al.id,name:name.trim(),phone:"",joined:true,code:mkCode()});
+      const full=await load(code);
+      localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));
+      onDone(full,name.trim())
+    }catch(e){alert("Could not create: "+e.message);setCreating(false)}
+  };
+  return(
+    <div className="ob">
+      <div className="card">
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <div style={{fontSize:36,marginBottom:8}}>📖</div>
+          <div style={{fontFamily:"Playfair Display,serif",fontSize:22,fontWeight:700,color:"#2a1505",lineHeight:1.2}}>Our Story</div>
+          <div style={{fontSize:13,color:"#9c7a52",marginTop:4,fontStyle:"italic"}}>Family memories, alive in voices</div>
+        </div>
+        {step===1&&(
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:2}}>Your name</div>
+            <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Ashish" onKeyDown={e=>e.key==="Enter"&&next1()} autoFocus/>
+            <button onClick={next1} disabled={!name.trim()} className="bA" style={{marginTop:4}}>Create a new group →</button>
+            <div style={{textAlign:"center",color:"#b09070",fontSize:12}}>— or —</div>
+            <button onClick={findGroups} disabled={!name.trim()||loadingCircles} className="bG" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>{loadingCircles?<><Spin col="#c8943a" sz={14}/>Loading...</>:"🔍 Find my existing group"}</button>
+          </div>
+        )}
+        {step===2&&(
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:2}}>Name this group</div>
+            <input className="inp" value={label} onChange={e=>setLabel(e.target.value)} placeholder="e.g. Tuteja Family" autoFocus onKeyDown={e=>e.key==="Enter"&&create()}/>
+            <div style={{fontSize:12,color:"#b09070",lineHeight:1.6,marginTop:2}}>📋 Once created, share the invite link with family — they join themselves.</div>
+            <button onClick={create} disabled={!label.trim()||creating} className="bA" style={{marginTop:4,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{creating?<><Spin col="#fff" sz={15}/>Creating...</>:"✨ Create group"}</button>
+            <button onClick={()=>setStep(1)} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",textAlign:"center",padding:"4px"}}>← Back</button>
+          </div>
+        )}
+        {step===4&&(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{fontSize:13,color:"#7a5c38",marginBottom:4}}>Your existing groups:</div>
+            {loadingCircles&&<div style={{textAlign:"center",padding:"20px 0"}}><Spin col="#c8943a" sz={20}/></div>}
+            {circles.map((ci,i)=>(
+              <div key={i} onClick={()=>rejoin(ci)} style={{display:"flex",alignItems:"center",gap:12,background:"#fff",borderRadius:14,padding:"13px 15px",cursor:"pointer",border:"1.5px solid rgba(200,148,58,.2)"}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:ci.color||"#c8943a",flexShrink:0}}/>
+                <div style={{flex:1,fontSize:15,color:"#2a1505",fontWeight:500}}>{ci.label}</div>
+                <div style={{fontSize:13,color:"#c8943a"}}>→</div>
+              </div>
+            ))}
+            {!loadingCircles&&circles.length===0&&<div style={{color:"#b09070",fontSize:13,textAlign:"center",padding:"12px 0"}}>No groups found.</div>}
+            {creating&&<div style={{textAlign:"center",padding:"8px"}}><Spin col="#c8943a" sz={16}/></div>}
+            <button onClick={()=>setStep(1)} style={{background:"none",border:"none",color:"#b09070",fontSize:13,cursor:"pointer",textAlign:"center",padding:"4px"}}>← Back</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ScrJoin({code,onDone}){
+  const[name,setName]=useState("");const[loading,setLoading]=useState(false);const[err,setErr]=useState("");
+  const join=async()=>{if(!name.trim())return;setLoading(true);setErr("");
+    try{const al=await joinAlbum(code,name.trim());if(!al){setErr("Group not found. Check the link.");setLoading(false);return;}localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK_SESSION,JSON.stringify({user:name.trim(),code}));localStorage.setItem(SK,JSON.stringify({user:name.trim(),code}));onDone(al,name.trim())}
+    catch(e){setErr("Could not join: "+e.message);setLoading(false)}};
+  return(
+    <div className="ob">
+      <div className="card">
+        <div style={{textAlign:"center",marginBottom:20}}><div style={{fontSize:36,marginBottom:8}}>📖</div><div style={{fontFamily:"Playfair Display,serif",fontSize:22,fontWeight:700,color:"#2a1505"}}>You're invited!</div><div style={{fontSize:13,color:"#9c7a52",marginTop:4,fontStyle:"italic"}}>Enter your name to join the family album</div></div>
+        <div style={{display:"flex",flexDirection:"column",gap:11}}>
+          <input className="inp" value={name} onChange={e=>setName(e.target.value)} placeholder="Your name" onKeyDown={e=>e.key==="Enter"&&join()} autoFocus/>
+          {err&&<div style={{color:"#c06858",fontSize:13,textAlign:"center"}}>{err}</div>}
+          <button onClick={join} disabled={!name.trim()||loading} className="bA" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{loading?<><Spin col="#fff" sz={15}/>Joining...</>:"Join album →"}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── App root ── */
+function App(){
+  const[scr,setScr]=useState("loading");const[album,setAlbum]=useState(null);const[user,setUser]=useState("");
+  useEffect(()=>{
+    (async()=>{
+      const jc=jCode();
+      if(jc){setScr("join");return}
+      try{const saved=JSON.parse(localStorage.getItem(SK_SESSION)||localStorage.getItem('ourstory_v23')||localStorage.getItem('ourstory_v22')||localStorage.getItem('ourstory_v21')||localStorage.getItem(SK)||"{}");
+        if(saved.user&&saved.code){const al=await load(saved.code);if(al){setAlbum(al);setUser(saved.user);setScr("album");return}}
+      }catch(e){}
+      setScr("first")
+    })()
+  },[]);
+  if(scr==="loading")return<div style={{width:"100vw",height:"100dvh",background:"#111014",display:"flex",alignItems:"center",justifyContent:"center"}}><Spin sz={28}/></div>;
+  if(scr==="join")return<ScrJoin code={jCode()} onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
+  if(scr==="first")return<ScrFirst onDone={(al,u)=>{setAlbum(al);setUser(u);setScr("album")}}/>;
+  if(scr==="album"&&album)return<ScrName key={album.id} album={album} user={user} onReload={async()=>{const fresh=await load(album.code);if(fresh)setAlbum(fresh)}} onSwitch={()=>{localStorage.removeItem(SK);setAlbum(null);setScr("first")}}/>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+// Auto-reload when a newer version is deployed — kills stale PWA cache
+(function(){
+  const VER='v55';
+  const stored=localStorage.getItem('ourstory_app_ver');
+  if(stored&&stored!==VER){
+    localStorage.setItem('ourstory_app_ver',VER);
+    // Clear all caches then hard reload
+    if('caches' in window){caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>location.reload(true))}
+    else{location.reload(true)}
+  } else {
+    localStorage.setItem('ourstory_app_ver',VER);
+  }
+})();
+</script></body></html>
