@@ -10,7 +10,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
-<title>Our Story v56</title>
+<title>Our Story v57</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
@@ -97,12 +97,12 @@ textarea.inp{resize:none;line-height:1.6}
 .summary-placeholder{font-family:'Lora',serif;font-style:italic;font-size:13px;color:#b09070;line-height:1.6;cursor:pointer;text-align:center}
 
 /* iPhone responsive — narrow screens stack vertically */
-@media(max-width:500px){
+@media(max-width:767px){
   .scrn-card{flex-direction:column!important}
-  .scrn-photo{flex:0 0 52vh!important;width:100%!important}
-  .scrn-info{flex:1!important;width:100%!important;overflow-y:auto!important;flex-direction:row!important;flex-wrap:wrap}
-  .scrn-caption{flex:1!important;min-width:60%!important;border-bottom:none!important;border-right:1px solid rgba(110,70,5,.2)!important}
-  .scrn-play{flex:0 0 auto!important;min-width:40%!important;border-top:none!important}
+  .scrn-photo{flex:0 0 55vh!important;width:100%!important;min-height:200px}
+  .scrn-info{flex:1!important;width:100%!important;overflow-y:auto!important;flex-direction:row!important;flex-wrap:wrap;min-height:0}
+  .scrn-caption{flex:1!important;min-width:55%!important;border-bottom:none!important;border-right:1px solid rgba(110,70,5,.2)!important;font-size:13px!important}
+  .scrn-play{flex:0 0 auto!important;min-width:40%!important;border-top:none!important;padding:10px!important}
   .scrn-add{width:100%!important}
 }
 
@@ -118,7 +118,7 @@ const {useState,useEffect,useRef,useCallback} = React;
 const SB_URL   = "https://crwigyzwesxhpiktcalp.supabase.co";
 const SB_KEY   = "sb_publishable_MZWysvvPtjTY35rM8r4ZZg_AbpbqC9F";
 const AI_URL = "https://crwigyzwesxhpiktcalp.supabase.co/functions/v1/ourstory-ai"; // Supabase Edge Function — key lives securely in Supabase /* ← paste your key here */
-const SK       = "ourstory_v56";
+const SK       = "ourstory_v57";
 const SK_SESSION = "ourstory_session";
 const SK_NAME    = "ourstory_name";
 const SK_GROUPS  = "ourstory_groups";
@@ -488,7 +488,7 @@ function FrameMode({memories,albumLabel,members,onExit,onAddMemory}){
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)},
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
   );
-  const handlePointerDown=()=>{setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
+  const handlePointerDown=(e)=>{if(e.target.closest('button,a,input,textarea,[role=button]'))return;setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
   const handlePointerUp=()=>{setPaused(false);if(arrowTimer.current)clearTimeout(arrowTimer.current);arrowTimer.current=setTimeout(()=>setShowArrows(false),1800)};
   const goNext=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)};
   const goPrev=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)};
@@ -818,7 +818,7 @@ function ScrName({album,user,onReload,onSwitch}){
     ()=>{playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)}
   );
 
-  const handlePointerDown=()=>{setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
+  const handlePointerDown=(e)=>{if(e.target.closest('button,a,input,textarea,[role=button]'))return;setPaused(true);setShowArrows(true);if(arrowTimer.current)clearTimeout(arrowTimer.current)};
   const handlePointerUp=()=>{setPaused(false);if(arrowTimer.current)clearTimeout(arrowTimer.current);arrowTimer.current=setTimeout(()=>setShowArrows(false),1800)};
   const goNext=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i+1)%shown.length);setPk(k=>k+1)},320)};
   const goPrev=e=>{e.stopPropagation();playFlip();setAnim("out");setTimeout(()=>{setIdx(i=>(i-1+shown.length)%shown.length);setPk(k=>k+1)},320)};
@@ -1136,7 +1136,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 // Auto-reload when a newer version is deployed — kills stale PWA cache
 (function(){
-  const VER='v56';
+  const VER='v57';
   const stored=localStorage.getItem('ourstory_app_ver');
   if(stored&&stored!==VER){
     localStorage.setItem('ourstory_app_ver',VER);
